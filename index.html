@@ -58,6 +58,7 @@
 <header>
     <div class="header-left"><button class="menu-icon" onclick="toggleSidebar()">≡</button><span>Visual Studio Code Web+</span></div>
     <div class="header-right">
+        <button id="manual-save-btn" onclick="saveData(true)" style="background: #007acc; display: none;">💾 全保存</button>
         <button id="btn-split" onclick="toggleSplitPreview()">プレビュー</button>
         <button onclick="fullPreview()">全画面プレビュー</button>
         <button onclick="openDownloadModal()" style="background: #2d7d46;">ダウンロード</button>
@@ -116,6 +117,7 @@
     <div class="setting-item"><label>テーマ</label><select id="setting-theme" onchange="updateSettings()"><option value="vs-dark">ダーク</option><option value="vs">ライト</option></select></div>
     <div class="setting-item"><label>文字サイズ</label><input type="number" id="setting-fontsize" onchange="updateSettings()"></div>
     <div class="setting-item"><label>インデント</label><select id="setting-tabsize" onchange="updateSettings()"><option value="2">2</option><option value="4">4</option></select></div>
+    <div class="setting-item"><label>自動保存</label><select id="setting-autosave" onchange="updateSettings()"><option value="on">ON (入力時に保存)</option><option value="off">OFF (手動保存のみ)</option></select></div>
     <hr>
     <button onclick="document.getElementById('import-file').click()" style="width:100%;">JSONから復元</button>
     <input type="file" id="import-file" style="display:none" onchange="importAllData(event)">
@@ -126,16 +128,20 @@
 <script>
     require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
     let editor, currentFile = 'index.html', openTabs = ['index.html'];
-    let files = JSON.parse(localStorage.getItem('vsc-web-files-v16')) || { 'index.html': '<h1>Hello</h1>' };
-    let config = JSON.parse(localStorage.getItem('vsc-web-config-v16')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4 };
+    let files = JSON.parse(localStorage.getItem('vsc-web-files-v17')) || { 'index.html': '<h1>Hello</h1>' };
+    let config = JSON.parse(localStorage.getItem('vsc-web-config-v17')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoSave: 'on' };
 
     require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('editor-container'), {
             value: files[currentFile], language: getLanguage(currentFile), theme: config.theme, fontSize: config.fontSize, tabSize: config.tabSize,
             automaticLayout: true, autoClosingTags: true, autoClosingBrackets: 'always', fixedOverflowWidgets: true,
-            contextmenu: true // 右クリックメニュー有効
+            contextmenu: true
         });
-        editor.onDidChangeModelContent(() => { files[currentFile] = editor.getValue(); saveData(); updatePreview(); });
+        editor.onDidChangeModelContent(() => { 
+            files[currentFile] = editor.getValue(); 
+            if(config.autoSave === 'on') saveData(); 
+            updatePreview(); 
+        });
         initUI(); renderFileList(); renderTabs(); updatePreview();
     });
 
@@ -246,23 +252,43 @@
 
     function deleteFile(e, n) { e.stopPropagation(); if(confirm(`${n} を削除してもよろしいですか？`)){ delete files[n]; openTabs = openTabs.filter(t => t !== n); currentFile = Object.keys(files)[0] || 'index.html'; if(!files[currentFile]) files[currentFile] = ""; switchFile(currentFile); } }
     function insertText(t) { editor.executeEdits("", [{ range: editor.getSelection(), text: t, forceMoveMarkers: true }]); editor.focus(); }
+    
     function updateSettings() {
         config.theme = document.getElementById('setting-theme').value;
         config.fontSize = parseInt(document.getElementById('setting-fontsize').value);
         config.tabSize = parseInt(document.getElementById('setting-tabsize').value);
-        monaco.editor.setTheme(config.theme); editor.updateOptions({ fontSize: config.fontSize, tabSize: config.tabSize });
+        config.autoSave = document.getElementById('setting-autosave').value;
+        
+        monaco.editor.setTheme(config.theme); 
+        editor.updateOptions({ fontSize: config.fontSize, tabSize: config.tabSize });
         document.body.className = config.theme === 'vs' ? 'light' : 'dark';
-        localStorage.setItem('vsc-web-config-v16', JSON.stringify(config));
+        document.getElementById('manual-save-btn').style.display = (config.autoSave === 'off') ? 'block' : 'none';
+        
+        localStorage.setItem('vsc-web-config-v17', JSON.stringify(config));
     }
+
     function initUI() {
         document.getElementById('setting-theme').value = config.theme;
         document.getElementById('setting-fontsize').value = config.fontSize;
         document.getElementById('setting-tabsize').value = config.tabSize;
+        document.getElementById('setting-autosave').value = config.autoSave;
         document.body.className = config.theme === 'vs' ? 'light' : 'dark';
+        document.getElementById('manual-save-btn').style.display = (config.autoSave === 'off') ? 'block' : 'none';
     }
+
     function exportAllData() { const blob = new Blob([JSON.stringify({files, config})], {type:"application/json"}); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "all_backup.json"; a.click(); }
     function importAllData(e) { const reader = new FileReader(); reader.onload = (ev) => { const d = JSON.parse(ev.target.result); files = d.files; config = d.config; saveData(); location.reload(); }; reader.readAsText(e.target.files[0]); }
-    function saveData() { localStorage.setItem('vsc-web-files-v16', JSON.stringify(files)); }
+    
+    function saveData(manual = false) { 
+        localStorage.setItem('vsc-web-files-v17', JSON.stringify(files)); 
+        if(manual) {
+            const btn = document.getElementById('manual-save-btn');
+            const original = btn.innerText;
+            btn.innerText = "✅ 保存完了";
+            setTimeout(() => btn.innerText = original, 1500);
+        }
+    }
+    
     function clearAllData() { if(confirm("消去しますか？")){ localStorage.clear(); location.reload(); } }
 </script>
 </body>
