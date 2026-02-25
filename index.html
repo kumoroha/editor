@@ -18,13 +18,12 @@
         
         header { height: var(--header-height); background: var(--head-bg); display: flex; align-items: center; padding: 0 15px; justify-content: space-between; border-bottom: 1px solid #2b2b2b; color: white; box-sizing: border-box; }
         .header-left { display: flex; align-items: center; gap: 12px; color: #4fc1ff; font-weight: bold; font-size: 19px; }
-        .header-right { display: flex; align-items: center; gap: 8px; }
         
         #main { display: flex; height: calc(100% - var(--header-height)); width: 100%; position: relative; }
         #sidebar { width: var(--sidebar-width); background: var(--side-bg); display: flex; flex-direction: column; border-right: 1px solid #333; transition: width 0.2s; flex-shrink: 0; }
         #sidebar.hidden { width: 0; border: none; overflow: hidden; }
         
-        #editor-wrapper { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg); }
+        #editor-wrapper { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg); position: relative; }
         #tabs-container { height: var(--tab-height); background: #2d2d2d; display: flex; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid #252526; }
         .tab { padding: 0 15px; height: 100%; display: flex; align-items: center; background: #2d2d2d; font-size: 12px; cursor: pointer; border-right: 1px solid #252526; white-space: nowrap; color: #999; }
         .tab.active { background: var(--bg); color: white; border-top: 1px solid var(--vscode-blue); }
@@ -34,6 +33,14 @@
         .spacer { flex: 1; }
 
         #editor-container { flex: 1; width: 100%; height: 100%; overflow: hidden; }
+        
+        /* Welcome & Settings Tab View */
+        #welcome-screen, #settings-view { position: absolute; top: var(--tab-height); left: 0; width: 100%; height: calc(100% - var(--tab-height)); background: var(--bg); z-index: 5; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 40px; box-sizing: border-box; overflow-y: auto; }
+        .welcome-content { text-align: center; max-width: 500px; }
+        .welcome-content h2 { color: var(--vscode-blue); margin-bottom: 30px; }
+        .welcome-btn { display: block; width: 100%; padding: 15px; margin: 10px 0; background: #333; color: white; border-radius: 6px; text-decoration: none; cursor: pointer; border: 1px solid #444; text-align: left; font-size: 15px; }
+        .welcome-btn:hover { background: #444; border-color: var(--vscode-blue); }
+
         #preview-container { width: 0; height: 100%; background: white; transition: width 0.3s; overflow: hidden; flex-shrink: 0; display: none; }
         #preview-container.visible { width: 50%; border-left: 1px solid #333; display: block; }
         #preview-container.md-mode { background: #fff; padding: 20px; box-sizing: border-box; overflow-y: auto; color: #333; }
@@ -45,25 +52,22 @@
         .file-item { padding: 8px 10px; cursor: pointer; font-size: 13px; display: flex; align-items: center; border-left: 3px solid transparent; color: #eee; gap: 5px; }
         .file-item.active { background: rgba(0, 122, 204, 0.2); color: #4fc1ff; border-left-color: var(--vscode-blue); }
         .file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .file-actions { display: flex; gap: 8px; opacity: 0.4; }
+        
+        /* Actions gap fix */
+        .file-actions { display: flex; gap: 12px; opacity: 0.4; padding-right: 5px; }
         .file-item:hover .file-actions { opacity: 1; }
 
-        /* Modals Fix */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 999; }
         .custom-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #252526; color: white; padding: 25px; border-radius: 8px; border: 1px solid #444; z-index: 1000; width: 340px; box-sizing: border-box; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; width: 100%; }
-        .modal-header h3 { margin: 0; font-size: 18px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .close-modal { font-size: 28px; cursor: pointer; color: #888; line-height: 1; }
-        .setting-item { margin-bottom: 15px; }
-        .setting-item label { display: block; margin-bottom: 8px; font-size: 12px; color: #aaa; }
         
-        .dl-item { display: flex; align-items: center; gap: 12px; padding: 8px 0; font-size: 14px; border-bottom: 1px solid #333; }
-        .dl-item input[type="checkbox"] { width: 18px; height: 18px; margin: 0; flex-shrink: 0; }
-        .dl-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .setting-item { margin-bottom: 20px; width: 100%; max-width: 400px; }
+        .setting-item label { display: block; margin-bottom: 8px; font-size: 13px; color: #aaa; }
         
-        select, input { width: 100%; padding: 8px; background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; }
+        select, input { width: 100%; padding: 10px; background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; }
         button { cursor: pointer; border-radius: 4px; border: none; padding: 8px 12px; }
-        hr { border: 0; border-top: 1px solid #444; margin: 15px 0; }
+        hr { border: 0; border-top: 1px solid #444; margin: 20px 0; width: 100%; max-width: 400px; }
     </style>
 </head>
 <body class="dark">
@@ -75,7 +79,7 @@
         <button id="btn-split" onclick="toggleSplitPreview()">プレビュー</button>
         <button onclick="fullPreview()" style="background:#444; color:white;">全画面プレビュー</button>
         <button onclick="openDownloadModal()" style="background: #2d7d46; color: white;">ダウンロード</button>
-        <button onclick="toggleModal('settings-modal')" style="background: #666; color: white;">⚙ 設定</button>
+        <button onclick="openSettingsTab()" style="background: #666; color: white;">⚙ 設定</button>
     </div>
 </header>
 
@@ -83,17 +87,36 @@
     <div id="sidebar">
         <div class="sidebar-title-row">
             <span>エクスプローラー</span>
-            <div>
-                <button class="add-btn" onclick="addNewFile()">+</button>
-                <button class="add-btn" style="font-size:16px; margin-left:8px;" onclick="document.getElementById('import-single').click()">⇪</button>
-            </div>
+            <div><button class="add-btn" onclick="addNewFile()">+</button></div>
         </div>
         <div id="file-list"></div>
-        <input type="file" id="import-single" style="display:none" onchange="importSingleFile(event)">
     </div>
     
     <div id="editor-wrapper">
         <div id="tabs-container"></div>
+        
+        <div id="welcome-screen">
+            <div class="welcome-content">
+                <h2>Visual Studio Code Web+</h2>
+                <div class="welcome-btn" onclick="addNewFile()">📄 新規ファイルを作成</div>
+                <div class="welcome-btn" onclick="document.getElementById('import-single').click()">⇪ ファイルをアップロード</div>
+                <div class="welcome-btn" onclick="openSettingsTab()">⚙ 設定を開く</div>
+                <input type="file" id="import-single" style="display:none" onchange="importSingleFile(event)">
+            </div>
+        </div>
+
+        <div id="settings-view">
+            <h3>⚙ Settings</h3>
+            <div class="setting-item"><label>テーマ</label><select id="setting-theme" onchange="updateSettings()"><option value="vs-dark">ダーク</option><option value="vs">ライト</option></select></div>
+            <div class="setting-item"><label>文字サイズ</label><input type="number" id="setting-fontsize" onchange="updateSettings()"></div>
+            <div class="setting-item"><label>インデント (Tab Size)</label><select id="setting-tabsize" onchange="updateSettings()"><option value="2">2</option><option value="4">4</option></select></div>
+            <div class="setting-item"><label>自動保存</label><select id="setting-autosave" onchange="updateSettings()"><option value="on">ON</option><option value="off">OFF</option></select></div>
+            <hr>
+            <button onclick="document.getElementById('import-file').click()" style="width:100%; max-width:400px; background:#3c3c3c; color:white; padding:12px; margin-bottom:10px;">JSONから復元</button>
+            <input type="file" id="import-file" style="display:none" onchange="importAllData(event)">
+            <button onclick="clearAllData()" style="background:#a94442; width:100%; max-width:400px; color:white; padding:12px;">全データ消去</button>
+        </div>
+
         <div id="toolbar">
             <button class="tool-btn" onclick="insertEmmetHtml()" style="background:#8a2be2">!</button>
             <button class="tool-btn" onclick="insertText('\t')">Tab</button>
@@ -102,11 +125,8 @@
             <button class="tool-btn" onclick="insertText('(')">(</button><button class="tool-btn" onclick="insertText(')')">)</button>
             <button class="tool-btn" onclick="insertText('<')">&lt;</button><button class="tool-btn" onclick="insertText('>')">&gt;</button>
             <button class="tool-btn" onclick="insertText(':')">:</button><button class="tool-btn" onclick="insertText('=')">=</button>
-            <button class="tool-btn" onclick="insertText('!')">!</button><button class="tool-btn" onclick="insertText('\"')">"</button>
-            <button class="tool-btn" onclick="insertText('/')">/</button><button class="tool-btn" onclick="insertText(';')">;</button>
-            <button class="tool-btn" onclick="insertText('\'')">'</button>
             <div class="spacer"></div>
-            <button class="tool-btn" onclick="editor.getAction('actions.find').run()" style="background:var(--vscode-blue); margin-right:5px;">🔍 検索</button>
+            <button class="tool-btn" onclick="editor.getAction('actions.find').run()" style="background:var(--vscode-blue);">🔍 検索</button>
         </div>
         <div id="editor-container"></div>
     </div>
@@ -118,45 +138,32 @@
 
 <div id="download-modal" class="custom-modal">
     <div class="modal-header"><h3>📥 ダウンロード</h3><span class="close-modal" onclick="closeAllModals()">&times;</span></div>
-    <div class="setting-item">
-        <label>ファイルを選択</label>
-        <div id="dl-checklist" style="max-height: 200px; overflow-y: auto; background: #1e1e1e; padding: 10px; border-radius: 4px; border: 1px solid #444;"></div>
-        <button onclick="downloadMultiFiles()" style="width:100%; margin-top:12px; background:var(--vscode-blue); color:white;">選択したファイルを保存</button>
-    </div>
+    <div id="dl-checklist" style="max-height: 200px; overflow-y: auto; background: #1e1e1e; padding: 10px; border-radius: 4px; border: 1px solid #444; margin-bottom: 12px;"></div>
+    <button onclick="downloadMultiFiles()" style="width:100%; background:var(--vscode-blue); color:white;">選択したファイルを保存</button>
     <hr>
     <button onclick="exportAllData()" style="width:100%; background:#444; color:white;">全一括バックアップ (JSON)</button>
-</div>
-
-<div id="settings-modal" class="custom-modal">
-    <div class="modal-header"><h3>⚙ 設定</h3><span class="close-modal" onclick="closeAllModals()">&times;</span></div>
-    <div class="setting-item"><label>テーマ</label><select id="setting-theme" onchange="updateSettings()"><option value="vs-dark">ダーク</option><option value="vs">ライト</option></select></div>
-    <div class="setting-item"><label>文字サイズ</label><input type="number" id="setting-fontsize" onchange="updateSettings()"></div>
-    <div class="setting-item"><label>インデント (Tab Size)</label><select id="setting-tabsize" onchange="updateSettings()"><option value="2">2</option><option value="4">4</option></select></div>
-    <div class="setting-item"><label>自動保存</label><select id="setting-autosave" onchange="updateSettings()"><option value="on">ON</option><option value="off">OFF</option></select></div>
-    <hr>
-    <button onclick="document.getElementById('import-file').click()" style="width:100%; background:#3c3c3c; color:white; margin-bottom:10px;">JSONから復元</button>
-    <input type="file" id="import-file" style="display:none" onchange="importAllData(event)">
-    <button onclick="clearAllData()" style="background:#a94442; width:100%; color:white;">全データ消去</button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
 <script>
     require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
-    let editor, currentFile = 'index.html', openTabs = ['index.html'];
-    let files = JSON.parse(localStorage.getItem('vsc-web-files-v20')) || { 'index.html': '<h1>Hello</h1>' };
-    let config = JSON.parse(localStorage.getItem('vsc-web-config-v20')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoSave: 'on' };
+    let editor, currentFile = 'index.html', openTabs = ['index.html'], isSettingsOpen = false;
+    let files = JSON.parse(localStorage.getItem('vsc-web-files-v21')) || { 'index.html': '<h1>Hello</h1>' };
+    let config = JSON.parse(localStorage.getItem('vsc-web-config-v21')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoSave: 'on' };
 
     require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('editor-container'), {
-            value: files[currentFile], language: getLanguage(currentFile), theme: config.theme, fontSize: config.fontSize, tabSize: config.tabSize,
+            value: files[currentFile] || "", language: getLanguage(currentFile), theme: config.theme, fontSize: config.fontSize, tabSize: config.tabSize,
             automaticLayout: true, autoClosingTags: true, autoClosingBrackets: 'always', fixedOverflowWidgets: true, contextmenu: true
         });
         editor.onDidChangeModelContent(() => { 
-            files[currentFile] = editor.getValue(); 
-            if(config.autoSave === 'on') saveToLocalStorage(); 
-            updatePreview(); 
+            if(currentFile && files[currentFile] !== undefined) {
+                files[currentFile] = editor.getValue(); 
+                if(config.autoSave === 'on') saveToLocalStorage(); 
+                updatePreview(); 
+            }
         });
-        initUI(); renderFileList(); renderTabs(); updatePreview();
+        initUI(); renderFileList(); renderTabs(); updateViewVisibility();
     });
 
     function getLanguage(f) {
@@ -178,39 +185,122 @@
     function renderTabs() {
         const container = document.getElementById('tabs-container'); container.innerHTML = '';
         openTabs.forEach(name => {
-            const tab = document.createElement('div'); tab.className = `tab ${name===currentFile?'active':''}`;
+            const tab = document.createElement('div'); tab.className = `tab ${name===currentFile && !isSettingsOpen?'active':''}`;
             tab.innerHTML = `${name} <span style="margin-left:8px;" onclick="closeTab(event,'${name}')">×</span>`;
             tab.onclick = () => switchFile(name);
             container.appendChild(tab);
         });
+        if(isSettingsOpen) {
+            const sTab = document.createElement('div'); sTab.className = `tab active`;
+            sTab.innerHTML = `Settings <span style="margin-left:8px;" onclick="closeSettingsTab(event)">×</span>`;
+            container.appendChild(sTab);
+        }
+    }
+
+    function updateViewVisibility() {
+        const welcome = document.getElementById('welcome-screen');
+        const settings = document.getElementById('settings-view');
+        const editorCont = document.getElementById('editor-container');
+        const toolbar = document.getElementById('toolbar');
+
+        welcome.style.display = (openTabs.length === 0 && !isSettingsOpen) ? 'flex' : 'none';
+        settings.style.display = isSettingsOpen ? 'flex' : 'none';
+        
+        if (isSettingsOpen || openTabs.length === 0) {
+            editorCont.style.visibility = 'hidden';
+            toolbar.style.visibility = 'hidden';
+        } else {
+            editorCont.style.visibility = 'visible';
+            toolbar.style.visibility = 'visible';
+            updatePreview();
+        }
+        renderTabs();
     }
 
     function switchFile(name) {
+        isSettingsOpen = false;
         currentFile = name; if(!openTabs.includes(name)) openTabs.push(name);
         editor.setValue(files[name] || "");
         monaco.editor.setModelLanguage(editor.getModel(), getLanguage(name));
-        renderFileList(); renderTabs(); updatePreview();
+        renderFileList(); updateViewVisibility();
+    }
+
+    function openSettingsTab() { isSettingsOpen = true; updateViewVisibility(); }
+    function closeSettingsTab(e) { if(e) e.stopPropagation(); isSettingsOpen = false; updateViewVisibility(); }
+
+    function closeTab(e, n) { 
+        e.stopPropagation(); 
+        openTabs = openTabs.filter(t => t !== n); 
+        if(currentFile === n) {
+            currentFile = openTabs.length > 0 ? openTabs[openTabs.length-1] : null;
+            if(currentFile) switchFile(currentFile);
+        }
+        updateViewVisibility();
     }
 
     function addNewFile() {
-        const name = prompt("作成するファイル名:");
+        const name = prompt("ファイル名:");
         if (name && !files[name]) {
-            if (getLanguage(name) === 'plaintext' && !confirm("未対応の拡張子です。よろしいですか？")) return;
+            if (getLanguage(name) === 'plaintext' && !confirm("未対応の拡張子です。続行しますか？")) return;
             files[name] = ""; switchFile(name);
         }
     }
 
     function renameFile(e, oldName) {
         e.stopPropagation();
-        const newName = prompt("新しいファイル名:", oldName);
+        const newName = prompt("新しい名前:", oldName);
         if(!newName || newName === oldName) return;
-        if(files[newName]) { alert("同名のファイルが存在します"); return; }
         const oldExt = oldName.split('.').pop(), newExt = newName.split('.').pop();
-        if(oldExt !== newExt && !confirm("拡張子を変更すると動作に影響する場合があります。")) return;
+        if(oldExt !== newExt && !confirm("拡張子を変更しますか？")) return;
         files[newName] = files[oldName]; delete files[oldName];
         openTabs = openTabs.map(t => t === oldName ? newName : t);
         if(currentFile === oldName) currentFile = newName;
         saveToLocalStorage(); renderFileList(); renderTabs();
+    }
+
+    function deleteFile(e, n) { 
+        e.stopPropagation(); 
+        if(confirm(`${n} を削除しますか？`)){ 
+            delete files[n]; openTabs = openTabs.filter(t=>t!==n); 
+            if(currentFile === n) currentFile = openTabs[0] || null;
+            saveToLocalStorage(); renderFileList(); updateViewVisibility();
+        } 
+    }
+
+    function saveCurrentFileManual() { saveToLocalStorage(); const btn = document.getElementById('manual-save-btn'); btn.innerText = "✅ 保存済"; setTimeout(() => btn.innerText = "💾 保存", 1000); }
+    function saveToLocalStorage() { localStorage.setItem('vsc-web-files-v21', JSON.stringify(files)); }
+    function toggleModal(id) { closeAllModals(); document.getElementById(id).style.display='block'; document.getElementById('overlay').style.display='block'; }
+    function closeAllModals() { document.querySelectorAll('.custom-modal').forEach(m=>m.style.display='none'); document.getElementById('overlay').style.display='none'; }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); setTimeout(() => editor.layout(), 210); }
+    function toggleSplitPreview() { document.getElementById('preview-container').classList.toggle('visible'); setTimeout(() => editor.layout(), 310); updatePreview(); }
+    function fullPreview() { const w = window.open(); w.document.write(document.getElementById('preview').srcdoc || ""); }
+
+    function updatePreview() {
+        if(!currentFile) return;
+        const isMd = currentFile.endsWith('.md'), ifr = document.getElementById('preview'), md = document.getElementById('md-preview');
+        const container = document.getElementById('preview-container');
+        if(isMd) { ifr.style.display='none'; md.style.display='block'; container.classList.add('md-mode'); md.innerHTML=marked.parse(files[currentFile]||""); }
+        else { md.style.display='none'; ifr.style.display='block'; container.classList.remove('md-mode'); let h = files['index.html']||""; if(files['style.css']) h+=`<style>${files['style.css']}</style>`; if(files['script.js']) h+=`<script>${files['script.js']}<\/script>`; ifr.srcdoc=h; }
+    }
+
+    function updateSettings() {
+        config.theme = document.getElementById('setting-theme').value;
+        config.fontSize = parseInt(document.getElementById('setting-fontsize').value);
+        config.tabSize = parseInt(document.getElementById('setting-tabsize').value);
+        config.autoSave = document.getElementById('setting-autosave').value;
+        monaco.editor.setTheme(config.theme); editor.updateOptions({ fontSize: config.fontSize, tabSize: config.tabSize });
+        document.body.className = config.theme === 'vs' ? 'light' : 'dark';
+        document.getElementById('manual-save-btn').style.display = (config.autoSave === 'off') ? 'block' : 'none';
+        localStorage.setItem('vsc-web-config-v21', JSON.stringify(config));
+    }
+
+    function initUI() {
+        document.getElementById('setting-theme').value = config.theme;
+        document.getElementById('setting-fontsize').value = config.fontSize;
+        document.getElementById('setting-tabsize').value = config.tabSize;
+        document.getElementById('setting-autosave').value = config.autoSave;
+        document.body.className = config.theme === 'vs' ? 'light' : 'dark';
+        document.getElementById('manual-save-btn').style.display = (config.autoSave === 'off') ? 'block' : 'none';
     }
 
     function openDownloadModal() {
@@ -226,60 +316,13 @@
     function downloadMultiFiles() {
         const checked = Array.from(document.querySelectorAll('#dl-checklist input:checked')).map(i => i.value);
         if(checked.length === 0) return;
-        if(checked.length === 1) {
-            const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([files[checked[0]]])); a.download = checked[0]; a.click();
-        } else {
-            const bundle = {}; checked.forEach(n => bundle[n] = files[n]);
-            const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(bundle, null, 2)])); a.download = "files_backup.json"; a.click();
-        }
+        const bundle = {}; checked.forEach(n => bundle[n] = files[n]);
+        const a = document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(bundle, null, 2)])); a.download="backup.json"; a.click();
     }
-
-    function toggleSplitPreview() {
-        const container = document.getElementById('preview-container');
-        container.classList.toggle('visible');
-        setTimeout(() => editor.layout(), 310);
-        updatePreview();
-    }
-
-    function saveCurrentFileManual() { saveToLocalStorage(); const btn = document.getElementById('manual-save-btn'); btn.innerText = "✅ 保存済"; setTimeout(() => btn.innerText = "💾 保存", 1000); }
-    function saveToLocalStorage() { localStorage.setItem('vsc-web-files-v20', JSON.stringify(files)); }
-    function toggleModal(id) { closeAllModals(); document.getElementById(id).style.display='block'; document.getElementById('overlay').style.display='block'; }
-    function closeAllModals() { document.querySelectorAll('.custom-modal').forEach(m=>m.style.display='none'); document.getElementById('overlay').style.display='none'; }
-    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); setTimeout(() => editor.layout(), 210); }
-    function fullPreview() { const w = window.open(); w.document.write(document.getElementById('preview').srcdoc || ""); }
-
-    function updatePreview() {
-        const isMd = currentFile.endsWith('.md'), ifr = document.getElementById('preview'), md = document.getElementById('md-preview');
-        const container = document.getElementById('preview-container');
-        if(isMd) { ifr.style.display='none'; md.style.display='block'; container.classList.add('md-mode'); md.innerHTML=marked.parse(files[currentFile]||""); }
-        else { md.style.display='none'; ifr.style.display='block'; container.classList.remove('md-mode'); let h = files['index.html']||""; if(files['style.css']) h+=`<style>${files['style.css']}</style>`; if(files['script.js']) h+=`<script>${files['script.js']}<\/script>`; ifr.srcdoc=h; }
-    }
-
-    function updateSettings() {
-        config.theme = document.getElementById('setting-theme').value;
-        config.fontSize = parseInt(document.getElementById('setting-fontsize').value);
-        config.tabSize = parseInt(document.getElementById('setting-tabsize').value);
-        config.autoSave = document.getElementById('setting-autosave').value;
-        monaco.editor.setTheme(config.theme); editor.updateOptions({ fontSize: config.fontSize, tabSize: config.tabSize });
-        document.body.className = config.theme === 'vs' ? 'light' : 'dark';
-        document.getElementById('manual-save-btn').style.display = (config.autoSave === 'off') ? 'block' : 'none';
-        localStorage.setItem('vsc-web-config-v20', JSON.stringify(config));
-    }
-
-    function initUI() {
-        document.getElementById('setting-theme').value = config.theme;
-        document.getElementById('setting-fontsize').value = config.fontSize;
-        document.getElementById('setting-tabsize').value = config.tabSize;
-        document.getElementById('setting-autosave').value = config.autoSave;
-        document.body.className = config.theme === 'vs' ? 'light' : 'dark';
-        document.getElementById('manual-save-btn').style.display = (config.autoSave === 'off') ? 'block' : 'none';
-    }
-
-    function deleteFile(e, n) { e.stopPropagation(); if(confirm(`${n} を削除しますか？`)){ delete files[n]; openTabs = openTabs.filter(t=>t!==n); currentFile = Object.keys(files)[0]||'index.html'; switchFile(currentFile); } }
+    
     function insertText(t) { editor.executeEdits("", [{ range: editor.getSelection(), text: t, forceMoveMarkers: true }]); editor.focus(); }
     function insertEmmetHtml() { insertText(`<!DOCTYPE html>\n<html>\n<head>\n<meta charset="UTF-8">\n</head>\n<body>\n\n</body>\n</html>`); }
-    function closeTab(e, n) { e.stopPropagation(); openTabs = openTabs.filter(t => t !== n); if(currentFile === n) { currentFile = openTabs[openTabs.length-1] || Object.keys(files)[0]; switchFile(currentFile); } else { renderTabs(); } }
-    function exportAllData() { const b = new Blob([JSON.stringify({files, config})], {type:"application/json"}); const a = document.createElement("a"); a.href=URL.createObjectURL(b); a.download="backup.json"; a.click(); }
+    function exportAllData() { const b = new Blob([JSON.stringify({files, config})], {type:"application/json"}); const a = document.createElement("a"); a.href=URL.createObjectURL(b); a.download="all_data.json"; a.click(); }
     function importAllData(e) { const r = new FileReader(); r.onload=(ev)=>{const d=JSON.parse(ev.target.result); files=d.files; config=d.config; saveToLocalStorage(); location.reload();}; r.readAsText(e.target.files[0]); }
     function importSingleFile(e) { const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload=(ev)=>{files[f.name]=ev.target.result; switchFile(f.name);}; r.readAsText(f); }
     function clearAllData() { if(confirm("消去しますか？")){ localStorage.clear(); location.reload(); } }
