@@ -6,41 +6,48 @@
     <title>Visual Studio Code Web+</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/editor/editor.main.min.css">
     <style>
-        :root { --sidebar-width: 220px; --header-height: 35px; --vscode-blue: #007acc; --vscode-bg: #1e1e1e; --sidebar-bg: #252526; --header-bg: #323233; }
-        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--vscode-bg); color: #cccccc; font-family: 'Segoe UI', sans-serif; }
-        
-        /* ヘッダー */
-        header { height: var(--header-height); background: var(--header-bg); display: flex; align-items: center; padding: 0 10px; justify-content: space-between; border-bottom: 1px solid #2b2b2b; }
-        .header-left { display: flex; align-items: center; gap: 10px; color: #4fc1ff; font-weight: 500; font-size: 13px; }
-        .header-right { display: flex; align-items: center; gap: 5px; }
-        
-        button { background: #3c3c3c; color: #eee; border: none; padding: 4px 10px; border-radius: 2px; cursor: pointer; font-size: 11px; }
-        button:hover { background: #505050; }
-        button.active { background: var(--vscode-blue); color: white; }
-        .icon-btn { background: transparent; font-size: 16px; padding: 2px 5px; }
-        .icon-btn:hover { background: #3c3c3c; }
+        :root { 
+            --sidebar-width: 220px; 
+            --header-height: 55px; /* 少し大きく調整 */
+            --vscode-blue: #007acc;
+            --bg: #1e1e1e; --side-bg: #252526; --head-bg: #323233; --text: #ccc;
+        }
+        body.light { --bg: #ffffff; --side-bg: #f3f3f3; --head-bg: #2c2c2c; --text: #333; }
 
-        /* メイン */
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; }
+        
+        header { height: var(--header-height); background: var(--head-bg); display: flex; align-items: center; padding: 0 15px; justify-content: space-between; border-bottom: 1px solid #2b2b2b; color: white; }
+        .header-left { display: flex; align-items: center; gap: 15px; color: #4fc1ff; font-weight: bold; font-size: 16px; }
+        .header-right { display: flex; align-items: center; gap: 8px; }
+        
+        button { background: #444; color: #eee; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; }
+        button:hover { background: #555; }
+        button.active { background: var(--vscode-blue); color: white; }
+
         #main { display: flex; height: calc(100% - var(--header-height)); width: 100%; }
         
-        /* サイドバー */
-        #sidebar { width: var(--sidebar-width); background: var(--sidebar-bg); display: flex; flex-direction: column; border-right: 1px solid #333; transition: 0.2s; }
+        #sidebar { width: var(--sidebar-width); background: var(--side-bg); display: flex; flex-direction: column; border-right: 1px solid #333; transition: 0.2s; }
         #sidebar.hidden { width: 0; overflow: hidden; border: none; }
-        .sidebar-title-row { padding: 10px 10px 5px 15px; font-size: 11px; font-weight: bold; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; color: #bbb; }
+        .sidebar-title-row { padding: 15px; font-size: 12px; font-weight: bold; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; color: #888; }
         
-        #file-list { flex: 1; overflow-y: auto; }
-        .file-item { padding: 5px 15px; cursor: pointer; font-size: 13px; display: flex; justify-content: space-between; align-items: center; height: 22px; }
-        .file-item:hover { background: #2a2d2e; }
-        .file-item.active { background: #37373d; color: white; border-left: 2px solid var(--vscode-blue); }
-        .del-icon { opacity: 0; font-size: 14px; transition: 0.2s; }
-        .file-item:hover .del-icon { opacity: 0.6; }
-        .del-icon:hover { opacity: 1 !important; color: #ff5555; }
+        .file-item { padding: 8px 15px; cursor: pointer; font-size: 14px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid transparent; }
+        .file-item:hover { background: rgba(255,255,255,0.05); }
+        .file-item.active { background: rgba(0, 122, 204, 0.2); color: #4fc1ff; border-left-color: var(--vscode-blue); }
 
-        /* エディタとプレビュー */
         #editor-container { flex: 1; height: 100%; min-width: 0; }
         #preview-container { width: 0; height: 100%; background: white; border-left: 1px solid #333; transition: 0.3s; overflow: hidden; }
         #preview-container.visible { width: 50%; }
         iframe { width: 100%; height: 100%; border: none; }
+
+        /* 設定モーダル */
+        #settings-modal { 
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #252526; color: white; padding: 30px; border-radius: 8px; border: 1px solid #444; z-index: 1000; width: 300px; 
+        }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 999; }
+        .setting-item { margin-bottom: 20px; }
+        .setting-item label { display: block; margin-bottom: 8px; font-size: 13px; }
+        select, input { width: 100%; padding: 8px; background: #3c3c3c; color: white; border: 1px solid #555; }
 
         @media (max-width: 768px) {
             #preview-container.visible { width: 100%; height: 40%; border-left: none; border-top: 1px solid #333; }
@@ -48,17 +55,18 @@
         }
     </style>
 </head>
-<body>
+<body class="dark">
 
 <header>
     <div class="header-left">
-        <button class="icon-btn" onclick="toggleSidebar()">☰</button>
+        <button onclick="toggleSidebar()" style="background:transparent; font-size:20px;">☰</button>
         <span>Visual Studio Code Web+</span>
     </div>
     <div class="header-right">
         <button id="btn-split" onclick="toggleSplitPreview()">分割プレビュー</button>
         <button onclick="fullPreview()">全画面プレビュー</button>
-        <button onclick="downloadCurrent()" style="background: #2d7d46;">ダウンロード</button>
+        <button onclick="openDownloadMenu()" style="background: #2d7d46;">ダウンロード</button>
+        <button onclick="toggleSettings()" style="background: #666;">⚙ 設定</button>
     </div>
 </header>
 
@@ -66,14 +74,30 @@
     <div id="sidebar">
         <div class="sidebar-title-row">
             <span>エクスプローラー</span>
-            <button class="icon-btn" onclick="addNewFile()" title="新しいファイル" style="color: #ccc;">＋</button>
+            <button onclick="addNewFile()" style="background:transparent; color:#007acc; font-size:20px;">＋</button>
         </div>
         <div id="file-list"></div>
     </div>
     <div id="editor-container"></div>
-    <div id="preview-container">
-        <iframe id="preview"></iframe>
+    <div id="preview-container"><iframe id="preview"></iframe></div>
+</div>
+
+<div class="modal-overlay" id="overlay" onclick="toggleSettings()"></div>
+<div id="settings-modal">
+    <h3>⚙ 設定</h3>
+    <div class="setting-item">
+        <label>テーマ</label>
+        <select id="setting-theme" onchange="updateSettings()">
+            <option value="vs-dark">ダークモード</option>
+            <option value="vs">ライトモード</option>
+        </select>
     </div>
+    <div class="setting-item">
+        <label>文字サイズ (px)</label>
+        <input type="number" id="setting-fontsize" value="16" onchange="updateSettings()">
+    </div>
+    <hr style="border:0; border-top:1px solid #444; margin: 20px 0;">
+    <button onclick="clearAllData()" style="background:#a94442; width:100%;">全データをクリア</button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
@@ -82,37 +106,44 @@
 
     let editor;
     let currentFile = 'index.html';
-    // キーを維持して継続性を確保
-    let files = JSON.parse(localStorage.getItem('vsc-web-files-v2')) || {
-        'index.html': '<h1>Visual Studio Code Web+</h1>\n<p>エクスプローラーの「＋」でファイルを追加できます。</p>\n<link rel="stylesheet" href="style.css">',
-        'style.css': 'h1 { color: #007acc; }'
+    
+    // 保存されたデータと設定
+    let files = JSON.parse(localStorage.getItem('vsc-web-files-v3')) || {
+        'index.html': '<h1>Visual Studio Code Web+</h1>\n<link rel="stylesheet" href="style.css">',
+        'style.css': 'h1 { color: #007acc; text-align: center; margin-top: 50px; }'
+    };
+    let config = JSON.parse(localStorage.getItem('vsc-web-config')) || {
+        theme: 'vs-dark',
+        fontSize: 16
     };
 
     require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('editor-container'), {
             value: files[currentFile] || "",
             language: getLanguage(currentFile),
-            theme: 'vs-dark',
+            theme: config.theme,
             automaticLayout: true,
-            fontSize: 16,
-            wordWrap: "on",
-            minimap: { enabled: false }
+            fontSize: config.fontSize,
+            wordWrap: "on"
         });
 
         editor.onDidChangeModelContent(() => {
             files[currentFile] = editor.getValue();
-            saveFiles();
+            saveData();
             updatePreview();
         });
+
+        applyTheme(config.theme);
+        document.getElementById('setting-theme').value = config.theme;
+        document.getElementById('setting-fontsize').value = config.fontSize;
 
         renderFileList();
         updatePreview();
     });
 
-    function getLanguage(filename) {
-        const ext = filename.split('.').pop().toLowerCase();
-        const map = { html: 'html', css: 'css', js: 'javascript', ts: 'typescript', json: 'json', md: 'markdown', php: 'php' };
-        // 拡張子がない、またはマップにない場合は 'plaintext'
+    function getLanguage(f) {
+        const ext = f.split('.').pop().toLowerCase();
+        const map = { html:'html', css:'css', js:'javascript', json:'json', md:'markdown' };
         return map[ext] || 'plaintext';
     }
 
@@ -122,7 +153,7 @@
         Object.keys(files).sort().forEach(name => {
             const div = document.createElement('div');
             div.className = `file-item ${name === currentFile ? 'active' : ''}`;
-            div.innerHTML = `<span>${name}</span><span class="del-icon" onclick="deleteFile(event, '${name}')">×</span>`;
+            div.innerHTML = `<span>${name}</span><span onclick="deleteFile(event, '${name}')">×</span>`;
             div.onclick = () => switchFile(name);
             list.appendChild(div);
         });
@@ -130,49 +161,75 @@
 
     function switchFile(name) {
         currentFile = name;
-        const lang = getLanguage(name);
-        monaco.editor.setModelLanguage(editor.getModel(), lang);
+        monaco.editor.setModelLanguage(editor.getModel(), getLanguage(name));
         editor.setValue(files[name]);
         renderFileList();
     }
 
     function addNewFile() {
-        const name = prompt("新しいファイル名を入力してください\n(拡張子がない場合はテキストとして保存されます)");
+        const name = prompt("ファイル名を入力");
         if (name && !files[name]) {
-            files[name] = "";
-            saveFiles();
-            switchFile(name);
-        } else if (files[name]) {
-            alert("同名のファイルが既に存在します");
+            files[name] = ""; saveData(); switchFile(name);
         }
     }
 
     function deleteFile(e, name) {
         e.stopPropagation();
         if (Object.keys(files).length <= 1) return;
-        if (confirm(`${name} を削除しますか？`)) {
+        if (confirm(`${name} を削除？`)) {
             delete files[name];
             if (currentFile === name) currentFile = Object.keys(files)[0];
-            saveFiles();
-            switchFile(currentFile);
+            saveData(); switchFile(currentFile);
         }
     }
 
-    function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('hidden');
+    // 設定関連
+    function toggleSettings() {
+        const m = document.getElementById('settings-modal');
+        const o = document.getElementById('overlay');
+        const isShow = m.style.display === 'block';
+        m.style.display = isShow ? 'none' : 'block';
+        o.style.display = isShow ? 'none' : 'block';
     }
 
-    function toggleSplitPreview() {
-        const pc = document.getElementById('preview-container');
-        const btn = document.getElementById('btn-split');
-        pc.classList.toggle('visible');
-        btn.classList.toggle('active');
+    function updateSettings() {
+        config.theme = document.getElementById('setting-theme').value;
+        config.fontSize = parseInt(document.getElementById('setting-fontsize').value);
+        
+        monaco.editor.setTheme(config.theme);
+        editor.updateOptions({ fontSize: config.fontSize });
+        applyTheme(config.theme);
+        localStorage.setItem('vsc-web-config', JSON.stringify(config));
     }
 
-    function saveFiles() {
-        localStorage.setItem('vsc-web-files-v2', JSON.stringify(files));
+    function applyTheme(t) {
+        document.body.className = (t === 'vs') ? 'light' : 'dark';
     }
 
+    function clearAllData() {
+        if (confirm("すべてのファイルと設定を削除して初期化しますか？")) {
+            localStorage.clear();
+            location.reload();
+        }
+    }
+
+    function openDownloadMenu() {
+        const names = Object.keys(files);
+        const choice = prompt(`ダウンロードするファイル名を入力してください:\n\n${names.join(', ')}`, currentFile);
+        if (choice && files[choice] !== undefined) {
+            const blob = new Blob([files[choice]], {type: "text/plain"});
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = choice;
+            a.click();
+        } else if (choice) {
+            alert("ファイルが見つかりません");
+        }
+    }
+
+    function saveData() { localStorage.setItem('vsc-web-files-v3', JSON.stringify(files)); }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); }
+    function toggleSplitPreview() { document.getElementById('preview-container').classList.toggle('visible'); document.getElementById('btn-split').classList.toggle('active'); }
     function updatePreview() {
         const preview = document.getElementById('preview');
         let html = files['index.html'] || "";
@@ -180,19 +237,7 @@
         if (files['script.js']) html += `<script>${files['script.js']}<\/script>`;
         preview.srcdoc = html;
     }
-
-    function fullPreview() {
-        const win = window.open();
-        win.document.write(document.getElementById('preview').srcdoc);
-    }
-
-    function downloadCurrent() {
-        const blob = new Blob([files[currentFile]], {type: "text/plain"});
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = currentFile;
-        a.click();
-    }
+    function fullPreview() { const win = window.open(); win.document.write(document.getElementById('preview').srcdoc); }
 </script>
 </body>
 </html>
