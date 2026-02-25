@@ -29,7 +29,6 @@
         .add-btn { background:transparent; color:#007acc; font-size: 22px; font-weight: 300; padding: 0; }
         #file-list { flex: 1; overflow-y: auto; }
         .file-item { padding: 8px 15px; cursor: pointer; font-size: 14px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid transparent; color: #eee; }
-        .file-item:hover { background: rgba(255,255,255,0.05); }
         .file-item.active { background: rgba(0, 122, 204, 0.2); color: #4fc1ff; border-left-color: var(--vscode-blue); font-weight: bold; }
         #editor-wrapper { flex: 1; display: flex; flex-direction: column; min-width: 0; }
         #toolbar { height: var(--toolbar-height); background: var(--side-bg); display: flex; align-items: center; padding: 0 10px; gap: 5px; border-bottom: 1px solid #333; overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -98,7 +97,10 @@
     <button onclick="exportAllData()" style="width:100%; margin-bottom:5px;">一括バックアップ (JSON)</button>
     <button onclick="document.getElementById('import-file').click()" style="width:100%;">インポート</button>
     <input type="file" id="import-file" style="display:none" onchange="importAllData(event)">
-    <button onclick="clearAllData()" style="background:#a94442; width:100%; margin-top:10px;">データ消去</button>
+    <div style="margin-top:20px;">
+        <button onclick="clearAllData()" style="background:#a94442; width:100%; margin-bottom:10px;">データを完全に消去</button>
+        <button onclick="toggleSettings()" style="background:#666; width:100%;">設定を閉じる</button>
+    </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
@@ -106,8 +108,9 @@
     if ('serviceWorker' in navigator) { navigator.serviceWorker.register('data:text/javascript,self.addEventListener("fetch", (e) => e.respondWith(fetch(e.request)))'); }
     require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
     let editor, currentFile = 'index.html';
-    let files = JSON.parse(localStorage.getItem('vsc-web-files-v7')) || { 'index.html': '<h1>Visual Studio Code Web+</h1>' };
-    let config = JSON.parse(localStorage.getItem('vsc-web-config-v7')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoRefresh: true };
+    // キーをv8に更新しました
+    let files = JSON.parse(localStorage.getItem('vsc-web-files-v8')) || { 'index.html': '<h1>Visual Studio Code Web+</h1>' };
+    let config = JSON.parse(localStorage.getItem('vsc-web-config-v8')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoRefresh: true };
 
     require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('editor-container'), {
@@ -143,7 +146,7 @@
         editor.updateOptions({ fontSize: config.fontSize, tabSize: config.tabSize });
         document.body.className = config.theme === 'vs' ? 'light' : 'dark';
         document.getElementById('manual-refresh').style.display = config.autoRefresh ? 'none' : 'block';
-        localStorage.setItem('vsc-web-config-v7', JSON.stringify(config));
+        localStorage.setItem('vsc-web-config-v8', JSON.stringify(config));
     }
     function initUI() {
         document.getElementById('setting-theme').value = config.theme;
@@ -159,7 +162,7 @@
         reader.readAsText(e.target.files[0]);
     }
     function openDownloadMenu() { const choice = prompt("DLするファイル名:", currentFile); if(choice && files[choice]){ const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([files[choice]])); a.download = choice; a.click(); } }
-    function saveData() { localStorage.setItem('vsc-web-files-v7', JSON.stringify(files)); }
+    function saveData() { localStorage.setItem('vsc-web-files-v8', JSON.stringify(files)); }
     function toggleSettings() { const s = document.getElementById('settings-modal').style; const o = document.getElementById('overlay').style; s.display = s.display === 'block' ? 'none' : 'block'; o.display = o.display === 'block' ? 'none' : 'block'; }
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); }
     function toggleSplitPreview() { document.getElementById('preview-container').classList.toggle('visible'); document.getElementById('btn-split').classList.toggle('active'); }
