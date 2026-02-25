@@ -43,8 +43,8 @@
             background: #252526; color: white; padding: 25px; border-radius: 8px; border: 1px solid #444; z-index: 1000; width: 320px;
         }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .modal-header h3 { margin: 0; }
-        .close-modal { font-size: 24px; cursor: pointer; color: #888; line-height: 1; }
+        .modal-header h3 { margin: 0; font-size: 18px; }
+        .close-modal { font-size: 28px; cursor: pointer; color: #888; line-height: 0.8; }
         .close-modal:hover { color: #fff; }
         .setting-item { margin-bottom: 15px; }
         .setting-item label { display: block; margin-bottom: 5px; font-size: 12px; color: #aaa; }
@@ -115,15 +115,16 @@
     if ('serviceWorker' in navigator) { navigator.serviceWorker.register('data:text/javascript,self.addEventListener("fetch", (e) => e.respondWith(fetch(e.request)))'); }
     require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
     let editor, currentFile = 'index.html';
-    // キーをv10に更新
-    let files = JSON.parse(localStorage.getItem('vsc-web-files-v10')) || { 'index.html': '<h1>Visual Studio Code Web+</h1>' };
-    let config = JSON.parse(localStorage.getItem('vsc-web-config-v10')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoRefresh: true };
+    let files = JSON.parse(localStorage.getItem('vsc-web-files-v11')) || { 'index.html': '<h1>Visual Studio Code Web+</h1>' };
+    let config = JSON.parse(localStorage.getItem('vsc-web-config-v11')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoRefresh: true };
 
     require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('editor-container'), {
             value: files[currentFile], language: getLanguage(currentFile), theme: config.theme, fontSize: config.fontSize, tabSize: config.tabSize, automaticLayout: true,
-            minimap: { enabled: false }, // iPad向けにミニマップはオフ
-            fixedOverflowWidgets: true // 検索窓などの表示を安定させる
+            minimap: { enabled: false }, fixedOverflowWidgets: true,
+            autoClosingTags: true, // HTML自動閉じタグ有効化
+            autoClosingBrackets: 'always',
+            autoClosingQuotes: 'always'
         });
         editor.onDidChangeModelContent(() => { files[currentFile] = editor.getValue(); saveData(); if(config.autoRefresh) updatePreview(); });
         initUI(); renderFileList(); updatePreview();
@@ -153,7 +154,7 @@
         files[name] = ""; saveData(); currentFile = name; renderFileList(); editor.setValue("");
         monaco.editor.setModelLanguage(editor.getModel(), lang);
     }
-    function deleteFile(e, n) { e.stopPropagation(); if(confirm(n+"を削除？")){ delete files[n]; currentFile = Object.keys(files)[0]; renderFileList(); editor.setValue(files[currentFile]); saveData(); } }
+    function deleteFile(e, n) { e.stopPropagation(); if(confirm(`${n} を削除してもよろしいですか？`)){ delete files[n]; currentFile = Object.keys(files)[0]; renderFileList(); editor.setValue(files[currentFile]); saveData(); } }
     function updateSettings() {
         config.theme = document.getElementById('setting-theme').value;
         config.fontSize = parseInt(document.getElementById('setting-fontsize').value);
@@ -163,7 +164,7 @@
         editor.updateOptions({ fontSize: config.fontSize, tabSize: config.tabSize });
         document.body.className = config.theme === 'vs' ? 'light' : 'dark';
         document.getElementById('manual-refresh').style.display = config.autoRefresh ? 'none' : 'block';
-        localStorage.setItem('vsc-web-config-v10', JSON.stringify(config));
+        localStorage.setItem('vsc-web-config-v11', JSON.stringify(config));
     }
     function initUI() {
         document.getElementById('setting-theme').value = config.theme;
@@ -179,7 +180,7 @@
         reader.readAsText(e.target.files[0]);
     }
     function openDownloadMenu() { const choice = prompt("DLするファイル名:", currentFile); if(choice && files[choice]){ const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([files[choice]])); a.download = choice; a.click(); } }
-    function saveData() { localStorage.setItem('vsc-web-files-v10', JSON.stringify(files)); }
+    function saveData() { localStorage.setItem('vsc-web-files-v11', JSON.stringify(files)); }
     function toggleSettings() { const s = document.getElementById('settings-modal').style; const o = document.getElementById('overlay').style; s.display = s.display === 'block' ? 'none' : 'block'; o.display = o.display === 'block' ? 'none' : 'block'; }
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); }
     function toggleSplitPreview() { document.getElementById('preview-container').classList.toggle('visible'); document.getElementById('btn-split').classList.toggle('active'); }
