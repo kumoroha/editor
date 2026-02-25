@@ -42,7 +42,9 @@
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: #252526; color: white; padding: 25px; border-radius: 8px; border: 1px solid #444; z-index: 1000; width: 320px;
         }
-        .close-modal { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; color: #888; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h3 { margin: 0; }
+        .close-modal { font-size: 24px; cursor: pointer; color: #888; line-height: 1; }
         .close-modal:hover { color: #fff; }
         .setting-item { margin-bottom: 15px; }
         .setting-item label { display: block; margin-bottom: 5px; font-size: 12px; color: #aaa; }
@@ -81,6 +83,7 @@
             <button class="tool-btn" onclick="insertText('!')">!</button><button class="tool-btn" onclick="insertText('\"')">"</button>
             <button class="tool-btn" onclick="insertText('/')">/</button><button class="tool-btn" onclick="insertText(';')">;</button>
             <button class="tool-btn" onclick="insertText('\'')">'</button>
+            <button class="tool-btn" onclick="editor.getAction('actions.find').run()" style="background:var(--vscode-blue);">🔍 検索</button>
             <button class="tool-btn" onclick="updatePreview(true)" id="manual-refresh" style="display:none; background:var(--vscode-blue);">更新</button>
         </div>
         <div id="editor-container"></div>
@@ -90,8 +93,10 @@
 
 <div class="modal-overlay" id="overlay" onclick="toggleSettings()"></div>
 <div id="settings-modal">
-    <span class="close-modal" onclick="toggleSettings()">&times;</span>
-    <h3>⚙ 設定</h3>
+    <div class="modal-header">
+        <h3>⚙ 設定</h3>
+        <span class="close-modal" onclick="toggleSettings()">&times;</span>
+    </div>
     <div class="setting-item"><label>テーマ</label><select id="setting-theme" onchange="updateSettings()"><option value="vs-dark">ダーク</option><option value="vs">ライト</option></select></div>
     <div class="setting-item"><label>文字サイズ</label><input type="number" id="setting-fontsize" onchange="updateSettings()"></div>
     <div class="setting-item"><label>インデント (スペース数)</label><select id="setting-tabsize" onchange="updateSettings()"><option value="2">2</option><option value="4">4</option><option value="8">8</option></select></div>
@@ -110,12 +115,15 @@
     if ('serviceWorker' in navigator) { navigator.serviceWorker.register('data:text/javascript,self.addEventListener("fetch", (e) => e.respondWith(fetch(e.request)))'); }
     require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
     let editor, currentFile = 'index.html';
-    let files = JSON.parse(localStorage.getItem('vsc-web-files-v9')) || { 'index.html': '<h1>Visual Studio Code Web+</h1>' };
-    let config = JSON.parse(localStorage.getItem('vsc-web-config-v9')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoRefresh: true };
+    // キーをv10に更新
+    let files = JSON.parse(localStorage.getItem('vsc-web-files-v10')) || { 'index.html': '<h1>Visual Studio Code Web+</h1>' };
+    let config = JSON.parse(localStorage.getItem('vsc-web-config-v10')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoRefresh: true };
 
     require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('editor-container'), {
-            value: files[currentFile], language: getLanguage(currentFile), theme: config.theme, fontSize: config.fontSize, tabSize: config.tabSize, automaticLayout: true
+            value: files[currentFile], language: getLanguage(currentFile), theme: config.theme, fontSize: config.fontSize, tabSize: config.tabSize, automaticLayout: true,
+            minimap: { enabled: false }, // iPad向けにミニマップはオフ
+            fixedOverflowWidgets: true // 検索窓などの表示を安定させる
         });
         editor.onDidChangeModelContent(() => { files[currentFile] = editor.getValue(); saveData(); if(config.autoRefresh) updatePreview(); });
         initUI(); renderFileList(); updatePreview();
@@ -124,8 +132,7 @@
     function getLanguage(f) {
         const ext = f.split('.').pop().toLowerCase();
         const map = { html:'html', css:'css', js:'javascript', ts:'typescript', cpp:'cpp', c:'c', cs:'csharp', py:'python', sql:'sql', xml:'xml', yaml:'yaml', json:'json', md:'markdown' };
-        if (map[ext]) return map[ext];
-        return 'plaintext';
+        return map[ext] || 'plaintext';
     }
     function insertText(t) { editor.executeEdits("", [{ range: editor.getSelection(), text: t, forceMoveMarkers: true }]); editor.focus(); }
     function renderFileList() {
@@ -142,9 +149,7 @@
         if (!name) return;
         if (files[name]) { alert("同名のファイルが存在します"); return; }
         const lang = getLanguage(name);
-        if (lang === 'plaintext') {
-            if (!confirm("対応していない拡張子です。テキストモード（サジェストなし）になりますが良いですか？")) return;
-        }
+        if (lang === 'plaintext' && !confirm("対応していない拡張子です。テキストモード（サジェストなし）になりますが良いですか？")) return;
         files[name] = ""; saveData(); currentFile = name; renderFileList(); editor.setValue("");
         monaco.editor.setModelLanguage(editor.getModel(), lang);
     }
@@ -158,7 +163,7 @@
         editor.updateOptions({ fontSize: config.fontSize, tabSize: config.tabSize });
         document.body.className = config.theme === 'vs' ? 'light' : 'dark';
         document.getElementById('manual-refresh').style.display = config.autoRefresh ? 'none' : 'block';
-        localStorage.setItem('vsc-web-config-v9', JSON.stringify(config));
+        localStorage.setItem('vsc-web-config-v10', JSON.stringify(config));
     }
     function initUI() {
         document.getElementById('setting-theme').value = config.theme;
@@ -174,7 +179,7 @@
         reader.readAsText(e.target.files[0]);
     }
     function openDownloadMenu() { const choice = prompt("DLするファイル名:", currentFile); if(choice && files[choice]){ const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([files[choice]])); a.download = choice; a.click(); } }
-    function saveData() { localStorage.setItem('vsc-web-files-v9', JSON.stringify(files)); }
+    function saveData() { localStorage.setItem('vsc-web-files-v10', JSON.stringify(files)); }
     function toggleSettings() { const s = document.getElementById('settings-modal').style; const o = document.getElementById('overlay').style; s.display = s.display === 'block' ? 'none' : 'block'; o.display = o.display === 'block' ? 'none' : 'block'; }
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); }
     function toggleSplitPreview() { document.getElementById('preview-container').classList.toggle('visible'); document.getElementById('btn-split').classList.toggle('active'); }
