@@ -36,12 +36,13 @@
         #preview-container.md-mode { background: #fff; color: #333; padding: 20px; overflow-y: auto; }
         iframe { width: 100%; height: 100%; border: none; }
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 999; }
-        #settings-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #252526; color: white; padding: 25px; border-radius: 8px; z-index: 1000; width: 320px; }
+        .custom-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #252526; color: white; padding: 25px; border-radius: 8px; z-index: 1000; width: 320px; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .close-modal { font-size: 28px; cursor: pointer; color: #888; line-height: 0.8; }
         .setting-item { margin-bottom: 15px; }
         .setting-item label { display: block; margin-bottom: 5px; font-size: 12px; color: #aaa; }
         select, input { width: 100%; padding: 8px; background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; }
+        hr { border:0; border-top:1px solid #444; margin: 15px 0; }
     </style>
 </head>
 <body class="dark">
@@ -50,8 +51,8 @@
     <div class="header-left"><button onclick="toggleSidebar()" style="background:transparent; font-size:22px;">≡</button><span>VS Code Web+</span></div>
     <div class="header-right">
         <button id="btn-split" onclick="toggleSplitPreview()">プレビュー</button>
-        <button onclick="downloadAction()" style="background: #2d7d46;">ダウンロード</button>
-        <button onclick="toggleSettings()" style="background: #666;">⚙</button>
+        <button onclick="toggleModal('download-modal')" style="background: #2d7d46;">ダウンロード</button>
+        <button onclick="toggleModal('settings-modal')" style="background: #666;">⚙</button>
     </div>
 </header>
 
@@ -70,6 +71,7 @@
     <div id="editor-wrapper">
         <div id="tabs-container"></div>
         <div id="toolbar">
+            <button class="tool-btn" onclick="insertEmmetHtml()" style="background:#8a2be2">!</button>
             <button class="tool-btn" onclick="insertText('\t')">Tab</button>
             <button class="tool-btn" onclick="insertText('{')">{</button><button class="tool-btn" onclick="insertText('}')">}</button>
             <button class="tool-btn" onclick="insertText('(')">(</button><button class="tool-btn" onclick="insertText(')')">)</button>
@@ -81,15 +83,29 @@
     <div id="preview-container"><iframe id="preview"></iframe><div id="md-preview" style="display:none"></div></div>
 </div>
 
-<div class="modal-overlay" id="overlay" onclick="toggleSettings()"></div>
-<div id="settings-modal">
-    <div class="modal-header"><h3>⚙ 設定</h3><span class="close-modal" onclick="toggleSettings()">&times;</span></div>
+<div class="modal-overlay" id="overlay" onclick="closeAllModals()"></div>
+
+<div id="download-modal" class="custom-modal">
+    <div class="modal-header"><h3>📥 ダウンロード</h3><span class="close-modal" onclick="closeAllModals()">&times;</span></div>
+    <div class="setting-item">
+        <label>ファイルを選択して保存</label>
+        <select id="download-select"></select>
+        <button onclick="downloadSelectedFile()" style="width:100%; margin-top:10px; background:var(--vscode-blue);">選択したファイルを保存</button>
+    </div>
+    <hr>
+    <div class="setting-item">
+        <label>全データ一括保存</label>
+        <button onclick="exportAllData()" style="width:100%;">JSONバックアップを保存</button>
+    </div>
+</div>
+
+<div id="settings-modal" class="custom-modal">
+    <div class="modal-header"><h3>⚙ 設定</h3><span class="close-modal" onclick="closeAllModals()">&times;</span></div>
     <div class="setting-item"><label>テーマ</label><select id="setting-theme" onchange="updateSettings()"><option value="vs-dark">ダーク</option><option value="vs">ライト</option></select></div>
     <div class="setting-item"><label>文字サイズ</label><input type="number" id="setting-fontsize" onchange="updateSettings()"></div>
     <div class="setting-item"><label>インデント</label><select id="setting-tabsize" onchange="updateSettings()"><option value="2">2</option><option value="4">4</option></select></div>
-    <hr style="border:0; border-top:1px solid #444;">
-    <button onclick="exportAllData()" style="width:100%; margin-bottom:5px;">一括バックアップ (JSON)</button>
-    <button onclick="document.getElementById('import-file').click()" style="width:100%;">復元 (JSON)</button>
+    <hr>
+    <button onclick="document.getElementById('import-file').click()" style="width:100%;">JSONから復元</button>
     <input type="file" id="import-file" style="display:none" onchange="importAllData(event)">
     <button onclick="clearAllData()" style="background:#a94442; width:100%; margin-top:10px;">全データ消去</button>
 </div>
@@ -98,8 +114,8 @@
 <script>
     require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
     let editor, currentFile = 'index.html', openTabs = ['index.html'];
-    let files = JSON.parse(localStorage.getItem('vsc-web-files-v13')) || { 'index.html': '<h1>Hello</h1>' };
-    let config = JSON.parse(localStorage.getItem('vsc-web-config-v13')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoRefresh: true };
+    let files = JSON.parse(localStorage.getItem('vsc-web-files-v14')) || { 'index.html': '<h1>Hello</h1>' };
+    let config = JSON.parse(localStorage.getItem('vsc-web-config-v14')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4 };
 
     require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('editor-container'), {
@@ -118,11 +134,16 @@
 
     function renderFileList() {
         const list = document.getElementById('file-list'); list.innerHTML = '';
+        const select = document.getElementById('download-select'); select.innerHTML = '';
         Object.keys(files).sort().forEach(name => {
+            // リスト表示
             const div = document.createElement('div'); div.className = `file-item ${name===currentFile?'active':''}`;
             div.innerHTML = `<span>${name}</span><span onclick="deleteFile(event,'${name}')">×</span>`;
             div.onclick = () => switchFile(name);
             list.appendChild(div);
+            // DL用ドロップダウン
+            const opt = document.createElement('option'); opt.value = name; opt.textContent = name;
+            select.appendChild(opt);
         });
     }
 
@@ -138,7 +159,7 @@
 
     function switchFile(name) {
         currentFile = name; if(!openTabs.includes(name)) openTabs.push(name);
-        editor.setValue(files[name]);
+        editor.setValue(files[name] || "");
         monaco.editor.setModelLanguage(editor.getModel(), getLanguage(name));
         renderFileList(); renderTabs(); updatePreview();
     }
@@ -154,11 +175,18 @@
 
     function addNewFile() {
         const name = prompt("ファイル名:");
-        if (name && !files[name]) {
-            const lang = getLanguage(name);
-            if (lang === 'plaintext' && !confirm("未対応の拡張子です。よろしいですか？")) return;
-            files[name] = ""; switchFile(name);
-        }
+        if (name && !files[name]) { switchFile(name); }
+    }
+
+    function insertEmmetHtml() {
+        const boilerplate = `<!DOCTYPE html>\n<html lang="ja">\n<head>\n    <meta charset="UTF-8">\n    <title>Document</title>\n</head>\n<body>\n    \n</body>\n</html>`;
+        if(editor.getValue().trim() === "") editor.setValue(boilerplate);
+        else insertText(boilerplate);
+    }
+
+    function downloadSelectedFile() {
+        const name = document.getElementById('download-select').value;
+        const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([files[name]])); a.download = name; a.click();
     }
 
     function importSingleFile(e) {
@@ -168,11 +196,14 @@
         reader.readAsText(file);
     }
 
-    function downloadAction() {
-        const mode = confirm("OK: 現在のファイルをDL\nキャンセル: 全ファイルをJSONバックアップ") ? 'single' : 'all';
-        if(mode === 'single') {
-            const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([files[currentFile]])); a.download = currentFile; a.click();
-        } else { exportAllData(); }
+    function toggleModal(id) { 
+        closeAllModals();
+        document.getElementById(id).style.display = 'block'; 
+        document.getElementById('overlay').style.display = 'block'; 
+    }
+    function closeAllModals() {
+        document.querySelectorAll('.custom-modal').forEach(m => m.style.display = 'none');
+        document.getElementById('overlay').style.display = 'none';
     }
 
     function updatePreview() {
@@ -193,7 +224,7 @@
         }
     }
 
-    function deleteFile(e, n) { e.stopPropagation(); if(confirm(`${n} を削除しますか？`)){ delete files[n]; openTabs = openTabs.filter(t => t !== n); currentFile = Object.keys(files)[0]; switchFile(currentFile); } }
+    function deleteFile(e, n) { e.stopPropagation(); if(confirm(`${n} を削除しますか？`)){ delete files[n]; openTabs = openTabs.filter(t => t !== n); currentFile = Object.keys(files)[0] || 'index.html'; if(!files[currentFile]) files[currentFile] = ""; switchFile(currentFile); } }
     function insertText(t) { editor.executeEdits("", [{ range: editor.getSelection(), text: t, forceMoveMarkers: true }]); editor.focus(); }
     function updateSettings() {
         config.theme = document.getElementById('setting-theme').value;
@@ -201,7 +232,7 @@
         config.tabSize = parseInt(document.getElementById('setting-tabsize').value);
         monaco.editor.setTheme(config.theme); editor.updateOptions({ fontSize: config.fontSize, tabSize: config.tabSize });
         document.body.className = config.theme === 'vs' ? 'light' : 'dark';
-        localStorage.setItem('vsc-web-config-v13', JSON.stringify(config));
+        localStorage.setItem('vsc-web-config-v14', JSON.stringify(config));
     }
     function initUI() {
         document.getElementById('setting-theme').value = config.theme;
@@ -209,12 +240,11 @@
         document.getElementById('setting-tabsize').value = config.tabSize;
         document.body.className = config.theme === 'vs' ? 'light' : 'dark';
     }
-    function exportAllData() { const blob = new Blob([JSON.stringify({files, config})], {type:"application/json"}); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "backup.json"; a.click(); }
+    function exportAllData() { const blob = new Blob([JSON.stringify({files, config})], {type:"application/json"}); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "all_files_backup.json"; a.click(); }
     function importAllData(e) { const reader = new FileReader(); reader.onload = (ev) => { const d = JSON.parse(ev.target.result); files = d.files; config = d.config; saveData(); location.reload(); }; reader.readAsText(e.target.files[0]); }
-    function toggleSettings() { const s = document.getElementById('settings-modal').style; const o = document.getElementById('overlay').style; s.display = s.display === 'block' ? 'none' : 'block'; o.display = o.display === 'block' ? 'none' : 'block'; }
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); }
     function toggleSplitPreview() { document.getElementById('preview-container').classList.toggle('visible'); updatePreview(); }
-    function saveData() { localStorage.setItem('vsc-web-files-v13', JSON.stringify(files)); }
+    function saveData() { localStorage.setItem('vsc-web-files-v14', JSON.stringify(files)); }
     function clearAllData() { if(confirm("消去しますか？")){ localStorage.clear(); location.reload(); } }
 </script>
 </body>
