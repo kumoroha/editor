@@ -8,7 +8,7 @@
     <style>
         :root { 
             --sidebar-width: 220px; 
-            --header-height: 55px; /* 少し大きく調整 */
+            --header-height: 55px;
             --vscode-blue: #007acc;
             --bg: #1e1e1e; --side-bg: #252526; --head-bg: #323233; --text: #ccc;
         }
@@ -24,11 +24,22 @@
         button:hover { background: #555; }
         button.active { background: var(--vscode-blue); color: white; }
 
+        /* 太い3本線ボタン */
+        .menu-icon { font-size: 24px; font-weight: 900; background: transparent; padding: 0 5px; color: #fff; }
+
         #main { display: flex; height: calc(100% - var(--header-height)); width: 100%; }
         
+        /* サイドバー */
         #sidebar { width: var(--sidebar-width); background: var(--side-bg); display: flex; flex-direction: column; border-right: 1px solid #333; transition: 0.2s; }
         #sidebar.hidden { width: 0; overflow: hidden; border: none; }
-        .sidebar-title-row { padding: 15px; font-size: 12px; font-weight: bold; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; color: #888; }
+        
+        /* エクスプローラー列の間隔を詰め、高さを最適化 */
+        .sidebar-title-row { 
+            padding: 5px 10px 5px 15px; /* 上下の余白を最小化 */
+            font-size: 11px; font-weight: bold; text-transform: uppercase; 
+            display: flex; justify-content: space-between; align-items: center; 
+            color: #888; border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
         
         .file-item { padding: 8px 15px; cursor: pointer; font-size: 14px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid transparent; }
         .file-item:hover { background: rgba(255,255,255,0.05); }
@@ -59,7 +70,7 @@
 
 <header>
     <div class="header-left">
-        <button onclick="toggleSidebar()" style="background:transparent; font-size:20px;">☰</button>
+        <button class="menu-icon" onclick="toggleSidebar()">≡</button>
         <span>Visual Studio Code Web+</span>
     </div>
     <div class="header-right">
@@ -74,7 +85,7 @@
     <div id="sidebar">
         <div class="sidebar-title-row">
             <span>エクスプローラー</span>
-            <button onclick="addNewFile()" style="background:transparent; color:#007acc; font-size:20px;">＋</button>
+            <button onclick="addNewFile()" style="background:transparent; color:#007acc; font-size:24px; font-weight:bold; padding:0;">+</button>
         </div>
         <div id="file-list"></div>
     </div>
@@ -107,10 +118,9 @@
     let editor;
     let currentFile = 'index.html';
     
-    // 保存されたデータと設定
     let files = JSON.parse(localStorage.getItem('vsc-web-files-v3')) || {
-        'index.html': '<h1>Visual Studio Code Web+</h1>\n<link rel="stylesheet" href="style.css">',
-        'style.css': 'h1 { color: #007acc; text-align: center; margin-top: 50px; }'
+        'index.html': '<h1>Visual Studio Code Web+</h1>',
+        'style.css': 'h1 { color: #007acc; }'
     };
     let config = JSON.parse(localStorage.getItem('vsc-web-config')) || {
         theme: 'vs-dark',
@@ -143,7 +153,11 @@
 
     function getLanguage(f) {
         const ext = f.split('.').pop().toLowerCase();
-        const map = { html:'html', css:'css', js:'javascript', json:'json', md:'markdown' };
+        const map = { 
+            html:'html', css:'css', js:'javascript', 
+            ts:'typescript', cpp:'cpp', c:'c', h:'c',
+            cs:'csharp', json:'json', md:'markdown' 
+        };
         return map[ext] || 'plaintext';
     }
 
@@ -161,13 +175,14 @@
 
     function switchFile(name) {
         currentFile = name;
-        monaco.editor.setModelLanguage(editor.getModel(), getLanguage(name));
+        const lang = getLanguage(name);
+        monaco.editor.setModelLanguage(editor.getModel(), lang);
         editor.setValue(files[name]);
         renderFileList();
     }
 
     function addNewFile() {
-        const name = prompt("ファイル名を入力");
+        const name = prompt("ファイル名を入力 (.ts, .cpp, .cs, .c も対応)");
         if (name && !files[name]) {
             files[name] = ""; saveData(); switchFile(name);
         }
@@ -183,7 +198,6 @@
         }
     }
 
-    // 設定関連
     function toggleSettings() {
         const m = document.getElementById('settings-modal');
         const o = document.getElementById('overlay');
@@ -195,7 +209,6 @@
     function updateSettings() {
         config.theme = document.getElementById('setting-theme').value;
         config.fontSize = parseInt(document.getElementById('setting-fontsize').value);
-        
         monaco.editor.setTheme(config.theme);
         editor.updateOptions({ fontSize: config.fontSize });
         applyTheme(config.theme);
@@ -207,7 +220,7 @@
     }
 
     function clearAllData() {
-        if (confirm("すべてのファイルと設定を削除して初期化しますか？")) {
+        if (confirm("すべてのデータと設定を削除しますか？")) {
             localStorage.clear();
             location.reload();
         }
@@ -215,15 +228,13 @@
 
     function openDownloadMenu() {
         const names = Object.keys(files);
-        const choice = prompt(`ダウンロードするファイル名を入力してください:\n\n${names.join(', ')}`, currentFile);
+        const choice = prompt(`ダウンロードするファイル名を入力:\n\n${names.join(', ')}`, currentFile);
         if (choice && files[choice] !== undefined) {
             const blob = new Blob([files[choice]], {type: "text/plain"});
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
             a.download = choice;
             a.click();
-        } else if (choice) {
-            alert("ファイルが見つかりません");
         }
     }
 
