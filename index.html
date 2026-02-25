@@ -6,59 +6,65 @@
     <title>Visual Studio Code Web+</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/editor/editor.main.min.css">
     <style>
-        :root { --sidebar-width: 200px; --header-height: 40px; }
-        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #1e1e1e; color: #cccccc; font-family: 'Segoe UI', sans-serif; }
+        :root { --sidebar-width: 200px; --header-height: 45px; --vscode-bg: #1e1e1e; --sidebar-bg: #252526; --header-bg: #323233; }
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--vscode-bg); color: #cccccc; font-family: 'Segoe UI', sans-serif; }
         
         /* ヘッダー */
-        header { height: var(--header-height); background: #323233; display: flex; align-items: center; padding: 0 15px; justify-content: space-between; font-size: 13px; }
-        .btn-group { display: flex; gap: 5px; }
-        button { background: #3c3c3c; color: white; border: none; padding: 4px 10px; border-radius: 2px; cursor: pointer; font-size: 11px; }
+        header { height: var(--header-height); background: var(--header-bg); display: flex; align-items: center; padding: 0 10px; justify-content: space-between; border-bottom: 1px solid #2b2b2b; }
+        .header-left, .header-right { display: flex; align-items: center; gap: 8px; }
+        button { background: #3c3c3c; color: white; border: none; padding: 6px 12px; border-radius: 3px; cursor: pointer; font-size: 12px; transition: 0.2s; }
         button:hover { background: #505050; }
+        button.active { background: #007acc; }
 
-        /* メイン */
-        #main { display: flex; height: calc(100% - var(--header-height)); }
+        /* メインレイアウト */
+        #main { display: flex; height: calc(100% - var(--header-height)); width: 100%; }
         
         /* サイドバー */
-        #sidebar { width: var(--sidebar-width); background: #252526; display: flex; flex-direction: column; border-right: 1px solid #333; }
-        .sidebar-title { padding: 10px; font-size: 11px; font-weight: bold; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+        #sidebar { width: var(--sidebar-width); background: var(--sidebar-bg); display: flex; flex-direction: column; border-right: 1px solid #333; transition: 0.3s; }
+        #sidebar.hidden { width: 0; overflow: hidden; border: none; }
+        .sidebar-title { padding: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; white-space: nowrap; }
+        
         #file-list { flex: 1; overflow-y: auto; }
-        .file-item { padding: 5px 15px; cursor: pointer; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+        .file-item { padding: 8px 15px; cursor: pointer; font-size: 13px; display: flex; justify-content: space-between; align-items: center; white-space: nowrap; }
         .file-item:hover { background: #2a2d2e; }
-        .file-item.active { background: #37373d; color: white; }
-        .delete-btn { color: #888; font-size: 10px; padding: 2px 5px; }
-        .delete-btn:hover { color: #ff4444; }
+        .file-item.active { background: #37373d; color: white; border-left: 2px solid #007acc; }
 
         /* エディタとプレビュー */
         #editor-container { flex: 1; height: 100%; min-width: 0; }
-        #preview-container { width: 35%; height: 100%; background: white; border-left: 1px solid #333; }
+        
+        #preview-container { width: 0; height: 100%; background: white; border-left: 1px solid #333; transition: 0.3s; overflow: hidden; }
+        #preview-container.visible { width: 50%; }
         iframe { width: 100%; height: 100%; border: none; }
 
         @media (max-width: 768px) {
+            #preview-container.visible { width: 100%; height: 40%; border-left: none; border-top: 1px solid #333; }
             #main { flex-direction: column; }
-            #sidebar { width: 100%; height: 150px; }
-            #preview-container { width: 100%; height: 30%; }
         }
     </style>
 </head>
 <body>
 
 <header>
-    <div>Visual Studio Code Web+</div>
-    <div class="btn-group">
-        <button onclick="fullPreview()">全画面プレビュー</button>
-        <button onclick="downloadCurrent()">DL</button>
+    <div class="header-left">
+        <button onclick="toggleSidebar()" title="サイドバー切替">☰</button>
+        <strong>Visual Studio Code Web+</strong>
+    </div>
+    <div class="header-right">
+        <button id="btn-split" onclick="toggleSplitPreview()">分割プレビュー</button>
+        <button onclick="fullPreview()">全画面</button>
+        <button onclick="addNewFile()">＋新ファイル</button>
+        <button onclick="downloadCurrent()" style="background: #2d7d46;">DL</button>
     </div>
 </header>
 
 <div id="main">
     <div id="sidebar">
-        <div class="sidebar-title">
-            エクスプローラー
-            <button onclick="addNewFile()" style="padding: 0 5px;">＋</button>
-        </div>
+        <div class="sidebar-title">エクスプローラー</div>
         <div id="file-list"></div>
     </div>
+
     <div id="editor-container"></div>
+
     <div id="preview-container">
         <iframe id="preview"></iframe>
     </div>
@@ -70,10 +76,10 @@
 
     let editor;
     let currentFile = 'index.html';
-    let files = JSON.parse(localStorage.getItem('vsc-web-files')) || {
-        'index.html': '<h1>Hello</h1>\n<link rel="stylesheet" href="style.css">',
-        'style.css': 'h1 { color: blue; }',
-        'memo.txt': 'これはただのテキストファイルです。'
+    let files = JSON.parse(localStorage.getItem('vsc-web-files-v2')) || {
+        'index.html': '\n<h1>Hello!</h1>\n<p>右上のボタンでプレビューしてね</p>\n<link rel="stylesheet" href="style.css">',
+        'style.css': 'h1 { color: #ff69b4; }',
+        'memo.txt': 'iPadでのコーディングも快適に。'
     };
 
     require(['vs/editor/editor.main'], function() {
@@ -82,7 +88,8 @@
             language: getLanguage(currentFile),
             theme: 'vs-dark',
             automaticLayout: true,
-            fontSize: 16
+            fontSize: 16,
+            wordWrap: "on"
         });
 
         editor.onDidChangeModelContent(() => {
@@ -107,7 +114,7 @@
         Object.keys(files).forEach(name => {
             const div = document.createElement('div');
             div.className = `file-item ${name === currentFile ? 'active' : ''}`;
-            div.innerHTML = `<span>${name}</span><span class="delete-btn" onclick="deleteFile(event, '${name}')">×</span>`;
+            div.innerHTML = `<span>${name}</span><span style="opacity:0.5" onclick="deleteFile(event, '${name}')">×</span>`;
             div.onclick = () => switchFile(name);
             list.appendChild(div);
         });
@@ -121,7 +128,7 @@
     }
 
     function addNewFile() {
-        const name = prompt("ファイル名を入力（例: test.js, notes.txt）");
+        const name = prompt("ファイル名を入力");
         if (name && !files[name]) {
             files[name] = "";
             saveFiles();
@@ -131,8 +138,8 @@
 
     function deleteFile(e, name) {
         e.stopPropagation();
-        if (Object.keys(files).length <= 1) return alert("最後のファイルは削除できません");
-        if (confirm(`${name} を削除しますか？`)) {
+        if (Object.keys(files).length <= 1) return;
+        if (confirm(`${name} を削除？`)) {
             delete files[name];
             if (currentFile === name) currentFile = Object.keys(files)[0];
             saveFiles();
@@ -140,15 +147,26 @@
         }
     }
 
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('hidden');
+    }
+
+    function toggleSplitPreview() {
+        const pc = document.getElementById('preview-container');
+        const btn = document.getElementById('btn-split');
+        pc.classList.toggle('visible');
+        btn.classList.toggle('active');
+    }
+
     function saveFiles() {
-        localStorage.setItem('vsc-web-files', JSON.stringify(files));
+        localStorage.setItem('vsc-web-files-v2', JSON.stringify(files));
     }
 
     function updatePreview() {
         const preview = document.getElementById('preview');
-        // HTMLファイルを表示。CSS/JSは簡易的に結合
         let html = files['index.html'] || "";
         if (files['style.css']) html += `<style>${files['style.css']}</style>`;
+        if (files['script.js']) html += `<script>${files['script.js']}<\/script>`;
         preview.srcdoc = html;
     }
 
