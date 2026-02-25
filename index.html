@@ -3,12 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Visual Studio Code Web+</title>
+    
+    <link rel="manifest" href="data:application/manifest+json,{'name':'VSCodeWeb','short_name':'VSCodeWeb','start_url':'.','display':'standalone'}">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/editor/editor.main.min.css">
     <style>
         :root { 
             --sidebar-width: 220px; --header-height: 55px; --toolbar-height: 40px;
-            --vscode-blue: #007acc; --bg: #1e1e1e; --side-bg: #252526; --head-bg: #323233; --text: #ccc;
+            --vscode-blue: #007acc; --bg: #1e1e1e; --side-bg: #252526; --head-bg: #323233; --text: #eee;
         }
         body.light { --bg: #ffffff; --side-bg: #f3f3f3; --head-bg: #2c2c2c; --text: #333; }
 
@@ -32,17 +37,15 @@
         .add-btn { background:transparent; color:#007acc; font-size: 22px; font-weight: 300; padding: 0; }
 
         #file-list { flex: 1; overflow-y: auto; }
-        .file-item { padding: 8px 15px; cursor: pointer; font-size: 14px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid transparent; }
-        .file-item.active { background: rgba(0, 122, 204, 0.2); color: #4fc1ff; border-left-color: var(--vscode-blue); }
+        .file-item { padding: 8px 15px; cursor: pointer; font-size: 14px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid transparent; color: #eee; } /* 文字色を見やすく */
+        .file-item:hover { background: rgba(255,255,255,0.05); }
+        .file-item.active { background: rgba(0, 122, 204, 0.2); color: #4fc1ff; border-left-color: var(--vscode-blue); font-weight: bold; }
 
         #editor-wrapper { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-        
-        /* 記号補助バー：スクロール可能に */
         #toolbar { height: var(--toolbar-height); background: var(--side-bg); display: flex; align-items: center; padding: 0 10px; gap: 5px; border-bottom: 1px solid #333; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .tool-btn { background: #3c3c3c; padding: 5px 8px; font-family: monospace; font-size: 14px; min-width: 32px; text-align: center; border-radius: 3px; }
+        .tool-btn { background: #3c3c3c; padding: 5px 8px; font-family: monospace; font-size: 14px; min-width: 32px; border-radius: 3px; }
 
         #editor-container { flex: 1; width: 100%; }
-        
         #preview-container { width: 0; height: 100%; background: white; transition: 0.3s; overflow: hidden; }
         #preview-container.visible { width: 50%; border-left: 1px solid #333; }
         iframe { width: 100%; height: 100%; border: none; }
@@ -50,11 +53,10 @@
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 999; }
         #settings-modal { 
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: #252526; color: white; padding: 25px; border-radius: 8px; border: 1px solid #444; z-index: 1000; width: 320px; max-height: 80vh; overflow-y: auto;
+            background: #252526; color: white; padding: 25px; border-radius: 8px; border: 1px solid #444; z-index: 1000; width: 320px;
         }
         .setting-item { margin-bottom: 15px; }
-        .setting-item label { display: block; margin-bottom: 5px; font-size: 12px; color: #aaa; }
-        select, input { width: 100%; padding: 8px; background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; }
+        select, input { width: 100%; padding: 8px; background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 4px; }
 
         @media (max-width: 768px) {
             #preview-container.visible { width: 100%; height: 40%; border-left: none; border-top: 1px solid #333; }
@@ -72,7 +74,7 @@
     <div class="header-right">
         <button id="btn-split" onclick="toggleSplitPreview()">分割プレビュー</button>
         <button onclick="fullPreview()">全画面プレビュー</button>
-        <button onclick="openDownloadMenu()" style="background: #2d7d46;">DL</button>
+        <button onclick="openDownloadMenu()" style="background: #2d7d46;">ダウンロード</button>
         <button onclick="toggleSettings()" style="background: #666;">⚙ 設定</button>
     </div>
 </header>
@@ -89,230 +91,100 @@
     <div id="editor-wrapper">
         <div id="toolbar">
             <button class="tool-btn" onclick="insertText('\t')">Tab</button>
-            <button class="tool-btn" onclick="insertText('{')">{</button>
-            <button class="tool-btn" onclick="insertText('}')">}</button>
-            <button class="tool-btn" onclick="insertText('[')">[</button>
-            <button class="tool-btn" onclick="insertText(']')">]</button>
-            <button class="tool-btn" onclick="insertText('(')">(</button>
-            <button class="tool-btn" onclick="insertText(')')">)</button>
-            <button class="tool-btn" onclick="insertText('<')">&lt;</button>
-            <button class="tool-btn" onclick="insertText('>')">&gt;</button>
-            <button class="tool-btn" onclick="insertText(':')">:</button>
-            <button class="tool-btn" onclick="insertText('=')">=</button>
-            <button class="tool-btn" onclick="insertText('!')">!</button>
-            <button class="tool-btn" onclick="insertText('\"')">"</button>
-            <button class="tool-btn" onclick="insertText('/')">/</button>
-            <button class="tool-btn" onclick="insertText(';')">;</button>
+            <button class="tool-btn" onclick="insertText('{')">{</button><button class="tool-btn" onclick="insertText('}')">}</button>
+            <button class="tool-btn" onclick="insertText('[')">[</button><button class="tool-btn" onclick="insertText(']')">]</button>
+            <button class="tool-btn" onclick="insertText('(')">(</button><button class="tool-btn" onclick="insertText(')')">)</button>
+            <button class="tool-btn" onclick="insertText('<')">&lt;</button><button class="tool-btn" onclick="insertText('>')">&gt;</button>
+            <button class="tool-btn" onclick="insertText(':')">:</button><button class="tool-btn" onclick="insertText('=')">=</button>
+            <button class="tool-btn" onclick="insertText('!')">!</button><button class="tool-btn" onclick="insertText('\"')">"</button>
+            <button class="tool-btn" onclick="insertText('/')">/</button><button class="tool-btn" onclick="insertText(';')">;</button>
             <button class="tool-btn" onclick="insertText('\'')">'</button>
             <button class="tool-btn" onclick="updatePreview(true)" id="manual-refresh" style="display:none; background:var(--vscode-blue);">更新</button>
         </div>
         <div id="editor-container"></div>
     </div>
-
     <div id="preview-container"><iframe id="preview"></iframe></div>
 </div>
 
 <div class="modal-overlay" id="overlay" onclick="toggleSettings()"></div>
 <div id="settings-modal">
     <h3>⚙ 設定</h3>
-    <div class="setting-item">
-        <label>テーマ</label>
-        <select id="setting-theme" onchange="updateSettings()">
-            <option value="vs-dark">ダークモード</option>
-            <option value="vs">ライトモード</option>
-        </select>
-    </div>
-    <div class="setting-item">
-        <label>文字サイズ (px)</label>
-        <input type="number" id="setting-fontsize" value="16" onchange="updateSettings()">
-    </div>
-    <div class="setting-item">
-        <label>プレビュー自動更新</label>
-        <select id="setting-auto-refresh" onchange="updateSettings()">
-            <option value="true">ON (入力時に更新)</option>
-            <option value="false">OFF (手動更新)</option>
-        </select>
-    </div>
-    <hr style="border:0; border-top:1px solid #444; margin: 15px 0;">
-    <div class="setting-item">
-        <label>一括バックアップ</label>
-        <button onclick="exportAllData()" style="width:100%; margin-bottom:5px;">全データをエクスポート (JSON)</button>
-        <button onclick="document.getElementById('import-file').click()" style="width:100%;">データをインポート</button>
-        <input type="file" id="import-file" style="display:none" onchange="importAllData(event)">
-    </div>
-    <button onclick="clearAllData()" style="background:#a94442; width:100%; margin-top:10px;">全データをクリア</button>
+    <div class="setting-item"><label>テーマ</label><select id="setting-theme" onchange="updateSettings()"><option value="vs-dark">ダーク</option><option value="vs">ライト</option></select></div>
+    <div class="setting-item"><label>文字サイズ</label><input type="number" id="setting-fontsize" onchange="updateSettings()"></div>
+    <div class="setting-item"><label>プレビュー自動更新</label><select id="setting-auto-refresh" onchange="updateSettings()"><option value="true">ON</option><option value="false">OFF</option></select></div>
+    <hr style="border:0; border-top:1px solid #444;">
+    <button onclick="exportAllData()" style="width:100%; margin-bottom:5px;">一括バックアップ (JSON)</button>
+    <button onclick="document.getElementById('import-file').click()" style="width:100%;">インポート</button>
+    <input type="file" id="import-file" style="display:none" onchange="importAllData(event)">
+    <button onclick="clearAllData()" style="background:#a94442; width:100%; margin-top:10px;">データ消去</button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
 <script>
-    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
+    // サービスワーカー（オフライン動作）の簡易登録
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('data:text/javascript,self.addEventListener("fetch", (e) => e.respondWith(fetch(e.request)))');
+    }
 
-    let editor;
-    let currentFile = 'index.html';
-    
-    // v5にキーを更新（設定保持のため）
-    let files = JSON.parse(localStorage.getItem('vsc-web-files-v5')) || {
-        'index.html': '<h1>Visual Studio Code Web+</h1>',
-        'style.css': 'h1 { color: #007acc; }'
-    };
-    let config = JSON.parse(localStorage.getItem('vsc-web-config-v5')) || {
-        theme: 'vs-dark',
-        fontSize: 16,
-        autoRefresh: true
-    };
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
+    let editor, currentFile = 'index.html';
+    let files = JSON.parse(localStorage.getItem('vsc-web-files-v6')) || { 'index.html': '<h1>Visual Studio Code Web+</h1>' };
+    let config = JSON.parse(localStorage.getItem('vsc-web-config-v6')) || { theme: 'vs-dark', fontSize: 16, autoRefresh: true };
 
     require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('editor-container'), {
-            value: files[currentFile] || "",
-            language: getLanguage(currentFile),
-            theme: config.theme,
-            automaticLayout: true,
-            fontSize: config.fontSize,
-            wordWrap: "on"
+            value: files[currentFile], language: getLanguage(currentFile), theme: config.theme, fontSize: config.fontSize, automaticLayout: true
         });
-
-        editor.onDidChangeModelContent(() => {
-            files[currentFile] = editor.getValue();
-            saveData();
-            if (config.autoRefresh) updatePreview();
-        });
-
-        initUI();
-        renderFileList();
-        updatePreview();
+        editor.onDidChangeModelContent(() => { files[currentFile] = editor.getValue(); saveData(); if(config.autoRefresh) updatePreview(); });
+        initUI(); renderFileList(); updatePreview();
     });
 
     function getLanguage(f) {
         const ext = f.split('.').pop().toLowerCase();
-        const map = { 
-            html:'html', css:'css', js:'javascript', ts:'typescript', 
-            cpp:'cpp', c:'c', cs:'csharp', py:'python', 
-            sql:'sql', xml:'xml', yaml:'yaml', json:'json', md:'markdown' 
-        };
+        const map = { html:'html', css:'css', js:'javascript', ts:'typescript', cpp:'cpp', c:'c', cs:'csharp', py:'python', sql:'sql', xml:'xml', yaml:'yaml', json:'json', md:'markdown' };
         return map[ext] || 'plaintext';
     }
-
-    function insertText(text) {
-        const selection = editor.getSelection();
-        const op = { range: selection, text: text, forceMoveMarkers: true };
-        editor.executeEdits("my-source", [op]);
-        editor.focus();
-    }
-
+    function insertText(t) { editor.executeEdits("", [{ range: editor.getSelection(), text: t, forceMoveMarkers: true }]); editor.focus(); }
     function renderFileList() {
-        const list = document.getElementById('file-list');
-        list.innerHTML = '';
+        const list = document.getElementById('file-list'); list.innerHTML = '';
         Object.keys(files).sort().forEach(name => {
-            const div = document.createElement('div');
-            div.className = `file-item ${name === currentFile ? 'active' : ''}`;
-            div.innerHTML = `<span>${name}</span><span onclick="deleteFile(event, '${name}')">×</span>`;
-            div.onclick = () => switchFile(name);
+            const div = document.createElement('div'); div.className = `file-item ${name===currentFile?'active':''}`;
+            div.innerHTML = `<span>${name}</span><span onclick="deleteFile(event,'${name}')">×</span>`;
+            div.onclick = () => { currentFile = name; editor.setValue(files[name]); monaco.editor.setModelLanguage(editor.getModel(), getLanguage(name)); renderFileList(); };
             list.appendChild(div);
         });
     }
-
-    function switchFile(name) {
-        currentFile = name;
-        monaco.editor.setModelLanguage(editor.getModel(), getLanguage(name));
-        editor.setValue(files[name]);
-        renderFileList();
-    }
-
-    function addNewFile() {
-        const name = prompt("ファイル名を入力\n例: main.py, style.css, script.ts, logic.cpp");
-        if (name && !files[name]) {
-            files[name] = ""; saveData(); switchFile(name);
-        }
-    }
-
-    function deleteFile(e, name) {
-        e.stopPropagation();
-        if (Object.keys(files).length <= 1) return;
-        if (confirm(`${name} を削除？`)) {
-            delete files[name];
-            if (currentFile === name) currentFile = Object.keys(files)[0];
-            saveData(); switchFile(currentFile);
-        }
-    }
-
+    function addNewFile() { const name = prompt("作成するファイル名:"); if(name && !files[name]) { files[name] = ""; saveData(); currentFile = name; renderFileList(); editor.setValue(""); } }
+    function deleteFile(e, n) { e.stopPropagation(); if(confirm(n+"を削除？")){ delete files[n]; currentFile = Object.keys(files)[0]; renderFileList(); editor.setValue(files[currentFile]); saveData(); } }
     function updateSettings() {
         config.theme = document.getElementById('setting-theme').value;
         config.fontSize = parseInt(document.getElementById('setting-fontsize').value);
         config.autoRefresh = document.getElementById('setting-auto-refresh').value === 'true';
-        
-        monaco.editor.setTheme(config.theme);
-        editor.updateOptions({ fontSize: config.fontSize });
-        document.body.className = (config.theme === 'vs') ? 'light' : 'dark';
+        monaco.editor.setTheme(config.theme); editor.updateOptions({ fontSize: config.fontSize });
+        document.body.className = config.theme === 'vs' ? 'light' : 'dark';
         document.getElementById('manual-refresh').style.display = config.autoRefresh ? 'none' : 'block';
-        
-        localStorage.setItem('vsc-web-config-v5', JSON.stringify(config));
+        localStorage.setItem('vsc-web-config-v6', JSON.stringify(config));
     }
-
     function initUI() {
         document.getElementById('setting-theme').value = config.theme;
         document.getElementById('setting-fontsize').value = config.fontSize;
         document.getElementById('setting-auto-refresh').value = config.autoRefresh.toString();
-        document.body.className = (config.theme === 'vs') ? 'light' : 'dark';
-        document.getElementById('manual-refresh').style.display = config.autoRefresh ? 'none' : 'block';
+        document.body.className = config.theme === 'vs' ? 'light' : 'dark';
     }
-
-    function exportAllData() {
-        const data = JSON.stringify({ files, config });
-        const blob = new Blob([data], {type: "application/json"});
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = "vsc-web-backup.json";
-        a.click();
-    }
-
+    function exportAllData() { const blob = new Blob([JSON.stringify({files, config})], {type:"application/json"}); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "backup.json"; a.click(); }
     function importAllData(e) {
-        const file = e.target.files[0];
-        if (!file) return;
         const reader = new FileReader();
-        reader.onload = (ev) => {
-            try {
-                const data = JSON.parse(ev.target.result);
-                if (data.files) {
-                    files = data.files;
-                    config = data.config || config;
-                    saveData();
-                    localStorage.setItem('vsc-web-config-v5', JSON.stringify(config));
-                    location.reload();
-                }
-            } catch (err) { alert("インポートに失敗しました。ファイル形式を確認してください。"); }
-        };
-        reader.readAsText(file);
+        reader.onload = (ev) => { const d = JSON.parse(ev.target.result); files = d.files; config = d.config; saveData(); location.reload(); };
+        reader.readAsText(e.target.files[0]);
     }
-
-    function openDownloadMenu() {
-        const names = Object.keys(files);
-        const choice = prompt(`保存するファイル名:\n\n${names.join(', ')}`, currentFile);
-        if (choice && files[choice] !== undefined) {
-            const blob = new Blob([files[choice]], {type: "text/plain"});
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob); a.download = choice; a.click();
-        }
-    }
-
-    function saveData() { localStorage.setItem('vsc-web-files-v5', JSON.stringify(files)); }
-    function toggleSettings() { 
-        const m = document.getElementById('settings-modal');
-        const o = document.getElementById('overlay');
-        m.style.display = m.style.display === 'block' ? 'none' : 'block';
-        o.style.display = o.style.display === 'block' ? 'none' : 'block';
-    }
+    function openDownloadMenu() { const choice = prompt("DLするファイル名:", currentFile); if(choice && files[choice]){ const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([files[choice]])); a.download = choice; a.click(); } }
+    function saveData() { localStorage.setItem('vsc-web-files-v6', JSON.stringify(files)); }
+    function toggleSettings() { const s = document.getElementById('settings-modal').style; const o = document.getElementById('overlay').style; s.display = s.display === 'block' ? 'none' : 'block'; o.display = o.display === 'block' ? 'none' : 'block'; }
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); }
     function toggleSplitPreview() { document.getElementById('preview-container').classList.toggle('visible'); document.getElementById('btn-split').classList.toggle('active'); }
-    function updatePreview(force = false) {
-        if (!config.autoRefresh && !force) return;
-        const p = document.getElementById('preview');
-        let html = files['index.html'] || "";
-        if (files['style.css']) html += `<style>${files['style.css']}</style>`;
-        if (files['script.js']) html += `<script>${files['script.js']}<\/script>`;
-        p.srcdoc = html;
-    }
+    function updatePreview(force = false) { if(!config.autoRefresh && !force) return; let html = files['index.html'] || ""; if(files['style.css']) html += `<style>${files['style.css']}</style>`; if(files['script.js']) html += `<script>${files['script.js']}<\/script>`; document.getElementById('preview').srcdoc = html; }
     function fullPreview() { const win = window.open(); win.document.write(document.getElementById('preview').srcdoc); }
-    function clearAllData() { if (confirm("全データを削除しますか？")) { localStorage.clear(); location.reload(); } }
+    function clearAllData() { if(confirm("消去しますか？")){ localStorage.clear(); location.reload(); } }
 </script>
 </body>
 </html>
