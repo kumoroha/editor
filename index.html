@@ -42,6 +42,8 @@
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: #252526; color: white; padding: 25px; border-radius: 8px; border: 1px solid #444; z-index: 1000; width: 320px;
         }
+        .close-modal { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; color: #888; }
+        .close-modal:hover { color: #fff; }
         .setting-item { margin-bottom: 15px; }
         .setting-item label { display: block; margin-bottom: 5px; font-size: 12px; color: #aaa; }
         select, input { width: 100%; padding: 8px; background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; }
@@ -88,6 +90,7 @@
 
 <div class="modal-overlay" id="overlay" onclick="toggleSettings()"></div>
 <div id="settings-modal">
+    <span class="close-modal" onclick="toggleSettings()">&times;</span>
     <h3>⚙ 設定</h3>
     <div class="setting-item"><label>テーマ</label><select id="setting-theme" onchange="updateSettings()"><option value="vs-dark">ダーク</option><option value="vs">ライト</option></select></div>
     <div class="setting-item"><label>文字サイズ</label><input type="number" id="setting-fontsize" onchange="updateSettings()"></div>
@@ -98,8 +101,7 @@
     <button onclick="document.getElementById('import-file').click()" style="width:100%;">インポート</button>
     <input type="file" id="import-file" style="display:none" onchange="importAllData(event)">
     <div style="margin-top:20px;">
-        <button onclick="clearAllData()" style="background:#a94442; width:100%; margin-bottom:10px;">データを完全に消去</button>
-        <button onclick="toggleSettings()" style="background:#666; width:100%;">設定を閉じる</button>
+        <button onclick="clearAllData()" style="background:#a94442; width:100%;">データを完全に消去</button>
     </div>
 </div>
 
@@ -108,9 +110,8 @@
     if ('serviceWorker' in navigator) { navigator.serviceWorker.register('data:text/javascript,self.addEventListener("fetch", (e) => e.respondWith(fetch(e.request)))'); }
     require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
     let editor, currentFile = 'index.html';
-    // キーをv8に更新しました
-    let files = JSON.parse(localStorage.getItem('vsc-web-files-v8')) || { 'index.html': '<h1>Visual Studio Code Web+</h1>' };
-    let config = JSON.parse(localStorage.getItem('vsc-web-config-v8')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoRefresh: true };
+    let files = JSON.parse(localStorage.getItem('vsc-web-files-v9')) || { 'index.html': '<h1>Visual Studio Code Web+</h1>' };
+    let config = JSON.parse(localStorage.getItem('vsc-web-config-v9')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoRefresh: true };
 
     require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('editor-container'), {
@@ -123,7 +124,8 @@
     function getLanguage(f) {
         const ext = f.split('.').pop().toLowerCase();
         const map = { html:'html', css:'css', js:'javascript', ts:'typescript', cpp:'cpp', c:'c', cs:'csharp', py:'python', sql:'sql', xml:'xml', yaml:'yaml', json:'json', md:'markdown' };
-        return map[ext] || 'plaintext';
+        if (map[ext]) return map[ext];
+        return 'plaintext';
     }
     function insertText(t) { editor.executeEdits("", [{ range: editor.getSelection(), text: t, forceMoveMarkers: true }]); editor.focus(); }
     function renderFileList() {
@@ -135,7 +137,17 @@
             list.appendChild(div);
         });
     }
-    function addNewFile() { const name = prompt("作成するファイル名:"); if(name && !files[name]) { files[name] = ""; saveData(); currentFile = name; renderFileList(); editor.setValue(""); } }
+    function addNewFile() {
+        const name = prompt("作成するファイル名:");
+        if (!name) return;
+        if (files[name]) { alert("同名のファイルが存在します"); return; }
+        const lang = getLanguage(name);
+        if (lang === 'plaintext') {
+            if (!confirm("対応していない拡張子です。テキストモード（サジェストなし）になりますが良いですか？")) return;
+        }
+        files[name] = ""; saveData(); currentFile = name; renderFileList(); editor.setValue("");
+        monaco.editor.setModelLanguage(editor.getModel(), lang);
+    }
     function deleteFile(e, n) { e.stopPropagation(); if(confirm(n+"を削除？")){ delete files[n]; currentFile = Object.keys(files)[0]; renderFileList(); editor.setValue(files[currentFile]); saveData(); } }
     function updateSettings() {
         config.theme = document.getElementById('setting-theme').value;
@@ -146,7 +158,7 @@
         editor.updateOptions({ fontSize: config.fontSize, tabSize: config.tabSize });
         document.body.className = config.theme === 'vs' ? 'light' : 'dark';
         document.getElementById('manual-refresh').style.display = config.autoRefresh ? 'none' : 'block';
-        localStorage.setItem('vsc-web-config-v8', JSON.stringify(config));
+        localStorage.setItem('vsc-web-config-v9', JSON.stringify(config));
     }
     function initUI() {
         document.getElementById('setting-theme').value = config.theme;
@@ -162,7 +174,7 @@
         reader.readAsText(e.target.files[0]);
     }
     function openDownloadMenu() { const choice = prompt("DLするファイル名:", currentFile); if(choice && files[choice]){ const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([files[choice]])); a.download = choice; a.click(); } }
-    function saveData() { localStorage.setItem('vsc-web-files-v8', JSON.stringify(files)); }
+    function saveData() { localStorage.setItem('vsc-web-files-v9', JSON.stringify(files)); }
     function toggleSettings() { const s = document.getElementById('settings-modal').style; const o = document.getElementById('overlay').style; s.display = s.display === 'block' ? 'none' : 'block'; o.display = o.display === 'block' ? 'none' : 'block'; }
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); }
     function toggleSplitPreview() { document.getElementById('preview-container').classList.toggle('visible'); document.getElementById('btn-split').classList.toggle('active'); }
