@@ -25,21 +25,18 @@
         
         #editor-wrapper { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg); position: relative; }
         #tabs-container { height: var(--tab-height); background: #2d2d2d; display: flex; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid #252526; }
-        .tab { padding: 0 15px; height: 100%; display: flex; align-items: center; background: #2d2d2d; font-size: 12px; cursor: pointer; border-right: 1px solid #252526; white-space: nowrap; color: #999; }
+        .tab { padding: 0 15px; height: 100%; display: flex; align-items: center; background: #2d2d2d; font-size: 12px; cursor: pointer; border-right: 1px solid #252526; white-space: nowrap; color: #999; position: relative; }
         .tab.active { background: var(--bg); color: white; border-top: 1px solid var(--vscode-blue); }
         
         #toolbar { height: var(--toolbar-height); background: var(--side-bg); display: flex; align-items: center; padding: 0 10px; gap: 5px; border-bottom: 1px solid #333; overflow-x: auto; flex-shrink: 0; }
-        .tool-btn { background: #3c3c3c; padding: 5px 8px; font-family: monospace; font-size: 14px; min-width: 32px; border-radius: 3px; color: #eee; border: none; }
-        .spacer { flex: 1; }
+        .tool-btn { background: #3c3c3c; padding: 5px 8px; font-family: monospace; font-size: 14px; min-width: 32px; border-radius: 3px; color: #eee; border: none; flex-shrink: 0; }
+        .spacer { flex: 1; min-width: 10px; }
 
         #editor-container { flex: 1; width: 100%; height: 100%; }
         
-        /* Welcome & Settings Tab View */
         #welcome-screen, #settings-view { position: absolute; top: var(--tab-height); left: 0; width: 100%; height: calc(100% - var(--tab-height)); background: var(--bg); z-index: 5; display: none; overflow-y: auto; box-sizing: border-box; }
         #welcome-screen { align-items: center; justify-content: center; flex-direction: column; }
-        
-        /* 設定画面を左詰め・本家風に */
-        #settings-view { padding: 30px 60px; display: none; flex-direction: column; align-items: flex-start; }
+        #settings-view { padding: 30px 60px; flex-direction: column; align-items: flex-start; }
         #settings-view h3 { font-size: 24px; font-weight: normal; margin-bottom: 25px; color: #ccc; }
         .setting-item { margin-bottom: 25px; width: 100%; max-width: 600px; }
         .setting-item label { display: block; margin-bottom: 10px; font-size: 14px; color: var(--vscode-blue); }
@@ -58,14 +55,16 @@
         .file-actions { display: flex; gap: 12px; opacity: 0.4; padding-right: 5px; }
         .file-item:hover .file-actions { opacity: 1; }
 
+        /* Custom Context Menu for Tabs */
+        #tab-context-menu { position: fixed; display: none; background: #252526; border: 1px solid #454545; box-shadow: 0 2px 10px rgba(0,0,0,0.5); z-index: 2000; min-width: 150px; padding: 5px 0; border-radius: 4px; }
+        .menu-item { padding: 8px 15px; cursor: pointer; font-size: 13px; color: #eee; }
+        .menu-item:hover { background: #007acc; color: white; }
+
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 999; }
         .custom-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #252526; color: white; padding: 25px; border-radius: 8px; border: 1px solid #444; z-index: 1000; width: 340px; box-sizing: border-box; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .close-modal { font-size: 28px; cursor: pointer; color: #888; line-height: 1; }
         
         select, input { width: 100%; padding: 10px; background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; }
         button { cursor: pointer; border-radius: 4px; border: none; padding: 8px 12px; }
-        hr { border: 0; border-top: 1px solid #444; margin: 20px 0; width: 100%; max-width: 600px; }
     </style>
 </head>
 <body class="dark">
@@ -83,20 +82,13 @@
 
 <div id="main">
     <div id="sidebar">
-        <div class="sidebar-title-row">
-            <span>エクスプローラー</span>
-            <div>
-                <button class="add-btn" onclick="addNewFile()" title="新規ファイル">+</button>
-                <button class="add-btn" style="font-size:16px; margin-left:8px;" onclick="document.getElementById('import-single').click()" title="ファイルをアップロード">⇪</button>
-            </div>
-        </div>
+        <div class="sidebar-title-row"><span>エクスプローラー</span><div><button class="add-btn" onclick="addNewFile()">+</button><button class="add-btn" style="font-size:16px; margin-left:8px;" onclick="document.getElementById('import-single').click()">⇪</button></div></div>
         <div id="file-list"></div>
         <input type="file" id="import-single" style="display:none" onchange="importSingleFile(event)">
     </div>
     
     <div id="editor-wrapper">
         <div id="tabs-container"></div>
-        
         <div id="welcome-screen">
             <div class="welcome-content">
                 <h2 style="font-weight:normal;">Visual Studio Code Web+</h2>
@@ -105,26 +97,30 @@
                 <div class="welcome-btn" onclick="openSettingsTab()">⚙ 設定を開く</div>
             </div>
         </div>
-
         <div id="settings-view">
             <h3>Settings</h3>
             <div class="setting-item"><label>Theme</label><select id="setting-theme" onchange="updateSettings()"><option value="vs-dark">Dark</option><option value="vs">Light</option></select></div>
             <div class="setting-item"><label>Font Size</label><input type="number" id="setting-fontsize" onchange="updateSettings()"></div>
             <div class="setting-item"><label>Tab Size</label><select id="setting-tabsize" onchange="updateSettings()"><option value="2">2</option><option value="4">4</option></select></div>
+            <div class="setting-item"><label>Word Wrap (折り返し)</label><select id="setting-wrap" onchange="updateSettings()"><option value="on">On</option><option value="off">Off</option></select></div>
+            <div class="setting-item"><label>Minimap</label><select id="setting-minimap" onchange="updateSettings()"><option value="true">Show</option><option value="false">Hide</option></select></div>
             <div class="setting-item"><label>Auto Save</label><select id="setting-autosave" onchange="updateSettings()"><option value="on">On</option><option value="off">Off</option></select></div>
             <hr>
             <button onclick="document.getElementById('import-file').click()" style="width:100%; max-width:400px; background:#3c3c3c; color:white; padding:12px; margin-bottom:10px;">JSONから復元</button>
             <input type="file" id="import-file" style="display:none" onchange="importAllData(event)">
             <button onclick="clearAllData()" style="background:#a94442; width:100%; max-width:400px; color:white; padding:12px;">全データ消去</button>
         </div>
-
         <div id="toolbar">
             <button class="tool-btn" onclick="insertEmmetHtml()" style="background:#8a2be2">!</button>
             <button class="tool-btn" onclick="insertText('\t')">Tab</button>
             <button class="tool-btn" onclick="insertText('{')">{</button><button class="tool-btn" onclick="insertText('}')">}</button>
             <button class="tool-btn" onclick="insertText('[')">[</button><button class="tool-btn" onclick="insertText(']')">]</button>
             <button class="tool-btn" onclick="insertText('(')">(</button><button class="tool-btn" onclick="insertText(')')">)</button>
+            <button class="tool-btn" onclick="insertText('<')">&lt;</button><button class="tool-btn" onclick="insertText('>')">&gt;</button>
             <button class="tool-btn" onclick="insertText(':')">:</button><button class="tool-btn" onclick="insertText('=')">=</button>
+            <button class="tool-btn" onclick="insertText('!')">!</button><button class="tool-btn" onclick="insertText('\"')">"</button>
+            <button class="tool-btn" onclick="insertText('\'')">'</button><button class="tool-btn" onclick="insertText('/')">/</button>
+            <button class="tool-btn" onclick="insertText(';')">;</button>
             <div class="spacer"></div>
             <button class="tool-btn" onclick="editor.getAction('actions.find').run()" style="background:var(--vscode-blue);">🔍 検索</button>
         </div>
@@ -133,27 +129,32 @@
     <div id="preview-container"><iframe id="preview"></iframe><div id="md-preview" style="display:none"></div></div>
 </div>
 
+<div id="tab-context-menu">
+    <div class="menu-item" onclick="formatDocument()">ドキュメントの整形</div>
+    <div class="menu-item" onclick="closeAllModals()">キャンセル</div>
+</div>
+
 <div class="modal-overlay" id="overlay" onclick="closeAllModals()"></div>
 
 <div id="download-modal" class="custom-modal">
     <div class="modal-header"><h3>📥 ダウンロード</h3><span class="close-modal" onclick="closeAllModals()">&times;</span></div>
     <div id="dl-checklist" style="max-height: 200px; overflow-y: auto; background: #1e1e1e; padding: 10px; border-radius: 4px; border: 1px solid #444; margin-bottom: 12px;"></div>
-    <button onclick="downloadMultiFiles()" style="width:100%; background:var(--vscode-blue); color:white;">選択ファイルをJSONで保存</button>
-    <hr>
-    <button onclick="exportAllData()" style="width:100%; background:#444; color:white;">全バックアップ</button>
+    <button onclick="downloadMultiFiles()" style="width:100%; background:var(--vscode-blue); color:white;">選択ファイルを保存</button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
 <script>
     require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
     let editor, currentFile = 'index.html', openTabs = ['index.html'], isSettingsOpen = false;
-    let files = JSON.parse(localStorage.getItem('vsc-web-files-v22')) || { 'index.html': '<h1>Hello</h1>' };
-    let config = JSON.parse(localStorage.getItem('vsc-web-config-v22')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoSave: 'on' };
+    let files = JSON.parse(localStorage.getItem('vsc-web-files-v23')) || { 'index.html': '<h1>Hello</h1>' };
+    let config = JSON.parse(localStorage.getItem('vsc-web-config-v23')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoSave: 'on', wrap: 'on', minimap: false };
 
     require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('editor-container'), {
-            value: files[currentFile] || "", language: getLanguage(currentFile), theme: config.theme, fontSize: config.fontSize, tabSize: config.tabSize,
-            automaticLayout: true, autoClosingTags: true, autoClosingBrackets: 'always', fixedOverflowWidgets: true, contextmenu: true
+            value: files[currentFile] || "", language: getLanguage(currentFile), theme: config.theme, 
+            fontSize: config.fontSize, tabSize: config.tabSize, wordWrap: config.wrap,
+            minimap: { enabled: config.minimap === 'true' || config.minimap === true },
+            automaticLayout: true, autoClosingTags: true, autoClosingBrackets: 'always', contextmenu: true
         });
         editor.onDidChangeModelContent(() => { 
             if(currentFile && files[currentFile] !== undefined) {
@@ -163,6 +164,8 @@
             }
         });
         initUI(); renderFileList(); renderTabs(); updateViewVisibility();
+        
+        window.addEventListener('click', () => { document.getElementById('tab-context-menu').style.display = 'none'; });
     });
 
     function getLanguage(f) {
@@ -187,6 +190,11 @@
             const tab = document.createElement('div'); tab.className = `tab ${name===currentFile && !isSettingsOpen?'active':''}`;
             tab.innerHTML = `${name} <span style="margin-left:8px;" onclick="closeTab(event,'${name}')">×</span>`;
             tab.onclick = () => switchFile(name);
+            tab.oncontextmenu = (e) => {
+                e.preventDefault();
+                const menu = document.getElementById('tab-context-menu');
+                menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px';
+            };
             container.appendChild(tab);
         });
         if(isSettingsOpen) {
@@ -197,20 +205,14 @@
     }
 
     function updateViewVisibility() {
-        const welcome = document.getElementById('welcome-screen');
-        const settings = document.getElementById('settings-view');
-        const editorCont = document.getElementById('editor-container');
-        const toolbar = document.getElementById('toolbar');
-
+        const welcome = document.getElementById('welcome-screen'), settings = document.getElementById('settings-view');
+        const editorCont = document.getElementById('editor-container'), toolbar = document.getElementById('toolbar');
         welcome.style.display = (openTabs.length === 0 && !isSettingsOpen) ? 'flex' : 'none';
         settings.style.display = isSettingsOpen ? 'flex' : 'none';
-        
         if (isSettingsOpen || openTabs.length === 0) {
-            editorCont.style.display = 'none';
-            toolbar.style.display = 'none';
+            editorCont.style.display = 'none'; toolbar.style.display = 'none';
         } else {
-            editorCont.style.display = 'block';
-            toolbar.style.display = 'flex';
+            editorCont.style.display = 'block'; toolbar.style.display = 'flex';
             if(editor) editor.layout();
             updatePreview();
         }
@@ -218,8 +220,7 @@
     }
 
     function switchFile(name) {
-        isSettingsOpen = false;
-        currentFile = name; if(!openTabs.includes(name)) openTabs.push(name);
+        isSettingsOpen = false; currentFile = name; if(!openTabs.includes(name)) openTabs.push(name);
         editor.setValue(files[name] || "");
         monaco.editor.setModelLanguage(editor.getModel(), getLanguage(name));
         renderFileList(); updateViewVisibility();
@@ -227,51 +228,44 @@
 
     function openSettingsTab() { isSettingsOpen = true; updateViewVisibility(); }
     function closeSettingsTab(e) { if(e) e.stopPropagation(); isSettingsOpen = false; updateViewVisibility(); }
-
-    function closeTab(e, n) { 
-        e.stopPropagation(); 
-        openTabs = openTabs.filter(t => t !== n); 
-        if(currentFile === n) currentFile = openTabs[openTabs.length-1] || null;
-        updateViewVisibility();
-    }
+    function closeTab(e, n) { e.stopPropagation(); openTabs = openTabs.filter(t => t !== n); if(currentFile === n) currentFile = openTabs[openTabs.length-1] || null; updateViewVisibility(); }
 
     function addNewFile() {
         const name = prompt("ファイル名:");
-        if (name && !files[name]) {
-            if (getLanguage(name) === 'plaintext' && !confirm("未対応の拡張子です。続行しますか？")) return;
-            files[name] = ""; switchFile(name);
-        }
+        if (name && !files[name]) { files[name] = ""; switchFile(name); }
     }
 
-    function renameFile(e, oldName) {
-        e.stopPropagation();
-        const newName = prompt("新しい名前:", oldName);
-        if(!newName || newName === oldName) return;
-        const oldExt = oldName.split('.').pop(), newExt = newName.split('.').pop();
-        if(oldExt !== newExt && !confirm("拡張子を変更しますか？")) return;
-        files[newName] = files[oldName]; delete files[oldName];
-        openTabs = openTabs.map(t => t === oldName ? newName : t);
-        if(currentFile === oldName) currentFile = newName;
-        saveToLocalStorage(); renderFileList(); renderTabs();
+    function formatDocument() { if(editor) editor.getAction('editor.action.formatDocument').run(); }
+
+    function updateSettings() {
+        config.theme = document.getElementById('setting-theme').value;
+        config.fontSize = parseInt(document.getElementById('setting-fontsize').value);
+        config.tabSize = parseInt(document.getElementById('setting-tabsize').value);
+        config.wrap = document.getElementById('setting-wrap').value;
+        config.minimap = document.getElementById('setting-minimap').value === 'true';
+        config.autoSave = document.getElementById('setting-autosave').value;
+        monaco.editor.setTheme(config.theme);
+        editor.updateOptions({ fontSize: config.fontSize, tabSize: config.tabSize, wordWrap: config.wrap, minimap: { enabled: config.minimap } });
+        document.body.className = config.theme === 'vs' ? 'light' : 'dark';
+        document.getElementById('manual-save-btn').style.display = (config.autoSave === 'off') ? 'block' : 'none';
+        localStorage.setItem('vsc-web-config-v23', JSON.stringify(config));
     }
 
-    function deleteFile(e, n) { 
-        e.stopPropagation(); 
-        if(confirm(`${n} を削除しますか？`)){ 
-            delete files[n]; openTabs = openTabs.filter(t=>t!==n); 
-            if(currentFile === n) currentFile = openTabs[0] || null;
-            saveToLocalStorage(); renderFileList(); updateViewVisibility();
-        } 
+    function initUI() {
+        document.getElementById('setting-theme').value = config.theme;
+        document.getElementById('setting-fontsize').value = config.fontSize;
+        document.getElementById('setting-tabsize').value = config.tabSize;
+        document.getElementById('setting-wrap').value = config.wrap || 'on';
+        document.getElementById('setting-minimap').value = config.minimap.toString();
+        document.getElementById('setting-autosave').value = config.autoSave;
+        document.body.className = config.theme === 'vs' ? 'light' : 'dark';
+        document.getElementById('manual-save-btn').style.display = (config.autoSave === 'off') ? 'block' : 'none';
     }
 
-    function saveCurrentFileManual() { saveToLocalStorage(); const btn = document.getElementById('manual-save-btn'); btn.innerText = "✅ 保存済"; setTimeout(() => btn.innerText = "💾 保存", 1000); }
-    function saveToLocalStorage() { localStorage.setItem('vsc-web-files-v22', JSON.stringify(files)); }
-    function toggleModal(id) { closeAllModals(); document.getElementById(id).style.display='block'; document.getElementById('overlay').style.display='block'; }
-    function closeAllModals() { document.querySelectorAll('.custom-modal').forEach(m=>m.style.display='none'); document.getElementById('overlay').style.display='none'; }
+    function saveToLocalStorage() { localStorage.setItem('vsc-web-files-v23', JSON.stringify(files)); }
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); setTimeout(() => editor.layout(), 210); }
     function toggleSplitPreview() { document.getElementById('preview-container').classList.toggle('visible'); setTimeout(() => editor.layout(), 310); updatePreview(); }
     function fullPreview() { const w = window.open(); w.document.write(document.getElementById('preview').srcdoc || ""); }
-
     function updatePreview() {
         if(!currentFile) return;
         const isMd = currentFile.endsWith('.md'), ifr = document.getElementById('preview'), md = document.getElementById('md-preview');
@@ -279,46 +273,14 @@
         if(isMd) { ifr.style.display='none'; md.style.display='block'; container.style.background='#fff'; md.innerHTML=marked.parse(files[currentFile]||""); }
         else { md.style.display='none'; ifr.style.display='block'; container.style.background='white'; let h = files['index.html']||""; if(files['style.css']) h+=`<style>${files['style.css']}</style>`; if(files['script.js']) h+=`<script>${files['script.js']}<\/script>`; ifr.srcdoc=h; }
     }
-
-    function updateSettings() {
-        config.theme = document.getElementById('setting-theme').value;
-        config.fontSize = parseInt(document.getElementById('setting-fontsize').value);
-        config.tabSize = parseInt(document.getElementById('setting-tabsize').value);
-        config.autoSave = document.getElementById('setting-autosave').value;
-        monaco.editor.setTheme(config.theme); editor.updateOptions({ fontSize: config.fontSize, tabSize: config.tabSize });
-        document.body.className = config.theme === 'vs' ? 'light' : 'dark';
-        document.getElementById('manual-save-btn').style.display = (config.autoSave === 'off') ? 'block' : 'none';
-        localStorage.setItem('vsc-web-config-v22', JSON.stringify(config));
-    }
-
-    function initUI() {
-        document.getElementById('setting-theme').value = config.theme;
-        document.getElementById('setting-fontsize').value = config.fontSize;
-        document.getElementById('setting-tabsize').value = config.tabSize;
-        document.getElementById('setting-autosave').value = config.autoSave;
-        document.body.className = config.theme === 'vs' ? 'light' : 'dark';
-        document.getElementById('manual-save-btn').style.display = (config.autoSave === 'off') ? 'block' : 'none';
-    }
-
-    function openDownloadModal() {
-        const list = document.getElementById('dl-checklist'); list.innerHTML = '';
-        Object.keys(files).sort().forEach(name => {
-            const item = document.createElement('div'); item.style.display='flex'; item.style.alignItems='center'; item.style.gap='10px'; item.style.padding='5px 0';
-            item.innerHTML = `<input type="checkbox" value="${name}" checked><span>${name}</span>`;
-            list.appendChild(item);
-        });
-        toggleModal('download-modal');
-    }
-
-    function downloadMultiFiles() {
-        const checked = Array.from(document.querySelectorAll('#dl-checklist input:checked')).map(i => i.value);
-        if(checked.length === 0) return;
-        const bundle = {}; checked.forEach(n => bundle[n] = files[n]);
-        const a = document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(bundle, null, 2)])); a.download="backup.json"; a.click();
-    }
-    
+    function renameFile(e, oldName) { e.stopPropagation(); const n = prompt("新しい名前:", oldName); if(n && !files[n]) { files[n]=files[oldName]; delete files[oldName]; openTabs=openTabs.map(t=>t===oldName?n:t); if(currentFile===oldName) currentFile=n; saveToLocalStorage(); renderFileList(); renderTabs(); } }
+    function deleteFile(e, n) { e.stopPropagation(); if(confirm("削除しますか？")){ delete files[n]; openTabs=openTabs.filter(t=>t!==n); if(currentFile===n) currentFile=openTabs[0]||null; saveToLocalStorage(); renderFileList(); updateViewVisibility(); } }
+    function openDownloadModal() { const list = document.getElementById('dl-checklist'); list.innerHTML = ''; Object.keys(files).sort().forEach(name => { const item = document.createElement('div'); item.style.display='flex'; item.style.alignItems='center'; item.style.gap='10px'; item.style.padding='5px 0'; item.innerHTML = `<input type="checkbox" value="${name}" checked><span>${name}</span>`; list.appendChild(item); }); toggleModal('download-modal'); }
+    function toggleModal(id) { document.getElementById(id).style.display='block'; document.getElementById('overlay').style.display='block'; }
+    function closeAllModals() { document.querySelectorAll('.custom-modal').forEach(m=>m.style.display='none'); document.getElementById('overlay').style.display='none'; document.getElementById('tab-context-menu').style.display='none'; }
+    function downloadMultiFiles() { const checked = Array.from(document.querySelectorAll('#dl-checklist input:checked')).map(i => i.value); const bundle = {}; checked.forEach(n => bundle[n] = files[n]); const a = document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(bundle, null, 2)])); a.download="backup.json"; a.click(); }
     function insertText(t) { editor.executeEdits("", [{ range: editor.getSelection(), text: t, forceMoveMarkers: true }]); editor.focus(); }
-    function insertEmmetHtml() { insertText(`<!DOCTYPE html>\n<html>\n<head>\n<meta charset="UTF-8">\n</head>\n<body>\n\n</body>\n</html>`); }
+    function insertEmmetHtml() { insertText(`<!DOCTYPE html>\n<html>\n<head>\n<meta charset="UTF-8">\n<title>Title</title>\n</head>\n<body>\n\n</body>\n</html>`); }
     function exportAllData() { const b = new Blob([JSON.stringify({files, config})], {type:"application/json"}); const a = document.createElement("a"); a.href=URL.createObjectURL(b); a.download="all_data.json"; a.click(); }
     function importAllData(e) { const r = new FileReader(); r.onload=(ev)=>{const d=JSON.parse(ev.target.result); files=d.files; config=d.config; saveToLocalStorage(); location.reload();}; r.readAsText(e.target.files[0]); }
     function importSingleFile(e) { const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload=(ev)=>{files[f.name]=ev.target.result; switchFile(f.name);}; r.readAsText(f); }
