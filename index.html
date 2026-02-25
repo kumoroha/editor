@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Magical Code Studio</title>
+    <link rel="stylesheet" data-name="vs/editor/editor.main" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/editor/editor.main.min.css">
+    <style>
+        :root { --header-height: 50px; }
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #1e1e1e; font-family: sans-serif; }
+        
+        header { 
+            height: var(--header-height); 
+            background: #333; color: white; 
+            display: flex; align-items: center; padding: 0 20px;
+            justify-content: space-between;
+        }
+
+        #container { display: flex; height: calc(100% - var(--header-height)); width: 100vw; }
+        #editor { width: 50%; height: 100%; }
+        #preview-container { width: 50%; height: 100%; background: #fff; border-left: 2px solid #444; }
+        #preview { width: 100%; height: 100%; border: none; }
+
+        /* iPad向けの調整: 画面が狭いときは上下分割 */
+        @media (max-width: 768px) {
+            #container { flex-direction: column; }
+            #editor, #preview-container { width: 100%; height: 50%; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div><strong>Magical Editor</strong> <small>(Auto-save enabled)</small></div>
+    <button onclick="clearStorage()" style="background:#cc0000; color:white; border:none; padding:5px 10px; border-radius:4px;">Reset</button>
+</header>
+
+<div id="container">
+    <div id="editor"></div>
+    <div id="preview-container">
+        <iframe id="preview"></iframe>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+<script>
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
+
+    window.editor = null;
+
+    require(['vs/editor/editor.main'], function() {
+        // LocalStorageから初期値を取得 (なければデフォルト)
+        const savedCode = localStorage.getItem('my-code') || `<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { background: #fdfdfd; text-align: center; padding-top: 50px; }
+        h1 { color: #8a2be2; font-family: sans-serif; }
+    </style>
+</head>
+<body>
+    <h1>Ready to Magic?</h1>
+    <p>iPadでもサジェストが効くよ！</p>
+</body>
+</html>`;
+
+        // エディタの初期化
+        window.editor = monaco.editor.create(document.getElementById('editor'), {
+            value: savedCode,
+            language: 'html',
+            theme: 'vs-dark',
+            automaticLayout: true, // 親要素のサイズ変更に自動追従
+            fontSize: 16,
+            tabSize: 2,
+            minimap: { enabled: false }, // iPadの画面を広く使うため
+            wordWrap: "on"
+        });
+
+        const preview = document.getElementById('preview');
+
+        // 更新処理
+        function update() {
+            const code = window.editor.getValue();
+            preview.srcdoc = code;
+            // LocalStorageへ保存
+            localStorage.setItem('my-code', code);
+        }
+
+        // 入力毎に実行（少し遅延させて負荷を軽減）
+        let timer;
+        window.editor.onDidChangeModelContent(() => {
+            clearTimeout(timer);
+            timer = setTimeout(update, 500);
+        });
+
+        update();
+    });
+
+    function clearStorage() {
+        if(confirm("コードをリセットしますか？")) {
+            localStorage.removeItem('my-code');
+            location.reload();
+        }
+    }
+</script>
+</body>
+</html>
