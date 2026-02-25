@@ -29,6 +29,7 @@
         .add-btn { background:transparent; color:#007acc; font-size: 22px; font-weight: 300; padding: 0; }
         #file-list { flex: 1; overflow-y: auto; }
         .file-item { padding: 8px 15px; cursor: pointer; font-size: 14px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid transparent; color: #eee; }
+        .file-item:hover { background: rgba(255,255,255,0.05); }
         .file-item.active { background: rgba(0, 122, 204, 0.2); color: #4fc1ff; border-left-color: var(--vscode-blue); font-weight: bold; }
         #editor-wrapper { flex: 1; display: flex; flex-direction: column; min-width: 0; }
         #toolbar { height: var(--toolbar-height); background: var(--side-bg); display: flex; align-items: center; padding: 0 10px; gap: 5px; border-bottom: 1px solid #333; overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -115,16 +116,16 @@
     if ('serviceWorker' in navigator) { navigator.serviceWorker.register('data:text/javascript,self.addEventListener("fetch", (e) => e.respondWith(fetch(e.request)))'); }
     require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
     let editor, currentFile = 'index.html';
-    let files = JSON.parse(localStorage.getItem('vsc-web-files-v11')) || { 'index.html': '<h1>Visual Studio Code Web+</h1>' };
-    let config = JSON.parse(localStorage.getItem('vsc-web-config-v11')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoRefresh: true };
+    let files = JSON.parse(localStorage.getItem('vsc-web-files-v12')) || { 'index.html': '<h1>Visual Studio Code Web+</h1>' };
+    let config = JSON.parse(localStorage.getItem('vsc-web-config-v12')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoRefresh: true };
 
     require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('editor-container'), {
             value: files[currentFile], language: getLanguage(currentFile), theme: config.theme, fontSize: config.fontSize, tabSize: config.tabSize, automaticLayout: true,
             minimap: { enabled: false }, fixedOverflowWidgets: true,
-            autoClosingTags: true, // HTML自動閉じタグ有効化
-            autoClosingBrackets: 'always',
-            autoClosingQuotes: 'always'
+            autoClosingTags: true, autoClosingBrackets: 'always', autoClosingQuotes: 'always',
+            formatOnType: true, formatOnPaste: true, // 入力時の自動整形
+            suggestSelection: 'first', // サジェストの選択をスムーズに
         });
         editor.onDidChangeModelContent(() => { files[currentFile] = editor.getValue(); saveData(); if(config.autoRefresh) updatePreview(); });
         initUI(); renderFileList(); updatePreview();
@@ -141,7 +142,7 @@
         Object.keys(files).sort().forEach(name => {
             const div = document.createElement('div'); div.className = `file-item ${name===currentFile?'active':''}`;
             div.innerHTML = `<span>${name}</span><span onclick="deleteFile(event,'${name}')">×</span>`;
-            div.onclick = () => { currentFile = name; editor.setValue(files[name]); monaco.editor.setModelLanguage(editor.getModel(), getLanguage(name)); renderFileList(); };
+            div.onclick = () => { if(name === currentFile) return; currentFile = name; editor.setValue(files[name]); monaco.editor.setModelLanguage(editor.getModel(), getLanguage(name)); renderFileList(); };
             list.appendChild(div);
         });
     }
@@ -150,11 +151,11 @@
         if (!name) return;
         if (files[name]) { alert("同名のファイルが存在します"); return; }
         const lang = getLanguage(name);
-        if (lang === 'plaintext' && !confirm("対応していない拡張子です。テキストモード（サジェストなし）になりますが良いですか？")) return;
+        if (lang === 'plaintext' && !confirm("対応していない拡張子です。テキストモードになりますが良いですか？")) return;
         files[name] = ""; saveData(); currentFile = name; renderFileList(); editor.setValue("");
         monaco.editor.setModelLanguage(editor.getModel(), lang);
     }
-    function deleteFile(e, n) { e.stopPropagation(); if(confirm(`${n} を削除してもよろしいですか？`)){ delete files[n]; currentFile = Object.keys(files)[0]; renderFileList(); editor.setValue(files[currentFile]); saveData(); } }
+    function deleteFile(e, n) { e.stopPropagation(); if(confirm(`${n} を削除してもよろしいですか？`)){ delete files[n]; if(currentFile === n) { currentFile = Object.keys(files)[0] || 'index.html'; if(!files[currentFile]) files[currentFile] = ""; editor.setValue(files[currentFile]); } renderFileList(); saveData(); } }
     function updateSettings() {
         config.theme = document.getElementById('setting-theme').value;
         config.fontSize = parseInt(document.getElementById('setting-fontsize').value);
@@ -164,7 +165,7 @@
         editor.updateOptions({ fontSize: config.fontSize, tabSize: config.tabSize });
         document.body.className = config.theme === 'vs' ? 'light' : 'dark';
         document.getElementById('manual-refresh').style.display = config.autoRefresh ? 'none' : 'block';
-        localStorage.setItem('vsc-web-config-v11', JSON.stringify(config));
+        localStorage.setItem('vsc-web-config-v12', JSON.stringify(config));
     }
     function initUI() {
         document.getElementById('setting-theme').value = config.theme;
@@ -180,7 +181,7 @@
         reader.readAsText(e.target.files[0]);
     }
     function openDownloadMenu() { const choice = prompt("DLするファイル名:", currentFile); if(choice && files[choice]){ const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([files[choice]])); a.download = choice; a.click(); } }
-    function saveData() { localStorage.setItem('vsc-web-files-v11', JSON.stringify(files)); }
+    function saveData() { localStorage.setItem('vsc-web-files-v12', JSON.stringify(files)); }
     function toggleSettings() { const s = document.getElementById('settings-modal').style; const o = document.getElementById('overlay').style; s.display = s.display === 'block' ? 'none' : 'block'; o.display = o.display === 'block' ? 'none' : 'block'; }
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); }
     function toggleSplitPreview() { document.getElementById('preview-container').classList.toggle('visible'); document.getElementById('btn-split').classList.toggle('active'); }
