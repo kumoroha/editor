@@ -32,28 +32,29 @@
         .tool-btn { background: #3c3c3c; padding: 5px 8px; font-family: monospace; font-size: 14px; min-width: 32px; border-radius: 3px; color: #eee; border: none; }
         .spacer { flex: 1; }
 
-        #editor-container { flex: 1; width: 100%; height: 100%; overflow: hidden; }
+        #editor-container { flex: 1; width: 100%; height: 100%; }
         
         /* Welcome & Settings Tab View */
-        #welcome-screen, #settings-view { position: absolute; top: var(--tab-height); left: 0; width: 100%; height: calc(100% - var(--tab-height)); background: var(--bg); z-index: 5; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 40px; box-sizing: border-box; overflow-y: auto; }
+        #welcome-screen, #settings-view { position: absolute; top: var(--tab-height); left: 0; width: 100%; height: calc(100% - var(--tab-height)); background: var(--bg); z-index: 5; display: none; overflow-y: auto; box-sizing: border-box; }
+        #welcome-screen { align-items: center; justify-content: center; flex-direction: column; }
+        
+        /* 設定画面を左詰め・本家風に */
+        #settings-view { padding: 30px 60px; display: none; flex-direction: column; align-items: flex-start; }
+        #settings-view h3 { font-size: 24px; font-weight: normal; margin-bottom: 25px; color: #ccc; }
+        .setting-item { margin-bottom: 25px; width: 100%; max-width: 600px; }
+        .setting-item label { display: block; margin-bottom: 10px; font-size: 14px; color: var(--vscode-blue); }
+
         .welcome-content { text-align: center; max-width: 500px; }
-        .welcome-content h2 { color: var(--vscode-blue); margin-bottom: 30px; }
-        .welcome-btn { display: block; width: 100%; padding: 15px; margin: 10px 0; background: #333; color: white; border-radius: 6px; text-decoration: none; cursor: pointer; border: 1px solid #444; text-align: left; font-size: 15px; }
-        .welcome-btn:hover { background: #444; border-color: var(--vscode-blue); }
+        .welcome-btn { display: block; width: 100%; padding: 15px; margin: 10px 0; background: #333; color: white; border-radius: 6px; cursor: pointer; border: 1px solid #444; text-align: left; }
 
         #preview-container { width: 0; height: 100%; background: white; transition: width 0.3s; overflow: hidden; flex-shrink: 0; display: none; }
         #preview-container.visible { width: 50%; border-left: 1px solid #333; display: block; }
-        #preview-container.md-mode { background: #fff; padding: 20px; box-sizing: border-box; overflow-y: auto; color: #333; }
-        iframe { width: 100%; height: 100%; border: none; }
-
+        
         .sidebar-title-row { padding: 5px 10px 5px 15px; font-size: 11px; font-weight: bold; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; color: #888; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .add-btn { background:transparent; color:#007acc; font-size: 22px; cursor: pointer; border: none; }
-        #file-list { flex: 1; overflow-y: auto; }
-        .file-item { padding: 8px 10px; cursor: pointer; font-size: 13px; display: flex; align-items: center; border-left: 3px solid transparent; color: #eee; gap: 5px; }
-        .file-item.active { background: rgba(0, 122, 204, 0.2); color: #4fc1ff; border-left-color: var(--vscode-blue); }
+        .file-item { padding: 8px 10px; cursor: pointer; font-size: 13px; display: flex; align-items: center; color: #eee; gap: 5px; }
+        .file-item.active { background: rgba(0, 122, 204, 0.2); color: #4fc1ff; }
         .file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        
-        /* Actions gap fix */
         .file-actions { display: flex; gap: 12px; opacity: 0.4; padding-right: 5px; }
         .file-item:hover .file-actions { opacity: 1; }
 
@@ -62,21 +63,18 @@
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .close-modal { font-size: 28px; cursor: pointer; color: #888; line-height: 1; }
         
-        .setting-item { margin-bottom: 20px; width: 100%; max-width: 400px; }
-        .setting-item label { display: block; margin-bottom: 8px; font-size: 13px; color: #aaa; }
-        
         select, input { width: 100%; padding: 10px; background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; }
         button { cursor: pointer; border-radius: 4px; border: none; padding: 8px 12px; }
-        hr { border: 0; border-top: 1px solid #444; margin: 20px 0; width: 100%; max-width: 400px; }
+        hr { border: 0; border-top: 1px solid #444; margin: 20px 0; width: 100%; max-width: 600px; }
     </style>
 </head>
 <body class="dark">
 
 <header>
-    <div class="header-left"><button onclick="toggleSidebar()" style="background:transparent; color:white; font-size:22px;">≡</button><span>Visual Studio Code Web+</span></div>
+    <div class="header-left"><button onclick="toggleSidebar()" style="background:transparent; color:white; font-size:22px; border:none; cursor:pointer;">≡</button><span>Visual Studio Code Web+</span></div>
     <div class="header-right">
         <button id="manual-save-btn" onclick="saveCurrentFileManual()" style="background: #007acc; display: none; color: white;">💾 保存</button>
-        <button id="btn-split" onclick="toggleSplitPreview()">プレビュー</button>
+        <button onclick="toggleSplitPreview()">プレビュー</button>
         <button onclick="fullPreview()" style="background:#444; color:white;">全画面プレビュー</button>
         <button onclick="openDownloadModal()" style="background: #2d7d46; color: white;">ダウンロード</button>
         <button onclick="openSettingsTab()" style="background: #666; color: white;">⚙ 設定</button>
@@ -87,9 +85,13 @@
     <div id="sidebar">
         <div class="sidebar-title-row">
             <span>エクスプローラー</span>
-            <div><button class="add-btn" onclick="addNewFile()">+</button></div>
+            <div>
+                <button class="add-btn" onclick="addNewFile()" title="新規ファイル">+</button>
+                <button class="add-btn" style="font-size:16px; margin-left:8px;" onclick="document.getElementById('import-single').click()" title="ファイルをアップロード">⇪</button>
+            </div>
         </div>
         <div id="file-list"></div>
+        <input type="file" id="import-single" style="display:none" onchange="importSingleFile(event)">
     </div>
     
     <div id="editor-wrapper">
@@ -97,20 +99,19 @@
         
         <div id="welcome-screen">
             <div class="welcome-content">
-                <h2>Visual Studio Code Web+</h2>
+                <h2 style="font-weight:normal;">Visual Studio Code Web+</h2>
                 <div class="welcome-btn" onclick="addNewFile()">📄 新規ファイルを作成</div>
                 <div class="welcome-btn" onclick="document.getElementById('import-single').click()">⇪ ファイルをアップロード</div>
                 <div class="welcome-btn" onclick="openSettingsTab()">⚙ 設定を開く</div>
-                <input type="file" id="import-single" style="display:none" onchange="importSingleFile(event)">
             </div>
         </div>
 
         <div id="settings-view">
-            <h3>⚙ Settings</h3>
-            <div class="setting-item"><label>テーマ</label><select id="setting-theme" onchange="updateSettings()"><option value="vs-dark">ダーク</option><option value="vs">ライト</option></select></div>
-            <div class="setting-item"><label>文字サイズ</label><input type="number" id="setting-fontsize" onchange="updateSettings()"></div>
-            <div class="setting-item"><label>インデント (Tab Size)</label><select id="setting-tabsize" onchange="updateSettings()"><option value="2">2</option><option value="4">4</option></select></div>
-            <div class="setting-item"><label>自動保存</label><select id="setting-autosave" onchange="updateSettings()"><option value="on">ON</option><option value="off">OFF</option></select></div>
+            <h3>Settings</h3>
+            <div class="setting-item"><label>Theme</label><select id="setting-theme" onchange="updateSettings()"><option value="vs-dark">Dark</option><option value="vs">Light</option></select></div>
+            <div class="setting-item"><label>Font Size</label><input type="number" id="setting-fontsize" onchange="updateSettings()"></div>
+            <div class="setting-item"><label>Tab Size</label><select id="setting-tabsize" onchange="updateSettings()"><option value="2">2</option><option value="4">4</option></select></div>
+            <div class="setting-item"><label>Auto Save</label><select id="setting-autosave" onchange="updateSettings()"><option value="on">On</option><option value="off">Off</option></select></div>
             <hr>
             <button onclick="document.getElementById('import-file').click()" style="width:100%; max-width:400px; background:#3c3c3c; color:white; padding:12px; margin-bottom:10px;">JSONから復元</button>
             <input type="file" id="import-file" style="display:none" onchange="importAllData(event)">
@@ -123,14 +124,12 @@
             <button class="tool-btn" onclick="insertText('{')">{</button><button class="tool-btn" onclick="insertText('}')">}</button>
             <button class="tool-btn" onclick="insertText('[')">[</button><button class="tool-btn" onclick="insertText(']')">]</button>
             <button class="tool-btn" onclick="insertText('(')">(</button><button class="tool-btn" onclick="insertText(')')">)</button>
-            <button class="tool-btn" onclick="insertText('<')">&lt;</button><button class="tool-btn" onclick="insertText('>')">&gt;</button>
             <button class="tool-btn" onclick="insertText(':')">:</button><button class="tool-btn" onclick="insertText('=')">=</button>
             <div class="spacer"></div>
             <button class="tool-btn" onclick="editor.getAction('actions.find').run()" style="background:var(--vscode-blue);">🔍 検索</button>
         </div>
         <div id="editor-container"></div>
     </div>
-    
     <div id="preview-container"><iframe id="preview"></iframe><div id="md-preview" style="display:none"></div></div>
 </div>
 
@@ -139,17 +138,17 @@
 <div id="download-modal" class="custom-modal">
     <div class="modal-header"><h3>📥 ダウンロード</h3><span class="close-modal" onclick="closeAllModals()">&times;</span></div>
     <div id="dl-checklist" style="max-height: 200px; overflow-y: auto; background: #1e1e1e; padding: 10px; border-radius: 4px; border: 1px solid #444; margin-bottom: 12px;"></div>
-    <button onclick="downloadMultiFiles()" style="width:100%; background:var(--vscode-blue); color:white;">選択したファイルを保存</button>
+    <button onclick="downloadMultiFiles()" style="width:100%; background:var(--vscode-blue); color:white;">選択ファイルをJSONで保存</button>
     <hr>
-    <button onclick="exportAllData()" style="width:100%; background:#444; color:white;">全一括バックアップ (JSON)</button>
+    <button onclick="exportAllData()" style="width:100%; background:#444; color:white;">全バックアップ</button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
 <script>
     require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
     let editor, currentFile = 'index.html', openTabs = ['index.html'], isSettingsOpen = false;
-    let files = JSON.parse(localStorage.getItem('vsc-web-files-v21')) || { 'index.html': '<h1>Hello</h1>' };
-    let config = JSON.parse(localStorage.getItem('vsc-web-config-v21')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoSave: 'on' };
+    let files = JSON.parse(localStorage.getItem('vsc-web-files-v22')) || { 'index.html': '<h1>Hello</h1>' };
+    let config = JSON.parse(localStorage.getItem('vsc-web-config-v22')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoSave: 'on' };
 
     require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('editor-container'), {
@@ -168,7 +167,7 @@
 
     function getLanguage(f) {
         const ext = f.split('.').pop().toLowerCase();
-        const map = { html:'html', css:'css', js:'javascript', py:'python', md:'markdown', json:'json' };
+        const map = { html:'html', css:'css', js:'javascript', py:'python', md:'markdown', json:'json', php:'php', sql:'sql', txt:'plaintext' };
         return map[ext] || 'plaintext';
     }
 
@@ -207,11 +206,12 @@
         settings.style.display = isSettingsOpen ? 'flex' : 'none';
         
         if (isSettingsOpen || openTabs.length === 0) {
-            editorCont.style.visibility = 'hidden';
-            toolbar.style.visibility = 'hidden';
+            editorCont.style.display = 'none';
+            toolbar.style.display = 'none';
         } else {
-            editorCont.style.visibility = 'visible';
-            toolbar.style.visibility = 'visible';
+            editorCont.style.display = 'block';
+            toolbar.style.display = 'flex';
+            if(editor) editor.layout();
             updatePreview();
         }
         renderTabs();
@@ -231,10 +231,7 @@
     function closeTab(e, n) { 
         e.stopPropagation(); 
         openTabs = openTabs.filter(t => t !== n); 
-        if(currentFile === n) {
-            currentFile = openTabs.length > 0 ? openTabs[openTabs.length-1] : null;
-            if(currentFile) switchFile(currentFile);
-        }
+        if(currentFile === n) currentFile = openTabs[openTabs.length-1] || null;
         updateViewVisibility();
     }
 
@@ -268,7 +265,7 @@
     }
 
     function saveCurrentFileManual() { saveToLocalStorage(); const btn = document.getElementById('manual-save-btn'); btn.innerText = "✅ 保存済"; setTimeout(() => btn.innerText = "💾 保存", 1000); }
-    function saveToLocalStorage() { localStorage.setItem('vsc-web-files-v21', JSON.stringify(files)); }
+    function saveToLocalStorage() { localStorage.setItem('vsc-web-files-v22', JSON.stringify(files)); }
     function toggleModal(id) { closeAllModals(); document.getElementById(id).style.display='block'; document.getElementById('overlay').style.display='block'; }
     function closeAllModals() { document.querySelectorAll('.custom-modal').forEach(m=>m.style.display='none'); document.getElementById('overlay').style.display='none'; }
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); setTimeout(() => editor.layout(), 210); }
@@ -279,8 +276,8 @@
         if(!currentFile) return;
         const isMd = currentFile.endsWith('.md'), ifr = document.getElementById('preview'), md = document.getElementById('md-preview');
         const container = document.getElementById('preview-container');
-        if(isMd) { ifr.style.display='none'; md.style.display='block'; container.classList.add('md-mode'); md.innerHTML=marked.parse(files[currentFile]||""); }
-        else { md.style.display='none'; ifr.style.display='block'; container.classList.remove('md-mode'); let h = files['index.html']||""; if(files['style.css']) h+=`<style>${files['style.css']}</style>`; if(files['script.js']) h+=`<script>${files['script.js']}<\/script>`; ifr.srcdoc=h; }
+        if(isMd) { ifr.style.display='none'; md.style.display='block'; container.style.background='#fff'; md.innerHTML=marked.parse(files[currentFile]||""); }
+        else { md.style.display='none'; ifr.style.display='block'; container.style.background='white'; let h = files['index.html']||""; if(files['style.css']) h+=`<style>${files['style.css']}</style>`; if(files['script.js']) h+=`<script>${files['script.js']}<\/script>`; ifr.srcdoc=h; }
     }
 
     function updateSettings() {
@@ -291,7 +288,7 @@
         monaco.editor.setTheme(config.theme); editor.updateOptions({ fontSize: config.fontSize, tabSize: config.tabSize });
         document.body.className = config.theme === 'vs' ? 'light' : 'dark';
         document.getElementById('manual-save-btn').style.display = (config.autoSave === 'off') ? 'block' : 'none';
-        localStorage.setItem('vsc-web-config-v21', JSON.stringify(config));
+        localStorage.setItem('vsc-web-config-v22', JSON.stringify(config));
     }
 
     function initUI() {
@@ -306,7 +303,7 @@
     function openDownloadModal() {
         const list = document.getElementById('dl-checklist'); list.innerHTML = '';
         Object.keys(files).sort().forEach(name => {
-            const item = document.createElement('div'); item.className = 'dl-item';
+            const item = document.createElement('div'); item.style.display='flex'; item.style.alignItems='center'; item.style.gap='10px'; item.style.padding='5px 0';
             item.innerHTML = `<input type="checkbox" value="${name}" checked><span>${name}</span>`;
             list.appendChild(item);
         });
