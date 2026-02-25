@@ -17,30 +17,32 @@
         body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; }
         
         header { height: var(--header-height); background: var(--head-bg); display: flex; align-items: center; padding: 0 15px; justify-content: space-between; border-bottom: 1px solid #2b2b2b; color: white; }
-        .header-left { display: flex; align-items: center; gap: 15px; color: #4fc1ff; font-weight: bold; font-size: 16px; }
+        /* タイトルを少し大きく */
+        .header-left { display: flex; align-items: center; gap: 12px; color: #4fc1ff; font-weight: bold; font-size: 19px; }
         .header-right { display: flex; align-items: center; gap: 8px; }
         
         button { background: #444; color: #eee; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; }
         button:hover { background: #555; }
         button.active { background: var(--vscode-blue); color: white; }
 
-        /* 太い3本線ボタン */
-        .menu-icon { font-size: 24px; font-weight: 900; background: transparent; padding: 0 5px; color: #fff; }
+        /* 3本線ボタン：サイズは維持しつつ太さを適度に */
+        .menu-icon { font-size: 22px; font-weight: normal; background: transparent; padding: 0 5px; color: #fff; cursor: pointer; }
 
         #main { display: flex; height: calc(100% - var(--header-height)); width: 100%; }
         
-        /* サイドバー */
         #sidebar { width: var(--sidebar-width); background: var(--side-bg); display: flex; flex-direction: column; border-right: 1px solid #333; transition: 0.2s; }
         #sidebar.hidden { width: 0; overflow: hidden; border: none; }
         
-        /* エクスプローラー列の間隔を詰め、高さを最適化 */
         .sidebar-title-row { 
-            padding: 5px 10px 5px 15px; /* 上下の余白を最小化 */
+            padding: 5px 10px 5px 15px;
             font-size: 11px; font-weight: bold; text-transform: uppercase; 
             display: flex; justify-content: space-between; align-items: center; 
             color: #888; border-bottom: 1px solid rgba(255,255,255,0.05);
         }
         
+        /* ＋ボタン：細めに調整 */
+        .add-btn { background:transparent; color:#007acc; font-size: 22px; font-weight: 300; padding: 0; line-height: 1; }
+
         .file-item { padding: 8px 15px; cursor: pointer; font-size: 14px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid transparent; }
         .file-item:hover { background: rgba(255,255,255,0.05); }
         .file-item.active { background: rgba(0, 122, 204, 0.2); color: #4fc1ff; border-left-color: var(--vscode-blue); }
@@ -85,7 +87,7 @@
     <div id="sidebar">
         <div class="sidebar-title-row">
             <span>エクスプローラー</span>
-            <button onclick="addNewFile()" style="background:transparent; color:#007acc; font-size:24px; font-weight:bold; padding:0;">+</button>
+            <button class="add-btn" onclick="addNewFile()">+</button>
         </div>
         <div id="file-list"></div>
     </div>
@@ -182,7 +184,8 @@
     }
 
     function addNewFile() {
-        const name = prompt("ファイル名を入力 (.ts, .cpp, .cs, .c も対応)");
+        // 対応拡張子をすべて表示
+        const name = prompt("ファイル名を入力してください\n対応拡張子: .html, .css, .js, .ts, .cpp, .c, .cs, .json, .md\n(拡張子がない場合はテキストになります)");
         if (name && !files[name]) {
             files[name] = ""; saveData(); switchFile(name);
         }
