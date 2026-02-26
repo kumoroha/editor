@@ -66,32 +66,31 @@
         select, input { width: 100%; padding: 10px; background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; }
         button { cursor: pointer; border-radius: 4px; border: none; padding: 8px 12px; }
 
-/* 1. メニューを包む大外のコンテナを強制的に表示 */
-.context-view {
-    border-radius: 12px !important;
-    background-color: #252526 !important;
-    border: 1px solid #4fc1ff !important;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important;
-    border-radius: 6px;
-    overflow: hidden;
-}
-
-/* 2. メニュー項目のリストを包む要素 */
-.monaco-menu-container {
-    background-color: #252526 !important;
-    color: #cccccc !important;
-}
-
-/* 3. 各項目の見た目をiPadでも見やすく調整 */
-.monaco-menu .action-item {
-    background-color: #252526 !important;
-    padding: 12px 15px !important; /* タップしやすいよう少し広げる */
-}
-
-/* 4. 文字が下のコードと被らないよう不透明度をMAXに */
-.monaco-action-bar {
-    opacity: 1 !important;
-}
+        /* 1. メニューを包む大外のコンテナを強制的に表示 */
+        .context-view {
+            border-radius: 12px !important;
+            background-color: #252526 !important;
+            border: 1px solid #4fc1ff !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        /* 2. メニュー項目のリストを包む要素 */
+        .monaco-menu-container {
+            background-color: #252526 !important;
+            color: #cccccc !important;
+        }
+        /* 3. 各項目の見た目をiPadでも見やすく調整 */
+        .monaco-menu .action-item {
+            font-size: 16px !important;
+            font-weight: 500 !important;
+            background-color: #252526 !important;
+            padding: 10px 8px !important; /* タップしやすいよう少し広げる */
+        }
+        /* 4. 文字が下のコードと被らないよう不透明度をMAXに */
+        .monaco-action-bar {
+            opacity: 1 !important;
+        }
     </style>
 </head>
 <body class="dark">
