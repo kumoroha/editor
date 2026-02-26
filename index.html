@@ -38,8 +38,8 @@
         #welcome-screen { align-items: center; justify-content: center; flex-direction: column; }
         #settings-view { padding: 30px 60px; flex-direction: column; align-items: flex-start; }
         #settings-view h3 { font-size: 28px; font-weight: normal; margin-bottom: 5px; color: #ddd; }
-        .setting-item { margin-bottom: 15px; width: 100%; max-width: 600px; }
-        .setting-item label { display: block; margin-bottom: 8px; font-size: 16px; color: var(--vscode-blue); }
+        .setting-item { margin-bottom: 10px; width: 100%; max-width: 600px; font-size: 14px }
+        .setting-item label { display: block; margin-bottom: 8px; font-size: 18px; color: var(--vscode-blue); }
 
         .welcome-content { text-align: center; max-width: 500px; }
         .welcome-btn { display: block; width: 100%; padding: 15px; margin: 10px 0; background: #333; color: white; border-radius: 6px; cursor: pointer; border: 1px solid #444; text-align: left; }
@@ -66,8 +66,8 @@
         
         select, input { width: 100%; padding: 10px; background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; }
         button { cursor: pointer; border-radius: 4px; border: none; padding: 8px 12px; }
-        .header-button button: { font-size: 18px; border-radius: 4px; color: #ffffff; }
-        #manual-save-btn { margin-right: 8px; display:inline-flex; align-items: center; }
+        .header-button button: { font-size: 18px; border-radius: 4px; color: #ffffff !important; }
+        #manual-save-btn { margin-right: 8px; display:inline-flex !important; align-items: center; }
 
         /* 1. メニューを包む大外のコンテナを強制的に表示 */
         .context-view {
@@ -127,7 +127,7 @@
             </div>
         </div>
         <div id="settings-view">
-            <h3>Settings</h3>
+            <h3 style="margin:-15px 0 5px 0">Settings</h3>
             <div class="setting-item"><label>Theme</label><select id="setting-theme" onchange="updateSettings()"><option value="vs-dark">Dark</option><option value="vs">Light</option></select></div>
             <div class="setting-item"><label>Font Size</label><input type="number" id="setting-fontsize" onchange="updateSettings()"></div>
             <div class="setting-item"><label>Tab Size</label><select id="setting-tabsize" onchange="updateSettings()"><option value="2">2</option><option value="4">4</option></select></div>
