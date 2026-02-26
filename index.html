@@ -76,39 +76,23 @@
         #dl-checklist div:hover { background: #2a2d2e; }
         /* チェックボックスを大きくする */
         #dl-checklist input[type="checkbox"] { width: 20px !important; height: 20px !important; margin-right: 12px !important; accent-color: var(--vscode-blue); }
-        .custom-modal button { margin: 0 20px 20px 20px !important; width: calc(100% - 40px) !important; padding: 12px !important; font-size: 15px !important; background-color: var(--vscode-blue) !important; font-weight: bold; transition: filter 0.2s; }
-        .custom-modal button:active { filter: brightness(1.2); }
+        .custom-modal button { margin: 0 20px 20px 20px !important; width: calc(100% - 40px) !important; padding: 12px !important; font-size: 15px !important; background-color: var(--vscode-blue) !important; font-weight: 500; transition: filter 0.2s; }
         
         select, input { width: 100%; padding: 10px; background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; }
         button { cursor: pointer; border-radius: 4px; border: none; padding: 8px 12px; }
         .header-button { font-size: 16px; border-radius: 6px; color: #ffffff; background-color: #3c3c3c }
         #manual-save-btn { margin-right: 25px; display:inline-flex; align-items: center; }
 
+        button:active { transform: scale(0.98); filter: brightness(0.9); }
+
         /* 1. メニューを包む大外のコンテナを強制的に表示 */
-        .context-view {
-            border-radius: 8px !important;
-            background-color: #252526 !important;
-            border: 1px solid #4fc1ff !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important;
-            border-radius: 6px;
-            overflow: hidden;
-        }
+        .context-view { border-radius: 8px !important; background-color: #252526 !important; border: 1px solid #4fc1ff !important; box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important; border-radius: 6px; overflow: hidden; }
         /* 2. メニュー項目のリストを包む要素 */
-        .monaco-menu-container {
-            background-color: #353535 !important;
-            color: #dddddd !important;
-        }
+        .monaco-menu-container { background-color: #353535 !important; color: #dddddd !important; }
         /* 3. 各項目の見た目をiPadでも見やすく調整 */
-        .monaco-menu .action-item {
-            font-size: 11px !important;
-            font-weight: 500 !important;
-            background-color: #353535 !important;
-            padding: 3px 1px !important; /* タップしやすいよう少し広げる */
-        }
+        .monaco-menu .action-item { font-size: 10px !important; font-weight: 500 !important; background-color: #353535 !important; padding: 3px 1px !important; }
         /* 4. 文字が下のコードと被らないよう不透明度をMAXに */
-        .monaco-action-bar {
-            opacity: 1 !important;
-        }
+        .monaco-action-bar { opacity: 1 !important; }
     </style>
 </head>
 <body class="dark">
