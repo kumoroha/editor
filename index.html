@@ -66,8 +66,8 @@
         
         select, input { width: 100%; padding: 10px; background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; }
         button { cursor: pointer; border-radius: 4px; border: none; padding: 8px 12px; }
-        .header-button button: { font-size: 18px; border-radius: 4px; color: #ffffff !important; }
-        #manual-save-btn { margin-right: 8px; display:inline-flex !important; align-items: center; }
+        .header-button { font-size: 16px; border-radius: 6px; color: #ffffff; background-color: #3c3c3c }
+        #manual-save-btn { margin-right: 25px; display:inline-flex !important; align-items: center; }
 
         /* 1. メニューを包む大外のコンテナを強制的に表示 */
         .context-view {
@@ -276,7 +276,7 @@
         monaco.editor.setTheme(config.theme);
         editor.updateOptions({ fontSize: config.fontSize, tabSize: config.tabSize, wordWrap: config.wrap, minimap: { enabled: config.minimap } });
         document.body.className = config.theme === 'vs' ? 'light' : 'dark';
-        document.getElementById('manual-save-btn').style.display = (config.autoSave === 'off') ? 'block' : 'none';
+        document.getElementById('manual-save-btn').style.display = (config.autoSave === 'off') ? '' : 'none';
         localStorage.setItem('vsc-web-config-v23', JSON.stringify(config));
     }
 
