@@ -62,7 +62,21 @@
         .menu-item:hover { background: #007acc; color: white; }
 
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 999; }
-        .custom-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #252526; color: white; padding: 25px; border-radius: 8px; border: 1px solid #444; z-index: 1000; width: 340px; box-sizing: border-box; }
+
+        /* モーダル本体 */
+        .custom-modal { display: none; position: fixed; background: #353535 !important; border: 1px solid #444 !important; border-radius: 6px !important; box-shadow: 0 20px 60px rgba(0,0,0,0.6) !important; padding: 0 !important; overflow: hidden; width: 90% !important; max-width: 450px !important; z-index: 2000 !important }
+        /* モーダルのヘッダー */
+        .modal-header { background: #353535; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; }
+        .modal-header h3 { margin: 0; font-size: 18px; color: #eeeeee; font-weight: normal; }
+        /* ファイルリストのエリア */
+        #dl-checklist { background: #1e1e1e !important; margin: 20px !important; border: 1px solid #333 !important; border-radius: 6px !important; max-height: 300px !important; }
+        /* リスト内の各ファイル項目 */
+        #dl-checklist div { padding: 12px 15px !important; border-bottom: 1px solid #2d2d2d; transition: background 0.2s; }
+        #dl-checklist div:hover { background: #2a2d2e; }
+        /* チェックボックスを大きくする */
+        #dl-checklist input[type="checkbox"] { width: 20px !important; height: 20px !important; margin-right: 12px !important; accent-color: var(--vscode-blue); }
+        .custom-modal button { margin: 0 20px 20px 20px !important; width: calc(100% - 40px) !important; padding: 12px !important; font-size: 15px !important; background-color: var(--vscode-blue) !important; font-weight: bold; transition: filter 0.2s; }
+        .custom-modal button:active { filter: brightness(1.2); }
         
         select, input { width: 100%; padding: 10px; background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; }
         button { cursor: pointer; border-radius: 4px; border: none; padding: 8px 12px; }
@@ -288,7 +302,7 @@
         document.getElementById('setting-minimap').value = config.minimap.toString();
         document.getElementById('setting-autosave').value = config.autoSave;
         document.body.className = config.theme === 'vs' ? 'light' : 'dark';
-        document.getElementById('manual-save-btn').style.display = (config.autoSave === 'off') ? 'block' : 'none';
+        document.getElementById('manual-save-btn').style.display = (config.autoSave === 'off') ? '' : 'none';
     }
 
     function saveToLocalStorage() { localStorage.setItem('vsc-web-files-v23', JSON.stringify(files)); }
@@ -305,7 +319,7 @@
     function renameFile(e, oldName) { e.stopPropagation(); const n = prompt("新しい名前:", oldName); if(n && !files[n]) { files[n]=files[oldName]; delete files[oldName]; openTabs=openTabs.map(t=>t===oldName?n:t); if(currentFile===oldName) currentFile=n; saveToLocalStorage(); renderFileList(); renderTabs(); } }
     function deleteFile(e, n) { e.stopPropagation(); if(confirm("削除しますか？")){ delete files[n]; openTabs=openTabs.filter(t=>t!==n); if(currentFile===n) currentFile=openTabs[0]||null; saveToLocalStorage(); renderFileList(); updateViewVisibility(); } }
     function openDownloadModal() { const list = document.getElementById('dl-checklist'); list.innerHTML = ''; Object.keys(files).sort().forEach(name => { const item = document.createElement('div'); item.style.display='flex'; item.style.alignItems='center'; item.style.gap='10px'; item.style.padding='5px 0'; item.innerHTML = `<input type="checkbox" value="${name}" checked><span>${name}</span>`; list.appendChild(item); }); toggleModal('download-modal'); }
-    function toggleModal(id) { document.getElementById(id).style.display='block'; document.getElementById('overlay').style.display='block'; }
+    function toggleModal(id) { const modal = document.getElementById(id); const overlay = document.getElementById('overlay'); if(modal) modal.style.setProperty('display', 'block', 'important'); if(overlay) overlay.style.setProperty('display', 'block', 'important'); }
     function closeAllModals() { document.querySelectorAll('.custom-modal').forEach(m=>m.style.display='none'); document.getElementById('overlay').style.display='none'; document.getElementById('tab-context-menu').style.display='none'; }
     function downloadMultiFiles() { const checked = Array.from(document.querySelectorAll('#dl-checklist input:checked')).map(i => i.value); const bundle = {}; checked.forEach(n => bundle[n] = files[n]); const a = document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(bundle, null, 2)])); a.download="backup.json"; a.click(); }
     function insertText(t) { editor.executeEdits("", [{ range: editor.getSelection(), text: t, forceMoveMarkers: true }]); editor.focus(); }
