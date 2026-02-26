@@ -66,30 +66,31 @@
         select, input { width: 100%; padding: 10px; background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; }
         button { cursor: pointer; border-radius: 4px; border: none; padding: 8px 12px; }
 
-/* 「.monaco-editor」を外して、body直下のコンテナを直接狙い撃ちします */
-.context-view.monaco-component {
-    background-color: #252526 !important; /* 背景を真っ黒に近く */
-    border: 1px solid #4fc1ff !important; /* 水色の枠線 */
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important; /* 強い影 */
-    border-radius: 4px !important;
-    padding: 2px !important;
+/* 1. メニューを包む大外のコンテナを強制的に表示 */
+.context-view {
+    border-radius: 12px !important;
+    background-color: #252526 !important;
+    border: 1px solid #4fc1ff !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important;
+    border-radius: 6px;
+    overflow: hidden;
 }
 
-/* メニュー内の各項目の背景 */
+/* 2. メニュー項目のリストを包む要素 */
+.monaco-menu-container {
+    background-color: #252526 !important;
+    color: #cccccc !important;
+}
+
+/* 3. 各項目の見た目をiPadでも見やすく調整 */
 .monaco-menu .action-item {
     background-color: #252526 !important;
+    padding: 12px 15px !important; /* タップしやすいよう少し広げる */
 }
 
-/* ホバー時の色 */
-.monaco-menu .action-item:hover .action-label,
-.monaco-menu .action-item.focused .action-label {
-    background-color: #007acc !important;
-    color: white !important;
-}
-
-/* 文字色を白に固定 */
-.monaco-menu .action-label {
-    color: #eee !important;
+/* 4. 文字が下のコードと被らないよう不透明度をMAXに */
+.monaco-action-bar {
+    opacity: 1 !important;
 }
     </style>
 </head>
@@ -180,7 +181,7 @@
             value: files[currentFile] || "", language: getLanguage(currentFile), theme: config.theme, 
             fontSize: config.fontSize, tabSize: config.tabSize, wordWrap: config.wrap,
             minimap: { enabled: config.minimap === 'true' || config.minimap === true },
-            automaticLayout: true, autoClosingTags: true, autoClosingBrackets: 'always', contextmenu: true, fixedOverflowWidgets: true
+            automaticLayout: true, autoClosingTags: true, autoClosingBrackets: 'always', contextmenu: true
         });
         editor.onDidChangeModelContent(() => { 
             if(currentFile && files[currentFile] !== undefined) {
@@ -311,21 +312,6 @@
     function importAllData(e) { const r = new FileReader(); r.onload=(ev)=>{const d=JSON.parse(ev.target.result); files=d.files; config=d.config; saveToLocalStorage(); location.reload();}; r.readAsText(e.target.files[0]); }
     function importSingleFile(e) { const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload=(ev)=>{files[f.name]=ev.target.result; switchFile(f.name);}; r.readAsText(f); }
     function clearAllData() { if(confirm("消去しますか？")){ localStorage.clear(); location.reload(); } }
-    monaco.editor.defineTheme('mytheme', {
-        base: 'vs-dark',
-        inherit: true,
-        rules: [],
-        colors: {
-            'editorWidget.background': '#202020', // メニューや検索窓の背景
-            'editorWidget.border': '#4fc1ff',     // メニューの枠線
-            'editorWidget.foreground': '#ffffff', // メニューの文字色
-            'list.hoverBackground': '#007acc',    // 選択（ホバー）時の背景
-            'list.hoverForeground': '#ffffff',
-            'widget.shadow': '#000000ff'
-        }
-    });
-    // 反映
-    monaco.editor.setTheme('mytheme');
 </script>
 </body>
 </html>
