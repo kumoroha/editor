@@ -70,7 +70,7 @@
 
         /* 1. メニューを包む大外のコンテナを強制的に表示 */
         .context-view {
-            border-radius: 12px !important;
+            border-radius: 8px !important;
             background-color: #252526 !important;
             border: 1px solid #4fc1ff !important;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important;
@@ -100,11 +100,11 @@
 <header>
     <div class="header-left"><button onclick="toggleSidebar()" style="background:transparent; color:white; font-size:22px; border:none; cursor:pointer;">≡</button><span>Visual Studio Code Web+</span></div>
     <div class="header-right">
-        <button class="header-button" id="manual-save-btn" onclick="saveCurrentFileManual()" style="background: #007acc; display: none; color: white;">💾 保存</button>
-        <button class="header-button" onclick="toggleSplitPreview()" style="background:#444; color:white;">プレビュー</button>
-        <button class="header-button" onclick="fullPreview()" style="background:#444; color:white;">全画面プレビュー</button>
-        <button class="header-button" onclick="openDownloadModal()" style="background: #2d7d46; color: white;">ダウンロード</button>
-        <button class="header-button" onclick="openSettingsTab()" style="background: #888; color: white;">⚙ 設定</button>
+        <button class="header-button" id="manual-save-btn" onclick="saveCurrentFileManual()" style="background: #007acc; display: none;">💾 保存</button>
+        <button class="header-button" onclick="toggleSplitPreview()">プレビュー</button>
+        <button class="header-button" onclick="fullPreview()">全画面プレビュー</button>
+        <button class="header-button" onclick="openDownloadModal()">ダウンロード</button>
+        <button class="header-button" onclick="openSettingsTab()">⚙ 設定</button>
     </div>
 </header>
 
@@ -134,9 +134,9 @@
             <div class="setting-item"><label>Minimap</label><select id="setting-minimap" onchange="updateSettings()"><option value="true">Show</option><option value="false">Hide</option></select></div>
             <div class="setting-item"><label>Auto Save</label><select id="setting-autosave" onchange="updateSettings()"><option value="on">On</option><option value="off">Off</option></select></div>
             <hr>
-            <button onclick="document.getElementById('import-file').click()" style="width:100%; max-width:400px; background:#3c3c3c; color:white; padding:12px; margin-bottom:10px;">JSONから復元</button>
+            <button onclick="document.getElementById('import-file').click()" style="width:100%; max-width:600px; background:#3c3c3c; color:white; padding:12px; margin-bottom:10px;">JSONから復元</button>
             <input type="file" id="import-file" style="display:none" onchange="importAllData(event)">
-            <button onclick="clearAllData()" style="background:#a94442; width:100%; max-width:400px; color:white; padding:12px;">全データ消去</button>
+            <button onclick="clearAllData()" style="background:#a94442; width:100%; max-width:600px; color:white; padding:12px;">全データ消去</button>
         </div>
         <div id="toolbar">
             <button class="tool-btn" onclick="insertEmmetHtml()" style="background:#8a2be2">!</button>
