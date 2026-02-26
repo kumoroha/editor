@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/editor/editor.main.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>
     <style>
-        :root { 
+        :root {
             --sidebar-width: 220px; --header-height: 55px; --toolbar-height: 40px; --tab-height: 35px;
             --vscode-blue: #007acc; --bg: #1e1e1e; --side-bg: #252526; --head-bg: #323233; --text: #eee;
         }
@@ -37,9 +37,9 @@
         #welcome-screen, #settings-view { position: absolute; top: var(--tab-height); left: 0; width: 100%; height: calc(100% - var(--tab-height)); background: var(--bg); z-index: 5; display: none; overflow-y: auto; box-sizing: border-box; }
         #welcome-screen { align-items: center; justify-content: center; flex-direction: column; }
         #settings-view { padding: 30px 60px; flex-direction: column; align-items: flex-start; }
-        #settings-view h3 { font-size: 24px; font-weight: normal; margin-bottom: 25px; color: #ccc; }
-        .setting-item { margin-bottom: 25px; width: 100%; max-width: 600px; }
-        .setting-item label { display: block; margin-bottom: 10px; font-size: 14px; color: var(--vscode-blue); }
+        #settings-view h3 { font-size: 28px; font-weight: normal; margin-bottom: 15px; color: #ddd; }
+        .setting-item { margin-bottom: 15px; width: 100%; max-width: 600px; }
+        .setting-item label { display: block; margin-bottom: 8px; font-size: 16px; color: var(--vscode-blue); }
 
         .welcome-content { text-align: center; max-width: 500px; }
         .welcome-btn { display: block; width: 100%; padding: 15px; margin: 10px 0; background: #333; color: white; border-radius: 6px; cursor: pointer; border: 1px solid #444; text-align: left; }
@@ -47,12 +47,13 @@
         #preview-container { width: 0; height: 100%; background: white; transition: width 0.3s; overflow: hidden; flex-shrink: 0; display: none; }
         #preview-container.visible { width: 50%; border-left: 1px solid #333; display: block; }
         
-        .sidebar-title-row { padding: 5px 10px 5px 15px; font-size: 13px; font-weight: bold; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; color: #aaaaaa; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .sidebar-title-row { padding: 5px 10px 5px 15px; font-size: 13px; font-weight: bold; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; color: #dddddd; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .add-btn { background:transparent; color:#007acc; font-size: 22px; cursor: pointer; border: none; }
         .file-item { padding: 8px 10px; cursor: pointer; font-size: 15px; display: flex; align-items: center; color: #eee; gap: 5px; }
         .file-item.active { background: rgba(0, 122, 204, 0.2); color: #4fc1ff; }
         .file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .file-actions { display: flex; gap: 12px; opacity: 0.4; padding-right: 5px; }
+        .file-actions { display: flex; gap: 16px; opacity: 0.8; padding-right: 5px; }
+        .file-actions span { font-size: 18px; padding: 3px; }
         .file-item:hover .file-actions { opacity: 1; }
 
         /* Custom Context Menu for Tabs */
@@ -82,10 +83,10 @@
         }
         /* 3. 各項目の見た目をiPadでも見やすく調整 */
         .monaco-menu .action-item {
-            font-size: 12px !important;
+            font-size: 13px !important;
             font-weight: 500 !important;
-            background-color: #252526 !important;
-            padding: 8px 6px !important; /* タップしやすいよう少し広げる */
+            background-color: #404040 !important;
+            padding: 5px 3px !important; /* タップしやすいよう少し広げる */
         }
         /* 4. 文字が下のコードと被らないよう不透明度をMAXに */
         .monaco-action-bar {
