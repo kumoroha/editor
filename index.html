@@ -65,6 +65,28 @@
         
         select, input { width: 100%; padding: 10px; background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; }
         button { cursor: pointer; border-radius: 4px; border: none; padding: 8px 12px; }
+
+        /* Monacoのメニュー（ウィジェット）を強制的に浮かせる */
+        .monaco-editor .editor-widget {
+        /* 外枠を太くし、少し光らせる（水色） */
+        border: 2px solid #4fc1ff !important;
+        /* 背景を真っ黒にして下のコードを完全に遮断する */
+        background-color: #000000 !important;
+        /* 非常に強力な影をつけて、浮かび上がらせる */
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8) !important;
+        border-radius: 8px !important; /* 角を少し丸くしてiPadに馴染ませる */
+        }
+
+        /* メニュー内の各項目の文字を見やすくする */
+        .monaco-editor .erow {
+        padding: 8px 12px !important; /* 押しやすくするために少し広げる */
+        color: #ffffff !important;
+        }
+
+        /* ホバー（選択）した時の色 */
+        .monaco-editor .erow:hover {
+        background-color: #007acc !important;
+        }
     </style>
 </head>
 <body class="dark">
