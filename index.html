@@ -66,7 +66,8 @@
         
         select, input { width: 100%; padding: 10px; background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; }
         button { cursor: pointer; border-radius: 4px; border: none; padding: 8px 12px; }
-        .header-button: { font-size: 18px; border-radius: 4px; color: white; }
+        .header-button button: { font-size: 18px; border-radius: 4px; color: #ffffff; }
+        #manual-save-btn { margin-right: 8px; display:inline-flex; align-items: center; }
 
         /* 1. メニューを包む大外のコンテナを強制的に表示 */
         .context-view {
@@ -79,14 +80,14 @@
         }
         /* 2. メニュー項目のリストを包む要素 */
         .monaco-menu-container {
-            background-color: #303030 !important;
+            background-color: #353535 !important;
             color: #dddddd !important;
         }
         /* 3. 各項目の見た目をiPadでも見やすく調整 */
         .monaco-menu .action-item {
             font-size: 11px !important;
             font-weight: 500 !important;
-            background-color: #303030 !important;
+            background-color: #353535 !important;
             padding: 3px 1px !important; /* タップしやすいよう少し広げる */
         }
         /* 4. 文字が下のコードと被らないよう不透明度をMAXに */
@@ -100,7 +101,7 @@
 <header>
     <div class="header-left"><button onclick="toggleSidebar()" style="background:transparent; color:white; font-size:22px; border:none; cursor:pointer;">≡</button><span>Visual Studio Code Web+</span></div>
     <div class="header-right">
-        <button class="header-button" id="manual-save-btn" onclick="saveCurrentFileManual()" style="background: #007acc; display: none; margin-right: 600px;">💾 保存</button>
+        <button class="header-button" id="manual-save-btn" onclick="saveCurrentFileManual()" style="background: #007acc; display: none;">💾 保存</button>
         <button class="header-button" onclick="toggleSplitPreview()">プレビュー</button>
         <button class="header-button" onclick="fullPreview()">全画面プレビュー</button>
         <button class="header-button" onclick="openDownloadModal()" style="background-color:green">ダウンロード</button>
@@ -119,7 +120,7 @@
         <div id="tabs-container"></div>
         <div id="welcome-screen">
             <div class="welcome-content">
-                <h2 style="font-weight:normal;">Visual Studio Code Web+</h2>
+                <h2 style="font-weight:normal; color:var(--vscode-blue);">Visual Studio Code Web+</h2>
                 <div class="welcome-btn" onclick="addNewFile()">📄 新規ファイルを作成</div>
                 <div class="welcome-btn" onclick="document.getElementById('import-single').click()">⇪ ファイルをアップロード</div>
                 <div class="welcome-btn" onclick="openSettingsTab()">⚙ 設定を開く</div>
