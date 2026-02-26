@@ -285,6 +285,19 @@
     function importAllData(e) { const r = new FileReader(); r.onload=(ev)=>{const d=JSON.parse(ev.target.result); files=d.files; config=d.config; saveToLocalStorage(); location.reload();}; r.readAsText(e.target.files[0]); }
     function importSingleFile(e) { const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload=(ev)=>{files[f.name]=ev.target.result; switchFile(f.name);}; r.readAsText(f); }
     function clearAllData() { if(confirm("消去しますか？")){ localStorage.clear(); location.reload(); } }
+    monaco.editor.defineTheme('mytheme', {
+        base: 'vs-dark', // または 'vs'
+        inherit: true,
+        rules: [],
+        colors: {
+            'menu.background': '#252525',      // メニューの背景色
+            'menu.foreground': '#cccccc',      // 文字色
+            'menu.selectionBackground': '#094771', // 選択中の背景
+            'menu.separatorBackground': '#454545'  // 区切り線の色
+        }
+    });
+    // 反映
+    monaco.editor.setTheme('mytheme');
 </script>
 </body>
 </html>
