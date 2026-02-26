@@ -66,26 +66,30 @@
         select, input { width: 100%; padding: 10px; background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; }
         button { cursor: pointer; border-radius: 4px; border: none; padding: 8px 12px; }
 
-/* メニューの背景を真っ黒にして、下の文字を完全に隠す */
-.monaco-editor .editor-widget, 
-.monaco-editor .context-view.monaco-component {
-    background-color: #1e1e1e !important; /* 背景をエディタと同じか、より濃い色に */
-    border: 1px solid #4fc1ff !important; /* 水色の枠線で境界をはっきりさせる */
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8) !important; /* 強い影で浮かせる */
-    z-index: 1000 !important;
+/* 1. メニューを包む大外のコンテナを強制的に表示 */
+.context-view {
+    background-color: #252526 !important;
+    border: 1px solid #4fc1ff !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important;
+    border-radius: 6px;
+    overflow: hidden;
 }
 
-/* メニュー内の各行の背景と文字色を固定 */
-.monaco-editor .context-view .monaco-menu .action-item {
-    background-color: #1e1e1e !important;
-    color: #ffffff !important;
+/* 2. メニュー項目のリストを包む要素 */
+.monaco-menu-container {
+    background-color: #252526 !important;
+    color: #cccccc !important;
 }
 
-/* ホバーした時の行の色 */
-.monaco-editor .context-view .monaco-menu .action-item:hover,
-.monaco-editor .context-view .monaco-menu .action-item.focused {
-    background-color: #094771 !important; /* 濃い青 */
-    color: #ffffff !important;
+/* 3. 各項目の見た目をiPadでも見やすく調整 */
+.monaco-menu .action-item {
+    background-color: #252526 !important;
+    padding: 10px 15px !important; /* タップしやすいよう少し広げる */
+}
+
+/* 4. 文字が下のコードと被らないよう不透明度をMAXに */
+.monaco-action-bar {
+    opacity: 1 !important;
 }
     </style>
 </head>
