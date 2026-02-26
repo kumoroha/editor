@@ -47,13 +47,13 @@
         #preview-container { width: 0; height: 100%; background: white; transition: width 0.3s; overflow: hidden; flex-shrink: 0; display: none; }
         #preview-container.visible { width: 50%; border-left: 1px solid #333; display: block; }
         
-        .sidebar-title-row { padding: 5px 10px 5px 15px; font-size: 13px; font-weight: bold; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; color: #dddddd; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .sidebar-title-row { padding: 5px 10px 3px 10px; font-size: 13px; font-weight: bold; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; color: #dddddd; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .add-btn { background:transparent; color:#007acc; font-size: 22px; cursor: pointer; border: none; }
         .file-item { padding: 8px 10px; cursor: pointer; font-size: 15px; display: flex; align-items: center; color: #eee; gap: 5px; }
         .file-item.active { background: rgba(0, 122, 204, 0.2); color: #4fc1ff; }
         .file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .file-actions { display: flex; gap: 16px; opacity: 0.8; padding-right: 5px; }
-        .file-actions span { font-size: 18px; padding: 3px; }
+        .file-actions { display: flex; gap: 14px; opacity: 0.8; padding-right: 5px; }
+        .file-actions span { font-size: 16px; padding: 3px; }
         .file-item:hover .file-actions { opacity: 1; }
 
         /* Custom Context Menu for Tabs */
@@ -78,15 +78,15 @@
         }
         /* 2. メニュー項目のリストを包む要素 */
         .monaco-menu-container {
-            background-color: #252526 !important;
-            color: #cccccc !important;
+            background-color: #303030 !important;
+            color: #dddddd !important;
         }
         /* 3. 各項目の見た目をiPadでも見やすく調整 */
         .monaco-menu .action-item {
-            font-size: 13px !important;
+            font-size: 11px !important;
             font-weight: 500 !important;
-            background-color: #404040 !important;
-            padding: 5px 3px !important; /* タップしやすいよう少し広げる */
+            background-color: #303030 !important;
+            padding: 3px 1px !important; /* タップしやすいよう少し広げる */
         }
         /* 4. 文字が下のコードと被らないよう不透明度をMAXに */
         .monaco-action-bar {
