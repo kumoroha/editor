@@ -66,30 +66,30 @@
         select, input { width: 100%; padding: 10px; background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; }
         button { cursor: pointer; border-radius: 4px; border: none; padding: 8px 12px; }
 
-/* 1. メニューを包む大外のコンテナを強制的に表示 */
-.context-view {
-    background-color: #252526 !important;
-    border: 1px solid #4fc1ff !important;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important;
-    border-radius: 6px;
-    overflow: hidden;
+/* 「.monaco-editor」を外して、body直下のコンテナを直接狙い撃ちします */
+.context-view.monaco-component {
+    background-color: #252526 !important; /* 背景を真っ黒に近く */
+    border: 1px solid #4fc1ff !important; /* 水色の枠線 */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important; /* 強い影 */
+    border-radius: 4px !important;
+    padding: 2px !important;
 }
 
-/* 2. メニュー項目のリストを包む要素 */
-.monaco-menu-container {
-    background-color: #252526 !important;
-    color: #cccccc !important;
-}
-
-/* 3. 各項目の見た目をiPadでも見やすく調整 */
+/* メニュー内の各項目の背景 */
 .monaco-menu .action-item {
     background-color: #252526 !important;
-    padding: 10px 15px !important; /* タップしやすいよう少し広げる */
 }
 
-/* 4. 文字が下のコードと被らないよう不透明度をMAXに */
-.monaco-action-bar {
-    opacity: 1 !important;
+/* ホバー時の色 */
+.monaco-menu .action-item:hover .action-label,
+.monaco-menu .action-item.focused .action-label {
+    background-color: #007acc !important;
+    color: white !important;
+}
+
+/* 文字色を白に固定 */
+.monaco-menu .action-label {
+    color: #eee !important;
 }
     </style>
 </head>
@@ -180,7 +180,7 @@
             value: files[currentFile] || "", language: getLanguage(currentFile), theme: config.theme, 
             fontSize: config.fontSize, tabSize: config.tabSize, wordWrap: config.wrap,
             minimap: { enabled: config.minimap === 'true' || config.minimap === true },
-            automaticLayout: true, autoClosingTags: true, autoClosingBrackets: 'always', contextmenu: true
+            automaticLayout: true, autoClosingTags: true, autoClosingBrackets: 'always', contextmenu: true, fixedOverflowWidgets: true
         });
         editor.onDidChangeModelContent(() => { 
             if(currentFile && files[currentFile] !== undefined) {
