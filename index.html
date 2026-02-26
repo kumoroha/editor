@@ -286,16 +286,15 @@
     function importSingleFile(e) { const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload=(ev)=>{files[f.name]=ev.target.result; switchFile(f.name);}; r.readAsText(f); }
     function clearAllData() { if(confirm("消去しますか？")){ localStorage.clear(); location.reload(); } }
     monaco.editor.defineTheme('mytheme', {
-        base: 'vs-dark', // または 'vs'
+        base: 'vs-dark',
         inherit: true,
         rules: [],
         colors: {
-            'menu.background': '#252525', // メニューの背景色
-            'menu.foreground': '#cccccc', // 文字色
-            'menu.selectionBackground': '#094771', // 選択中の背景
-            'menu.separatorBackground': '#454545'  // 区切り線の色
-            'menu.border': '#4fc1ff', // メニューの外枠（ヘッダーと同じ水色系にすると統一感が出ます）
-            'widget.shadow': '#000000aa' // メニューの影（これで下のコードと分離して見えます）
+            'editorWidget.background': '#252525', // メニューや検索窓の背景
+            'editorWidget.border': '#4fc1ff',     // メニューの枠線
+            'editorWidget.foreground': '#cccccc', // メニューの文字色
+            'list.hoverBackground': '#094771',    // 選択（ホバー）時の背景
+            'widget.shadow': '#000000aa'          // 影
         }
     });
     // 反映
