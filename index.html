@@ -185,7 +185,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
     <script>
-        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
     let editor, currentFile = 'index.html', openTabs = ['index.html'], isSettingsOpen = false;
     let files = JSON.parse(localStorage.getItem('vsc-web-files-v23')) || { 'index.html': '<h1>Hello</h1>' };
     let config = JSON.parse(localStorage.getItem('vsc-web-config-v23')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoSave: 'on', wrap: 'on', minimap: false };
@@ -216,8 +216,14 @@
             }
         });
         initUI(); renderFileList(); renderTabs(); updateViewVisibility();
-        
         window.addEventListener('click', () => { document.getElementById('tab-context-menu').style.display = 'none'; });
+        // 整形コマンド（editor.action.formatDocument）に割り込み
+        const originalFormat = editor.getAction('editor.action.formatDocument').run;
+        editor.getAction('editor.action.formatDocument').run = function() {
+            if(confirm("コードを整形してよろしいですか？")) {
+                return originalFormat.apply(this, arguments);
+            }
+        };
     });
 
     function getLanguage(f) {
