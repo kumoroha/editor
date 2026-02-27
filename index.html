@@ -78,12 +78,14 @@
         #dl-checklist input[type="checkbox"] { width: 20px !important; height: 20px !important; margin-right: 12px !important; accent-color: var(--vscode-blue); }
         .custom-modal button { margin: 0 20px 20px 20px !important; width: calc(100% - 40px) !important; padding: 12px !important; font-size: 15px !important; background-color: var(--vscode-blue) !important; font-weight: 500; transition: filter 0.2s; }
         
-        select, input { width: 100%; padding: 10px; background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; }
+        select, input { font-size: 16px; width: 100%; padding: 10px; background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; }
         button { cursor: pointer; border-radius: 4px; border: none; padding: 8px 12px; }
         .header-button { font-size: 16px; border-radius: 6px; color: #ffffff; background-color: #3c3c3c }
         #manual-save-btn { margin-right: 25px; display:inline-flex; align-items: center; }
 
         button:active { transform: scale(0.98); filter: brightness(0.9); }
+
+        .set-btn { font-size: 16px; font-weight: normal; }
 
         /* 1. メニューを包む大外のコンテナを強制的に表示 */
         .context-view { border-radius: 8px !important; background-color: #252526 !important; border: 1px solid #4fc1ff !important; box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important; border-radius: 6px; overflow: hidden; }
@@ -134,9 +136,9 @@
             <div class="setting-item"><label>Minimap</label><select id="setting-minimap" onchange="updateSettings()"><option value="true">Show</option><option value="false">Hide</option></select></div>
             <div class="setting-item"><label>Auto Save</label><select id="setting-autosave" onchange="updateSettings()"><option value="on">On</option><option value="off">Off</option></select></div>
             <hr>
-            <button onclick="document.getElementById('import-file').click()" style="width:100%; max-width:600px; background:#3c3c3c; color:white; padding:12px; margin-bottom:10px;">JSONから復元</button>
+            <button class="set-btn" onclick="document.getElementById('import-file').click()" style="width:100%; max-width:600px; background:#3c3c3c; color:white; padding:12px; margin-bottom:10px;">JSONから復元</button>
             <input type="file" id="import-file" style="display:none" onchange="importAllData(event)">
-            <button onclick="clearAllData()" style="background:#a94442; width:100%; max-width:600px; color:white; padding:12px;">全データ消去</button>
+            <button class="set-btn" onclick="clearAllData()" style="background:#a94442; width:100%; max-width:600px; color:white; padding:12px;">全データ消去</button>
         </div>
         <div id="toolbar">
             <button class="tool-btn" onclick="insertEmmetHtml()" style="background:#8a2be2">!</button>
