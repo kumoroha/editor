@@ -39,7 +39,7 @@
         #settings-view { padding: 30px 60px; flex-direction: column; align-items: flex-start; }
         #settings-view h3 { font-size: 28px; font-weight: normal; margin-bottom: 5px; color: #ddd; }
         .setting-item { margin-bottom: 16px; width: 100%; max-width: 600px; font-size: 14px }
-        .setting-item label { display: block; margin-bottom: 0px; font-size: 18px; color: var(--vscode-blue); }
+        .setting-item label { display: block; margin-bottom: -1px; font-size: 18px; color: var(--vscode-blue); }
 
         .welcome-content { text-align: center; max-width: 500px; }
         .welcome-btn { display: block; width: 100%; padding: 15px; margin: 10px 0; background: #333; color: white; border-radius: 6px; cursor: pointer; border: 1px solid #444; text-align: left; }
@@ -292,7 +292,12 @@
         document.getElementById('manual-save-btn').style.display = (config.autoSave === 'off') ? '' : 'none';
     }
 
-    function saveToLocalStorage() { localStorage.setItem('vsc-web-files-v23', JSON.stringify(files)); }
+    // 既存の関数を少し拡張して、手動保存時にメッセージを出す
+    function saveToLocalStorage(isManual = false) { localStorage.setItem('vsc-web-files-v23', JSON.stringify(files)); if (isManual) { alert("ファイルを保存しました！"); } }
+
+    // HTMLの onclick="saveCurrentFileManual()" から呼ばれる関数を新設（または書き換え）
+    function saveCurrentFileManual() { if(currentFile && files[currentFile] !== undefined) { files[currentFile] = editor.getValue(); saveToLocalStorage(true); updatePreview(); } }
+
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); setTimeout(() => editor.layout(), 210); }
     function toggleSplitPreview() { document.getElementById('preview-container').classList.toggle('visible'); setTimeout(() => editor.layout(), 310); updatePreview(); }
     function fullPreview() { const w = window.open(); w.document.write(document.getElementById('preview').srcdoc || ""); }
