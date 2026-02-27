@@ -181,10 +181,21 @@
 
     require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('editor-container'), {
-            value: files[currentFile] || "", language: getLanguage(currentFile), theme: config.theme, 
-            fontSize: config.fontSize, tabSize: config.tabSize, wordWrap: config.wrap,
+            value: files[currentFile] || "", 
+            language: getLanguage(currentFile), 
+            theme: config.theme, 
+            fontSize: config.fontSize, 
+            tabSize: config.tabSize, 
+            wordWrap: config.wrap, // ← ここで設定（config）を読み込んでいるのでOK
             minimap: { enabled: config.minimap === 'true' || config.minimap === true },
-            automaticLayout: true, autoClosingTags: true, autoClosingBrackets: 'always', contextmenu: true
+            automaticLayout: true,
+            // --- 設定画面に項目がない「便利な入力支援」だけを追記 ---
+            quickSuggestions: { other: true, comments: true, strings: true },
+            suggestOnTriggerCharacters: true,
+            acceptSuggestionOnEnter: "on",
+            parameterHints: { enabled: true },
+            formatOnPaste: true,
+            suggestSelection: 'first'
         });
         editor.onDidChangeModelContent(() => { 
             if(currentFile && files[currentFile] !== undefined) {
@@ -200,7 +211,19 @@
 
     function getLanguage(f) {
         const ext = f.split('.').pop().toLowerCase();
-        const map = { html:'html', css:'css', js:'javascript', py:'python', md:'markdown', json:'json', php:'php', sql:'sql', txt:'plaintext' };
+        const map = {
+            // Web / Frontend
+            html:'html', css:'css', js:'javascript', ts:'typescript', jsx:'javascript', tsx:'typescript',
+            // Server / Scripting
+            py:'python', rb:'ruby', php:'php', go:'go', rust:'rust', sh:'shell', bat:'bat', ps1:'powershell',
+            // C-Family
+            c:'c', cpp:'cpp', cs:'csharp', java:'java', m:'objective-c', swift:'swift', kt:'kotlin',
+            // Data / Config
+            json:'json', yml:'yaml', yaml:'yaml', xml:'xml', sql:'sql', ini:'ini',
+            // Others
+            md:'markdown', r:'r', lua:'lua', dart:'dart', coffee:'coffeescript',
+            txt:'plaintext' 
+        };
         return map[ext] || 'plaintext';
     }
 
