@@ -185,7 +185,8 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
     <script>
-    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
+    // Monaco Editorの日本語化設定
+    require.config( { paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }, 'vs/nls': { availableLanguages: { '*': 'ja' } } });
     let editor, currentFile = 'index.html', openTabs = ['index.html'], isSettingsOpen = false;
     let files = JSON.parse(localStorage.getItem('vsc-web-files-v23')) || { 'index.html': '<h1>Hello</h1>' };
     let config = JSON.parse(localStorage.getItem('vsc-web-config-v23')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoSave: 'on', wrap: 'on', minimap: false };
@@ -200,12 +201,19 @@
             wordWrap: config.wrap, // ← ここで設定（config）を読み込んでいるのでOK
             minimap: { enabled: config.minimap === 'true' || config.minimap === true },
             automaticLayout: true,
+            // --- 勝手な整形を徹底的に止める設定 ---
+            formatOnPaste: false,      // ペースト時
+            formatOnType: false,       // 入力時
+            autoIndent: "none",        // 改行時
+            // --- メニュー整理（デフォルトの日本語整形を消す） ---
+            menu: {
+                editorContext: { 'editor.action.formatDocument': false }
+            },
             // --- 設定画面に項目がない「便利な入力支援」だけを追記 ---
             quickSuggestions: { other: true, comments: true, strings: true },
             suggestOnTriggerCharacters: true,
             acceptSuggestionOnEnter: "on",
             parameterHints: { enabled: true },
-            formatOnPaste: false,
             suggestSelection: 'first'
         });
         editor.onDidChangeModelContent(() => { 
@@ -217,11 +225,12 @@
         });
         initUI(); renderFileList(); renderTabs(); updateViewVisibility();
         window.addEventListener('click', () => { document.getElementById('tab-context-menu').style.display = 'none'; });
-        // 整形コマンド（editor.action.formatDocument）に割り込み
-        const originalFormat = editor.getAction('editor.action.formatDocument').run;
-        editor.getAction('editor.action.formatDocument').run = function() {
-            if(confirm("コードを整形してよろしいですか？")) {
-                return originalFormat.apply(this, arguments);
+        // 既存の整形アクションを上書き（これならメニューは1つだけになります）
+        const formatAction = editor.getAction('editor.action.formatDocument');
+        const originalRun = formatAction.run;
+        formatAction.run = function() {
+            if (confirm("コードを整形してよろしいですか？")) {
+                return originalRun.apply(this, arguments);
             }
         };
     });
