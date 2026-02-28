@@ -192,14 +192,15 @@
 
     require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('editor-container'), {
-            value: files[currentFile] || "", 
-            language: getLanguage(currentFile), 
-            theme: config.theme, 
-            fontSize: config.fontSize, 
-            tabSize: config.tabSize, 
+            value: files[currentFile] || "",
+            language: getLanguage(currentFile),
+            theme: config.theme,
+            fontSize: config.fontSize,
+            tabSize: config.tabSize,
             wordWrap: config.wrap, // ← ここで設定（config）を読み込んでいるのでOK
             minimap: { enabled: config.minimap === 'true' || config.minimap === true },
             automaticLayout: true,
+            formatOnPaste: false,
             // --- 設定画面に項目がない「便利な入力支援」だけを追記 ---
             quickSuggestions: { other: true, comments: true, strings: true },
             suggestOnTriggerCharacters: true,
