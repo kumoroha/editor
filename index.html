@@ -223,16 +223,34 @@
                 updatePreview(); 
             }
         });
+
+        // 1. デフォルトの整形ボタンだけを狙って削除
+        const menuService = editor._bootstrapService.get('IMenuService');
+        const menuItems = menuService.getMenuItems(monaco.extra.MenuId.EditorContext);
+        
+        for (let i = 0; i < menuItems.length; i++) {
+            const id = menuItems[i].command ? menuItems[i].command.id : '';
+            if (id === 'editor.action.formatDocument') {
+                menuItems.splice(i, 1);
+                break; 
+            }
+        }
+        // 2. 自作の確認付き整形ボタンを追加（これを書き足します）
+        editor.addAction({
+            id: 'my-custom-format',
+            label: 'ドキュメントの整形',
+            keybindings: [monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KeyF],
+            contextMenuGroupId: '1_modification',
+            contextMenuOrder: 1,
+            run: function() {
+                if (confirm("コードを整形してよろしいですか？")) {
+                    editor.getAction('editor.action.formatDocument').run();
+                }
+            }
+        });
+
         initUI(); renderFileList(); renderTabs(); updateViewVisibility();
         window.addEventListener('click', () => { document.getElementById('tab-context-menu').style.display = 'none'; });
-        // 既存の整形アクションを上書き（これならメニューは1つだけになります）
-        const formatAction = editor.getAction('editor.action.formatDocument');
-        const originalRun = formatAction.run;
-        formatAction.run = function() {
-            if (confirm("コードを整形してよろしいですか？")) {
-                return originalRun.apply(this, arguments);
-            }
-        };
     });
 
     function getLanguage(f) {
@@ -322,7 +340,7 @@
 
     function initUI() {
         document.getElementById('setting-theme').value = config.theme;
-        document.getElementById('setting-fontsize').value = config.fontSize;
+        document.getElementById('setting-fontsize').value = config.fontSize || 16;
         document.getElementById('setting-tabsize').value = config.tabSize;
         document.getElementById('setting-wrap').value = config.wrap || 'on';
         document.getElementById('setting-minimap').value = config.minimap.toString();
