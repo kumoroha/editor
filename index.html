@@ -140,6 +140,17 @@
                 <div class="setting-item">
                     <label>Auto Save</label><select id="setting-autosave" onchange="updateSettings()"><option value="on">On</option><option value="off">Off</option></select>
                 </div>
+                <div class="setting-item">
+                    <label>Auto Save</label><select id="setting-autosave" onchange="updateSettings()"><option value="on">On</option><option value="off">Off</option></select>
+                </div>
+                <div class="setting-item">
+                    <label>Auto Save Delay (ms)</label>
+                    <select id="setting-autosave-delay" onchange="updateSettings()">
+                        <option value="500">500ms (0.5秒)</option>
+                        <option value="1000">1000ms (1秒)</option>
+                        <option value="2000">2000ms (2秒)</option>
+                    </select>
+                </div>
                 <hr>
                 <button class="set-btn" onclick="document.getElementById('import-file').click()" style="width:100%; max-width:600px; background:#3c3c3c; color:white; padding:12px; margin-bottom:10px;">JSONから復元</button>
                 <input type="file" id="import-file" style="display:none" onchange="importAllData(event)">
@@ -188,8 +199,9 @@
     // Monaco Editorの日本語化設定
     require.config( { paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }, 'vs/nls': { availableLanguages: { '*': 'ja' } } });
     let editor, currentFile = 'index.html', openTabs = ['index.html'], isSettingsOpen = false;
+    let saveTimeout; // タイマー管理用
     let files = JSON.parse(localStorage.getItem('vsc-web-files-v23')) || { 'index.html': '<h1>Hello</h1>' };
-    let config = JSON.parse(localStorage.getItem('vsc-web-config-v23')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoSave: 'on', wrap: 'on', minimap: false };
+    let config = JSON.parse(localStorage.getItem('vsc-web-config-v23')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoSave: 'on', autosavedelay: 1000, wrap: 'on', minimap: false };
 
     require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('editor-container'), {
@@ -218,9 +230,17 @@
         });
         editor.onDidChangeModelContent(() => { 
             if(currentFile && files[currentFile] !== undefined) {
-                files[currentFile] = editor.getValue(); 
-                if(config.autoSave === 'on') saveToLocalStorage(); 
-                updatePreview(); 
+                files[currentFile] = editor.getValue();
+                if(config.autoSave === 'on') saveToLocalStorage();
+                updatePreview();
+                // 1文字ごとの保存を中止し、ディレイをかける
+                if(config.autoSave === 'on') {
+                    clearTimeout(saveTimeout);
+                    saveTimeout = setTimeout(() => {
+                        saveToLocalStorage();
+                        console.log("Auto saved!");
+                    }, config.autoSaveDelay || 1000);
+                }
             }
         });
 
@@ -331,6 +351,8 @@
         config.wrap = document.getElementById('setting-wrap').value;
         config.minimap = document.getElementById('setting-minimap').value === 'true';
         config.autoSave = document.getElementById('setting-autosave').value;
+        config.autoSaveDelay = parseInt(document.getElementById('setting-autosave-delay').value) || 1000; // 追記
+
         monaco.editor.setTheme(config.theme);
         editor.updateOptions({ fontSize: config.fontSize, tabSize: config.tabSize, wordWrap: config.wrap, minimap: { enabled: config.minimap } });
         document.body.className = config.theme === 'vs' ? 'light' : 'dark';
@@ -340,7 +362,7 @@
 
     function initUI() {
         document.getElementById('setting-theme').value = config.theme;
-        document.getElementById('setting-fontsize').value = config.fontSize || 16;
+        document.getElementById('setting-fontsize').value = config.fontSize;
         document.getElementById('setting-tabsize').value = config.tabSize;
         document.getElementById('setting-wrap').value = config.wrap || 'on';
         document.getElementById('setting-minimap').value = config.minimap.toString();
