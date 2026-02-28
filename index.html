@@ -199,14 +199,13 @@
             tabSize: config.tabSize,
             wordWrap: config.wrap, // ← ここで設定（config）を読み込んでいるのでOK
             minimap: { enabled: config.minimap === 'true' || config.minimap === true },
-            automaticLayout: true,
-            formatOnPaste: false,
+            automaticLayout: true;
             // --- 設定画面に項目がない「便利な入力支援」だけを追記 ---
             quickSuggestions: { other: true, comments: true, strings: true },
             suggestOnTriggerCharacters: true,
             acceptSuggestionOnEnter: "on",
             parameterHints: { enabled: true },
-            formatOnPaste: true,
+            formatOnPaste: false,
             suggestSelection: 'first'
         });
         editor.onDidChangeModelContent(() => { 
