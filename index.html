@@ -141,9 +141,6 @@
                     <label>Auto Save</label><select id="setting-autosave" onchange="updateSettings()"><option value="on">On</option><option value="off">Off</option></select>
                 </div>
                 <div class="setting-item">
-                    <label>Auto Save</label><select id="setting-autosave" onchange="updateSettings()"><option value="on">On</option><option value="off">Off</option></select>
-                </div>
-                <div class="setting-item">
                     <label>Auto Save Delay (ms)</label>
                     <select id="setting-autosave-delay" onchange="updateSettings()">
                         <option value="500">500ms (0.5秒)</option>
@@ -201,7 +198,7 @@
     let editor, currentFile = 'index.html', openTabs = ['index.html'], isSettingsOpen = false;
     let saveTimeout; // タイマー管理用
     let files = JSON.parse(localStorage.getItem('vsc-web-files-v23')) || { 'index.html': '<h1>Hello</h1>' };
-    let config = JSON.parse(localStorage.getItem('vsc-web-config-v23')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoSave: 'on', autosavedelay: 1000, wrap: 'on', minimap: false };
+    let config = JSON.parse(localStorage.getItem('vsc-web-config-v23')) || { theme: 'vs-dark', fontSize: 16, tabSize: 4, autoSave: 'on', autoSaveDelay: 1000, wrap: 'on', minimap: false };
 
     require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('editor-container'), {
@@ -231,7 +228,7 @@
         editor.onDidChangeModelContent(() => { 
             if(currentFile && files[currentFile] !== undefined) {
                 files[currentFile] = editor.getValue();
-                if(config.autoSave === 'on') saveToLocalStorage();
+                //if(config.autoSave === 'on') saveToLocalStorage();
                 updatePreview();
                 // 1文字ごとの保存を中止し、ディレイをかける
                 if(config.autoSave === 'on') {
@@ -362,11 +359,14 @@
 
     function initUI() {
         document.getElementById('setting-theme').value = config.theme;
-        document.getElementById('setting-fontsize').value = config.fontSize;
+        document.getElementById('setting-fontsize').value = config.fontSize || 12;
         document.getElementById('setting-tabsize').value = config.tabSize;
         document.getElementById('setting-wrap').value = config.wrap || 'on';
         document.getElementById('setting-minimap').value = config.minimap.toString();
         document.getElementById('setting-autosave').value = config.autoSave;
+
+        document.getElementById('setting-autosave-delay').value = config.autoSaveDelay || 1000;
+
         document.body.className = config.theme === 'vs' ? 'light' : 'dark';
         document.getElementById('manual-save-btn').style.display = (config.autoSave === 'off') ? '' : 'none';
     }
