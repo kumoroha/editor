@@ -18,7 +18,8 @@
         #sidebar { width: var(--sidebar-width); background: var(--side-bg); display: flex; flex-direction: column; border-right: 1px solid #333; transition: width 0.2s; flex-shrink: 0; }
         #sidebar.hidden { width: 0; border: none; overflow: hidden; }
         #editor-wrapper { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg); position: relative; }
-        #tabs-container { height: var(--tab-height); background: #2d2d2d; display: flex; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid #252526; }
+        #tabs-container { height: var(--tab-height); background: #2d2d2d; display: flex; overflow-x: auto; /*scrollbar-width: none;*/ border-bottom: 1px solid #252526; }
+        #tabs-container::-webkit-scrollbar { display: none; }
         .tab { padding: 0 15px; height: 100%; display: flex; align-items: center; background: #2d2d2d; font-size: 15px; cursor: pointer; border-right: 1px solid #252526; white-space: nowrap; color: #999; position: relative; }
         .tab.active { background: var(--bg); color: white; border-top: 1px solid var(--vscode-blue); }
         #toolbar { height: var(--toolbar-height); background: var(--side-bg); display: flex; align-items: center; padding: 0 10px; gap: 5px; border-bottom: 1px solid #333; overflow-x: auto; flex-shrink: 0; }
@@ -161,7 +162,7 @@
                 <button class="tool-btn" onclick="insertText('(')">(</button><button class="tool-btn" onclick="insertText(')')">)</button>
                 <button class="tool-btn" onclick="insertText('<')">&lt;</button><button class="tool-btn" onclick="insertText('>')">&gt;</button>
                 <button class="tool-btn" onclick="insertText(':')">:</button><button class="tool-btn" onclick="insertText('=')">=</button>
-                <button class="tool-btn" onclick="insertText('!')">!</button><button class="tool-btn" onclick="insertText('\"')">"</button>
+                <button class="tool-btn" onclick="insertText('!')">!</button><button class="tool-btn" onclick="insertText('&quot')">"</button>
             <button class="tool-btn" onclick="insertText('\'')">'</button><button class="tool-btn" onclick="insertText('/')">/</button>
                 <button class="tool-btn" onclick="insertText(';')">;</button>
                 <div class="spacer"></div>
