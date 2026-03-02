@@ -18,7 +18,7 @@
         #sidebar { width: var(--sidebar-width); background: var(--side-bg); display: flex; flex-direction: column; border-right: 1px solid #333; transition: width 0.2s; flex-shrink: 0; }
         #sidebar.hidden { width: 0; border: none; overflow: hidden; }
         #editor-wrapper { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg); position: relative; }
-        #tabs-container { height: var(--tab-height); background: #2d2d2d; display: flex; overflow-x: auto; /*scrollbar-width: none;*/ border-bottom: 1px solid #252526; }
+        #tabs-container { height: var(--tab-height); background: #2d2d2d; display: flex; overflow-x: auto; /*scrollbar-width: none;*/ border-bottom: 1px solid #252526; -ms-overflow-style: none; }
         #tabs-container::-webkit-scrollbar { display: none; }
         .tab { padding: 0 15px; height: 100%; display: flex; align-items: center; background: #2d2d2d; font-size: 15px; cursor: pointer; border-right: 1px solid #252526; white-space: nowrap; color: #999; position: relative; }
         .tab.active { background: var(--bg); color: white; border-top: 1px solid var(--vscode-blue); }
@@ -241,6 +241,10 @@
                 }
             }
         });
+
+        if (currentFile && files[currentFile]) {
+            editor.setValue(files[currentFile]);
+        }
 
         // 1. デフォルトの整形ボタンだけを狙って削除
         const menuService = editor._bootstrapService.get('IMenuService');
