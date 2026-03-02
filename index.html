@@ -246,6 +246,8 @@
             switchFile(currentFile);
         }
 
+        updateSettings();
+
         // 1. デフォルトの整形ボタンだけを狙って削除
         const menuService = editor._bootstrapService.get('IMenuService');
         const menuItems = menuService.getMenuItems(monaco.extra.MenuId.EditorContext);
