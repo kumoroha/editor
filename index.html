@@ -162,7 +162,7 @@
                 <button class="tool-btn" onclick="insertText('(')">(</button><button class="tool-btn" onclick="insertText(')')">)</button>
                 <button class="tool-btn" onclick="insertText('<')">&lt;</button><button class="tool-btn" onclick="insertText('>')">&gt;</button>
                 <button class="tool-btn" onclick="insertText(':')">:</button><button class="tool-btn" onclick="insertText('=')">=</button>
-                <button class="tool-btn" onclick="insertText('!')">!</button><button class="tool-btn" onclick="insertText('&quot')">"</button>
+                <button class="tool-btn" onclick="insertText('!')">!</button><button class="tool-btn" onclick="insertText('&quot;')">"</button>
             <button class="tool-btn" onclick="insertText('\'')">'</button><button class="tool-btn" onclick="insertText('/')">/</button>
                 <button class="tool-btn" onclick="insertText(';')">;</button>
                 <div class="spacer"></div>
@@ -242,9 +242,7 @@
             }
         });
 
-        if (currentFile && files[currentFile]) {
-            editor.setValue(files[currentFile]);
-        }
+        
 
         // 1. デフォルトの整形ボタンだけを狙って削除
         const menuService = editor._bootstrapService.get('IMenuService');
