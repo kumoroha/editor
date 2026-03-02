@@ -206,7 +206,7 @@
             value: files[currentFile] || "",
             language: getLanguage(currentFile),
             theme: config.theme,
-            fontSize: config.fontSize,
+            fontSize: parseInt(config.fontSize) || 16,
             tabSize: config.tabSize,
             wordWrap: config.wrap, // ← ここで設定（config）を読み込んでいるのでOK
             minimap: { enabled: config.minimap === 'true' || config.minimap === true },
@@ -362,6 +362,7 @@
         document.body.className = config.theme === 'vs' ? 'light' : 'dark';
         document.getElementById('manual-save-btn').style.display = (config.autoSave === 'off') ? '' : 'none';
         localStorage.setItem('vsc-web-config-v23', JSON.stringify(config));
+        saveToLocalStorage();
     }
 
     function initUI() {
@@ -379,7 +380,12 @@
     }
 
     // 既存の関数を少し拡張して、手動保存時にメッセージを出す
-    function saveToLocalStorage(isManual = false) { localStorage.setItem('vsc-web-files-v23', JSON.stringify(files)); if (isManual) { alert("ファイルを保存しました！"); } }
+    // 284行目付近を以下のように修正
+    function saveToLocalStorage(isManual = false) { 
+        localStorage.setItem('vsc-web-files-v23', JSON.stringify(files)); 
+        localStorage.setItem('vsc-web-config-v23', JSON.stringify(config)); // ★設定も保存するように追加
+        if (isManual) { alert("ファイルを保存しました！"); } 
+    }
 
     // HTMLの onclick="saveCurrentFileManual()" から呼ばれる関数を新設（または書き換え）
     function saveCurrentFileManual() { if(currentFile && files[currentFile] !== undefined) { files[currentFile] = editor.getValue(); saveToLocalStorage(true); updatePreview(); } }
