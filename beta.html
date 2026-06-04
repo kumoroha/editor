@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Web Code Studio Pro v12</title>
+    <title>Web Code Studio Pro v13</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
@@ -24,7 +24,6 @@
         .view-layer { display: none; height: 100%; width: 100%; }
         .view-layer.active { display: block; }
         
-        /* 言語別アイコンカラー */
         .icon-html { color: #e34f26; }
         .icon-css { color: #1572b6; }
         .icon-js { color: #f7df1e; }
@@ -38,7 +37,7 @@
         .icon-sh { color: #4ebd3a; }
         .icon-sql { color: #00758f; }
         .icon-yaml { color: #cb171e; }
-        .icon-xml { color: #0066b3; }
+        .xml { color: #0066b3; }
 
         #sidebar { transition: transform 0.2s ease, width 0s; }
         #sidebar.collapsed { width: 0px !important; min-width: 0px !important; border-right-width: 0px; }
@@ -49,6 +48,12 @@
         @container (max-width: 170px) {
             #replaceWrapper { flex-direction: column !important; }
             #btnReplaceAll { width: 100% !important; height: 28px; margin-top: 4px; }
+        }
+        
+        /* スクロールバグ改修用：タッチ操作を有効化 */
+        .scrollable-area {
+            touch-action: pan-y !important;
+            -webkit-overflow-scrolling: touch;
         }
     </style>
 </head>
@@ -87,10 +92,10 @@
                         <button onclick="promptNewFile()" class="hover:bg-[#333] p-1 rounded text-white text-xl" title="新規ファイル作成">＋</button>
                     </div>
                 </div>
-                <div id="fileList" class="flex-1 overflow-y-auto no-scrollbar py-2 text-sm md:text-[14px]"></div>
+                <div id="fileList" class="flex-1 overflow-y-auto no-scrollbar py-2 text-sm md:text-[14px] scrollable-area"></div>
             </div>
 
-            <div id="sideViewSearch" class="flex-1 flex flex-col p-3 space-y-3 overflow-y-auto no-scrollbar hidden">
+            <div id="sideViewSearch" class="flex-1 flex flex-col p-3 space-y-3 overflow-y-auto no-scrollbar hidden scrollable-area">
                 <div id="searchContainer" class="w-full space-y-3">
                     <div>
                         <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1">Search</label>
@@ -106,7 +111,7 @@
                 </div>
                 <div class="border-t border-[#333] pt-2">
                     <div id="searchResultsCount" class="text-xs text-gray-400 mb-2 font-medium">0 件のマッチ</div>
-                    <div id="searchResultsList" class="space-y-2 text-xs max-h-[300px] overflow-y-auto no-scrollbar"></div>
+                    <div id="searchResultsList" class="space-y-2 text-xs max-h-[300px] overflow-y-auto no-scrollbar scrollable-area"></div>
                 </div>
             </div>
 
@@ -128,6 +133,8 @@
             <div id="quickInputBar" class="bg-[#2d2d2d] border-b border-[#232324] h-9 px-2 flex items-center space-x-1.5 overflow-x-auto no-scrollbar shrink-0">
                 <button onclick="openLivePreview()" class="bg-emerald-700 hover:bg-emerald-600 text-white text-xs px-2 py-1 rounded transition shrink-0 font-bold flex items-center space-x-1"><span>👀</span><span>プレビュー</span></button>
                 <button onclick="setDiffCheckpoint()" class="bg-indigo-700 hover:bg-indigo-600 text-white text-xs px-2 py-1 rounded transition shrink-0 font-medium flex items-center space-x-1" title="現在の状態を差分の基準点に設定します"><span>📌</span><span>基準設定</span></button>
+                <button onclick="openHistoryModal()" class="bg-amber-700 hover:bg-amber-600 text-white text-xs px-2 py-1 rounded transition shrink-0 font-medium flex items-center space-x-1" title="自動履歴（タイムマシーン）を開く"><span>⏳</span><span>履歴</span></button>
+                <button onclick="formatCodeWithConfirm()" class="bg-purple-700 hover:bg-purple-600 text-white text-xs px-2 py-1 rounded transition shrink-0 font-medium flex items-center space-x-1" title="コードをきれいに整形します"><span>✨</span><span>整形</span></button>
                 <div class="h-4 w-[1px] bg-[#555] shrink-0"></div>
 
                 <button onclick="executeSelectAll()" class="bg-[#444] hover:bg-[#555] text-white text-xs px-2 py-1 rounded transition shrink-0 font-medium">全選択</button>
@@ -154,107 +161,119 @@
                 <button onclick="insertSymbol('=')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">=</button>
             </div>
             
-            <div class="flex-1 relative bg-[#1e1e1e]">
-                <div id="editorLayer" class="view-layer active">
-                    <div id="editorContainer" class="w-full h-full"></div>
-                </div>
+            <div class="flex-1 relative bg-[#1e1e1e] flex flex-col overflow-hidden">
+                <div class="flex-1 relative overflow-hidden">
+                    <div id="editorLayer" class="view-layer active">
+                        <div id="editorContainer" class="w-full h-full"></div>
+                    </div>
 
-                <div id="diffLayer" class="view-layer">
-                    <div id="diffContainer" class="w-full h-full"></div>
-                </div>
+                    <div id="diffLayer" class="view-layer">
+                        <div id="diffContainer" class="w-full h-full"></div>
+                    </div>
 
-                <div id="previewLayer" class="view-layer bg-white">
-                    <iframe id="previewIframe" class="w-full h-full border-none bg-white"></iframe>
-                </div>
+                    <div id="previewLayer" class="view-layer bg-white">
+                        <iframe id="previewIframe" class="w-full h-full border-none bg-white"></iframe>
+                    </div>
 
-                <div id="welcomeLayer" class="view-layer bg-[#1e1e1e] flex flex-col items-center justify-center p-6 text-center">
-                    <div class="max-w-md space-y-6">
-                        <div>
-                            <div class="text-5xl mb-3">🚀</div>
-                            <h2 class="text-2xl font-bold text-white tracking-wide">Web Code Studio Pro</h2>
-                            <p class="text-gray-400 text-xs mt-1">Pocket IDE Environment v12</p>
+                    <div id="welcomeLayer" class="view-layer bg-[#1e1e1e] flex flex-col items-center justify-center p-6 text-center">
+                        <div class="max-w-md space-y-6">
+                            <div>
+                                <div class="text-5xl mb-3">🚀</div>
+                                <h2 class="text-2xl font-bold text-white tracking-wide">Web Code Studio Pro</h2>
+                                <p class="text-gray-400 text-xs mt-1">Pocket IDE Environment v13</p>
+                            </div>
+                            <p class="text-sm text-gray-400 leading-relaxed">
+                                開いているファイルがありません。左のエクスプローラーからファイルを選択するか、新しく作成してコーディングを開始しましょう。
+                            </p>
+                            <div class="pt-2 flex flex-col space-y-2.5 max-w-xs mx-auto text-xs">
+                                <button onclick="promptNewFile()" class="w-full bg-[#0e639c] hover:bg-[#1177bb] text-white py-2.5 rounded font-bold transition flex items-center justify-center space-x-2 shadow-lg">
+                                    <span>📄</span><span>新規ファイルを作成する</span>
+                                </button>
+                                <button onclick="document.getElementById('fileUploadInput').click()" class="w-full bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 border border-[#555] py-2 rounded font-medium transition flex items-center justify-center space-x-2">
+                                    <span>📤</span><span>既存ファイルを読み込む</span>
+                                </button>
+                            </div>
                         </div>
-                        <p class="text-sm text-gray-400 leading-relaxed">
-                            開いているファイルがありません。左のエクスプローラーからファイルを選択するか、新しく作成してコーディングを開始しましょう。
-                        </p>
-                        <div class="pt-2 flex flex-col space-y-2.5 max-w-xs mx-auto text-xs">
-                            <button onclick="promptNewFile()" class="w-full bg-[#0e639c] hover:bg-[#1177bb] text-white py-2.5 rounded font-bold transition flex items-center justify-center space-x-2 shadow-lg">
-                                <span>📄</span><span>新規ファイルを作成する</span>
-                            </button>
-                            <button onclick="document.getElementById('fileUploadInput').click()" class="w-full bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 border border-[#555] py-2 rounded font-medium transition flex items-center justify-center space-x-2">
-                                <span>📤</span><span>既存ファイルを読み込む</span>
-                            </button>
+                    </div>
+
+                    <div id="settingsLayer" class="view-layer bg-[#1e1e1e] p-6 md:p-10 overflow-y-auto text-sm md:text-[15px] scrollable-area">
+                        <h2 class="text-2xl md:text-3xl mb-6 font-light">Settings</h2>
+                        <div class="max-w-xl space-y-8 pb-12">
+                            <section>
+                                <label class="block font-bold mb-2 text-gray-400">Editor: Font Size</label>
+                                <div class="flex items-center space-x-4">
+                                    <input type="range" id="fontSizeRange" min="10" max="30" step="1" oninput="updateSettingsFromUI()" class="flex-1">
+                                    <span id="fontSizeVal" class="w-12 text-center font-bold">16</span>
+                                </div>
+                            </section>
+
+                            <section>
+                                <label class="block font-bold mb-2 text-gray-400">Editor: Tab Size</label>
+                                <select id="tabSizeSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2.5 rounded outline-none text-sm">
+                                    <option value="2">2 スペース</option>
+                                    <option value="4">4 スペース</option>
+                                    <option value="8">8 スペース</option>
+                                </select>
+                            </section>
+
+                            <section>
+                                <label class="block font-bold mb-2 text-gray-400">Editor: Word Wrap</label>
+                                <select id="wordWrapSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2.5 rounded outline-none text-sm">
+                                    <option value="on">on</option>
+                                    <option value="off">off</option>
+                                </select>
+                            </section>
+
+                            <section>
+                                <label class="block font-bold mb-2 text-gray-400">Editor: Line Numbers</label>
+                                <select id="lineNumbersSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2.5 rounded outline-none text-sm">
+                                    <option value="on">on</option>
+                                    <option value="off">off</option>
+                                </select>
+                            </section>
+
+                            <section>
+                                <label class="block font-bold mb-2 text-gray-400">Editor: Minimap</label>
+                                <select id="minimapSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2.5 rounded outline-none text-sm">
+                                    <option value="off">off</option>
+                                    <option value="on">on</option>
+                                </select>
+                            </section>
+
+                            <section>
+                                <label class="block font-bold mb-2 text-gray-400">Files: Auto Save Delay</label>
+                                <div class="flex items-center space-x-4">
+                                    <input type="range" id="autoSaveRange" min="0" max="5000" step="100" oninput="updateSettingsFromUI()" class="flex-1">
+                                    <span id="autoSaveVal" class="w-16 text-center font-bold">500ms</span>
+                                </div>
+                            </section>
+
+                            <section>
+                                <label class="block font-bold mb-2 text-gray-400">Editor: Color Theme</label>
+                                <select id="themeSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2.5 rounded outline-none text-sm">
+                                    <option value="vs-dark">Visual Studio Dark</option>
+                                    <option value="vs-light">Visual Studio Light</option>
+                                    <option value="hc-black">High Contrast</option>
+                                </select>
+                            </section>
+
+                            <section class="pt-6 border-t border-[#333]">
+                                <button onclick="resetAllData()" class="bg-red-900/30 hover:bg-red-900/50 text-red-400 px-4 py-2 rounded text-xs transition">
+                                    すべてのデータを初期化
+                                </button>
+                            </section>
                         </div>
                     </div>
                 </div>
 
-                <div id="settingsLayer" class="view-layer bg-[#1e1e1e] p-6 md:p-10 overflow-y-auto text-sm md:text-[15px]">
-                    <h2 class="text-2xl md:text-3xl mb-6 font-light">Settings</h2>
-                    <div class="max-w-xl space-y-8 pb-12">
-                        <section>
-                            <label class="block font-bold mb-2 text-gray-400">Editor: Font Size</label>
-                            <div class="flex items-center space-x-4">
-                                <input type="range" id="fontSizeRange" min="10" max="30" step="1" oninput="updateSettingsFromUI()" class="flex-1">
-                                <span id="fontSizeVal" class="w-12 text-center font-bold">16</span>
-                            </div>
-                        </section>
-
-                        <section>
-                            <label class="block font-bold mb-2 text-gray-400">Editor: Tab Size</label>
-                            <select id="tabSizeSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2.5 rounded outline-none text-sm">
-                                <option value="2">2 スペース</option>
-                                <option value="4">4 スペース</option>
-                                <option value="8">8 スペース</option>
-                            </select>
-                        </section>
-
-                        <section>
-                            <label class="block font-bold mb-2 text-gray-400">Editor: Word Wrap</label>
-                            <select id="wordWrapSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2.5 rounded outline-none text-sm">
-                                <option value="on">on</option>
-                                <option value="off">off</option>
-                            </select>
-                        </section>
-
-                        <section>
-                            <label class="block font-bold mb-2 text-gray-400">Editor: Line Numbers</label>
-                            <select id="lineNumbersSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2.5 rounded outline-none text-sm">
-                                <option value="on">on</option>
-                                <option value="off">off</option>
-                            </select>
-                        </section>
-
-                        <section>
-                            <label class="block font-bold mb-2 text-gray-400">Editor: Minimap</label>
-                            <select id="minimapSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2.5 rounded outline-none text-sm">
-                                <option value="off">off</option>
-                                <option value="on">on</option>
-                            </select>
-                        </section>
-
-                        <section>
-                            <label class="block font-bold mb-2 text-gray-400">Files: Auto Save Delay</label>
-                            <div class="flex items-center space-x-4">
-                                <input type="range" id="autoSaveRange" min="0" max="5000" step="100" oninput="updateSettingsFromUI()" class="flex-1">
-                                <span id="autoSaveVal" class="w-16 text-center font-bold">500ms</span>
-                            </div>
-                        </section>
-
-                        <section>
-                            <label class="block font-bold mb-2 text-gray-400">Editor: Color Theme</label>
-                            <select id="themeSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2.5 rounded outline-none text-sm">
-                                <option value="vs-dark">Visual Studio Dark</option>
-                                <option value="vs-light">Visual Studio Light</option>
-                                <option value="hc-black">High Contrast</option>
-                            </select>
-                        </section>
-
-                        <section class="pt-6 border-t border-[#333]">
-                            <button onclick="resetAllData()" class="bg-red-900/30 hover:bg-red-900/50 text-red-400 px-4 py-2 rounded text-xs transition">
-                                すべてのデータを初期化
-                            </button>
-                        </section>
+                <div id="consolePanel" class="h-32 bg-[#181818] border-t border-[#2d2d2d] flex flex-col overflow-hidden shrink-0">
+                    <div class="bg-[#202020] h-7 px-3 flex items-center justify-between border-b border-[#2d2d2d] text-[11px] shrink-0 font-bold uppercase tracking-wider text-gray-400">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-emerald-500">💻</span><span>Console Output</span>
+                        </div>
+                        <button onclick="clearVirtualConsole()" class="hover:text-white px-2 py-0.5 rounded bg-[#2d2d2d] transition text-[10px]">Clear</button>
                     </div>
+                    <div id="consoleLogs" class="flex-1 p-2 font-mono text-[11px] overflow-y-auto no-scrollbar space-y-1 bg-[#151515] text-gray-300 scrollable-area"></div>
                 </div>
             </div>
         </main>
@@ -282,21 +301,16 @@
                 <button onclick="closeDownloadModal()" class="text-gray-400 hover:text-white text-lg font-bold px-1">&times;</button>
             </div>
             <div class="p-4 space-y-4">
-                <p class="text-xs text-gray-400 leading-relaxed">
-                    ダウンロードするファイルを選択してください。複数のファイルを選択して個別に保存するか、システム全体の完全なスナップショット（HTML）を書き出せます。
-                </p>
-                
-                <div class="border border-[#3c3c3c] bg-[#1e1e1e] rounded max-h-48 overflow-y-auto no-scrollbar p-2">
+                <div class="border border-[#3c3c3c] bg-[#1e1e1e] rounded max-h-48 overflow-y-auto no-scrollbar p-2 scrollable-area">
                     <div class="flex justify-between items-center border-b border-[#3c3c3c] pb-1.5 mb-1.5 px-1">
                         <span class="text-xs font-bold text-gray-400">対象ファイル一覧</span>
                         <button onclick="toggleAllModalCheckboxes()" class="text-[11px] text-[#007acc] hover:underline font-medium">すべて選択/解除</button>
                     </div>
                     <div id="modalFileList" class="space-y-1.5 text-xs"></div>
                 </div>
-
                 <div class="grid grid-cols-2 gap-3 pt-2">
                     <button onclick="downloadSelectedFilesFromModal()" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-white border border-[#555] py-2.5 rounded text-center transition font-medium text-xs flex items-center justify-center space-x-1.5">
-                        <span>📥</span><span>選択したファイルを保存</span>
+                        <span>📥</span><span>選択ファイルを保存</span>
                     </button>
                     <button onclick="exportSystemSnapshotFromModal()" class="bg-[#0e639c] hover:bg-[#1177bb] text-white py-2.5 rounded text-center transition font-bold text-xs flex items-center justify-center space-x-1.5">
                         <span>📦</span><span>システム全体を一括保存</span>
@@ -306,39 +320,45 @@
         </div>
     </div>
 
+    <div id="historyModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 hidden" onclick="closeHistoryModal()">
+        <div class="bg-[#252526] border border-[#444] rounded-lg w-11/12 max-w-lg overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
+            <div class="bg-[#2d2d2d] px-4 py-3 border-b border-[#333] flex justify-between items-center">
+                <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+                    <span>⏳</span><span>タイムマシーン（履歴自動バックアップ）</span>
+                </h3>
+                <button onclick="closeHistoryModal()" class="text-gray-400 hover:text-white text-lg font-bold px-1">&times;</button>
+            </div>
+            <div class="p-4 space-y-4">
+                <p class="text-xs text-gray-400 leading-relaxed">
+                    3分ごとに自動生成されたバックアップ履歴（最大10世代）です。現在の最新コードを破壊することなく、過去の状態と差分比較したり、その時点へ復元（リバート）できます。
+                </p>
+                <div class="border border-[#3c3c3c] bg-[#1e1e1e] rounded max-h-56 overflow-y-auto no-scrollbar p-1.5 scrollable-area">
+                    <div id="historyList" class="space-y-1.5 text-xs"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const EXT_MAP = {
-            'html': 'html', 'js': 'javascript', 'css': 'css',
-            'py': 'python', 'json': 'json',
-            'cpp': 'cpp', 'cc': 'cpp', 'h': 'cpp', 'hpp': 'cpp',
-            'cs': 'csharp', 'md': 'markdown', 'ts': 'typescript', 
-            'txt': 'plaintext', 'sh': 'shell', 'bash': 'shell',
-            'sql': 'sql', 'yaml': 'yaml', 'yml': 'yaml', 'xml': 'xml'
+            'html': 'html', 'js': 'javascript', 'css': 'css', 'py': 'python', 'json': 'json',
+            'cpp': 'cpp', 'cc': 'cpp', 'h': 'cpp', 'hpp': 'cpp', 'cs': 'csharp', 'md': 'markdown',
+            'ts': 'typescript', 'txt': 'plaintext', 'sh': 'shell', 'bash': 'shell', 'sql': 'sql',
+            'yaml': 'yaml', 'yml': 'yaml', 'xml': 'xml'
         };
 
         let projectData = {
             files: {
-                "main.js": { content: "// Welcome to WebStudio Pro\nconsole.log('Happy Coding!');", lang: "javascript" },
+                "main.js": { content: "// Welcome to WebStudio Pro\nconsole.log('Happy Coding!');\n\nfunction test() {\nconsole.log('インデント自動整形のテスト用です');\n}", lang: "javascript" },
                 "src/index.html": { content: "<!DOCTYPE html>\n<html>\n<head>\n  <link rel='stylesheet' href='styles/app.css'>\n</head>\n<body>\n  <h1>Hello World</h1>\n  <script src='../main.js'><\/script>\n</body>\n</html>", lang: "html" },
                 "src/styles/app.css": { content: "body { background: #111; color: #007acc; text-align: center; padding-top: 50px; }", lang: "css" }
             },
-            settings: {
-                fontSize: 16,
-                tabSize: 4,
-                wordWrap: "on",
-                lineNumbers: "on",
-                minimap: "off",
-                autoSaveDelay: 500,
-                theme: "vs-dark",
-                sidebarWidth: 200
-            },
-            foldersExpanded: {
-                "src": true,
-                "src/styles": true
-            },
+            settings: { fontSize: 16, tabSize: 4, wordWrap: "on", lineNumbers: "on", minimap: "off", autoSaveDelay: 500, theme: "vs-dark", sidebarWidth: 200 },
+            foldersExpanded: { "src": true, "src/styles": true },
             openTabs: ["main.js", "src/index.html", "src/styles/app.css"],
-            // 差分の基準点を保存するオブジェクト
-            diffCheckpoints: {}
+            diffCheckpoints: {},
+            // タイムマシーン履歴管理（配列）
+            timeMachine: []
         };
 
         let activeTab = "main.js";
@@ -350,6 +370,34 @@
         let selectedFiles = new Set();
         let currentSidebarView = 'explorer';
         let wakeLock = null;
+
+        // 仮想コンソールフックシステム
+        (function() {
+            window.addEventListener('message', function(e) {
+                if (e.data && e.data.type === 'VIRTUAL_CONSOLE') {
+                    const logsContainer = document.getElementById("consoleLogs");
+                    if (!logsContainer) return;
+                    
+                    const logRow = document.createElement("div");
+                    if (e.data.method === 'error') {
+                        logRow.className = "text-red-400 bg-red-950/20 px-2 py-0.5 border-l-2 border-red-500 font-bold break-all";
+                    } else if (e.data.method === 'warn') {
+                        logRow.className = "text-yellow-400 bg-yellow-950/20 px-2 py-0.5 border-l-2 border-yellow-500 break-all";
+                    } else {
+                        logRow.className = "text-gray-300 px-2 py-0.5 border-l-2 border-gray-600 break-all";
+                    }
+                    
+                    const timeStr = new Date().toLocaleTimeString();
+                    logRow.innerText = `[${timeStr}] ${e.data.args.join(' ')}`;
+                    logsContainer.appendChild(logRow);
+                    logsContainer.scrollTop = logsContainer.scrollHeight;
+                }
+            });
+        })();
+
+        function clearVirtualConsole() {
+            document.getElementById("consoleLogs").innerHTML = `<div class="text-gray-500 italic text-[10px]">Console cleared.</div>`;
+        }
 
         require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' } });
         
@@ -396,11 +444,9 @@
             editor.onDidChangeCursorSelection((e) => {
                 const position = editor.getPosition();
                 document.getElementById('cursorPos').innerText = `Ln ${position.lineNumber}, Col ${position.column}`;
-                
                 const selection = e.selection;
                 if (selection && !selection.isEmpty()) {
-                    const model = editor.getModel();
-                    const selectedText = model.getValueInRange(selection);
+                    const selectedText = editor.getModel().getValueInRange(selection);
                     const el = document.getElementById('statSelected');
                     el.innerText = `${selectedText.length} selected`;
                     el.classList.remove('hidden');
@@ -413,50 +459,143 @@
             setupWakeLock();
             renderUI();
             switchTab(activeTab);
+            
+            // タイムマシーン自動定期バックアップ（3分ごと）
+            setInterval(triggerTimeMachineBackup, 180000);
         });
+
+        // タイムマシーン：自動バックアップ実行ロジック
+        function triggerTimeMachineBackup() {
+            if (editor && projectData.files[activeTab] && !isSpecialActive()) {
+                projectData.files[activeTab].content = editor.getValue();
+            }
+            
+            const snapshot = {
+                timestamp: Date.now(),
+                files: JSON.parse(JSON.stringify(projectData.files))
+            };
+            
+            if (!projectData.timeMachine) projectData.timeMachine = [];
+            projectData.timeMachine.unshift(snapshot);
+            
+            // 最大10世代制限
+            if (projectData.timeMachine.length > 10) {
+                projectData.timeMachine.pop();
+            }
+            saveData();
+        }
+
+        function openHistoryModal() {
+            const listEl = document.getElementById("historyList");
+            listEl.innerHTML = "";
+            
+            if (!projectData.timeMachine || projectData.timeMachine.length === 0) {
+                listEl.innerHTML = `<div class="text-gray-500 italic p-3 text-center">まだ自動履歴履歴が存在しません。 (3分ごとに自動巡回生成されます)</div>`;
+                document.getElementById("historyModal").classList.remove("hidden");
+                return;
+            }
+            
+            projectData.timeMachine.forEach((snap, idx) => {
+                const timeStr = new Date(snap.timestamp).toLocaleString();
+                const fileCount = Object.keys(snap.files).length;
+                
+                const row = document.createElement("div");
+                row.className = "bg-[#252526] p-2 rounded border border-[#3c3c3c] flex items-center justify-between space-x-2";
+                row.innerHTML = `
+                    <div class="flex flex-col min-w-0">
+                        <span class="font-bold text-gray-200">${timeStr} <span class="text-[10px] text-amber-500 bg-amber-950/40 px-1 rounded ml-1">Gen ${idx+1}</span></span>
+                        <span class="text-[11px] text-gray-400 mt-0.5 truncate">ワークスペース内スナップショット (${fileCount} 個のファイル)</span>
+                    </div>
+                    <div class="flex items-center space-x-1.5 shrink-0">
+                        <button onclick="viewHistoryDiff(${idx})" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-white px-2 py-1 rounded text-[11px] transition">差分</button>
+                        <button onclick="restoreHistorySnapshot(${idx})" class="bg-amber-700 hover:bg-amber-600 text-white px-2 py-1 rounded text-[11px] font-bold transition">復元</button>
+                    </div>
+                `;
+                listEl.appendChild(row);
+            });
+            document.getElementById("historyModal").classList.remove("hidden");
+        }
+
+        function closeHistoryModal() { document.getElementById("historyModal").classList.add("hidden"); }
+
+        function viewHistoryDiff(idx) {
+            const snap = projectData.timeMachine[idx];
+            if (!snap || !snap.files[activeTab]) {
+                alert("この履歴データ内に対象ファイルが存在しないため比較できません。");
+                return;
+            }
+            closeHistoryModal();
+            
+            const originalContent = snap.files[activeTab].content;
+            const currentContent = projectData.files[activeTab].content;
+            const fileLang = projectData.files[activeTab].lang;
+
+            const originalModel = monacoInstance.editor.createModel(originalContent, fileLang);
+            const modifiedModel = monacoInstance.editor.createModel(currentContent, fileLang);
+            diffEditor.setModel({ original: originalModel, modified: modifiedModel });
+
+            if (originalModelForDiff) originalModelForDiff.dispose();
+            originalModelForDiff = originalModel;
+
+            switchTab("__diff__");
+            document.getElementById("topFileName").innerText = `Diff: 履歴世代との比較`;
+        }
+
+        function restoreHistorySnapshot(idx) {
+            if (!confirm("本当にこの世代の状態へワークスペース全体を復元しますか？\n（現在の最新コードは上書きされます）")) return;
+            const snap = projectData.timeMachine[idx];
+            if (!snap) return;
+            
+            projectData.files = JSON.parse(JSON.stringify(snap.files));
+            saveData();
+            closeHistoryModal();
+            
+            // 現在のモデル達を全てリフレッシュ破棄
+            monacoInstance.editor.getModels().forEach(m => m.dispose());
+            switchTab(activeTab);
+            alert("タイムマシーン：指定世代への復元が完了しました。");
+        }
+
+        // 新機能：実行前確認ダイアログ付き自動整形（Prettier風コアロジック）
+        function formatCodeWithConfirm() {
+            if (isSpecialActive() || !projectData.files[activeTab]) return;
+            
+            if (confirm("✨ コードを自動整形（フォーマット）しますか？\n（インデント構造が上書きされます）")) {
+                editor.getAction('editor.action.formatDocument').run().then(() => {
+                    const status = document.getElementById("statusInfo");
+                    status.innerText = "✨ Formatted Successfully";
+                    setTimeout(() => { status.innerText = "Ready"; }, 1500);
+                });
+            }
+        }
 
         async function setupWakeLock() {
             if ('wakeLock' in navigator) {
                 try {
                     wakeLock = await navigator.wakeLock.request('visibility');
-                    document.getElementById("wakeLockStatus").innerHTML = "<span>☕</span><span class='hidden sm:inline'>Awake</span>";
                     document.addEventListener('visibilitychange', async () => {
-                        if (wakeLock !== null && document.visibilityState === 'visible') {
-                            wakeLock = await navigator.wakeLock.request('visibility');
-                        }
+                        if (wakeLock !== null && document.visibilityState === 'visible') wakeLock = await navigator.wakeLock.request('visibility');
                     });
-                } catch (err) {
-                    document.getElementById("wakeLockStatus").classList.add("hidden");
-                }
-            } else {
-                document.getElementById("wakeLockStatus").classList.add("hidden");
+                } catch (e) {}
             }
         }
 
         function executeSelectAll() {
             if (!editor || isSpecialActive()) return;
             const model = editor.getModel();
-            const lastLine = model.getLineCount();
-            const lastColumn = model.getLineMaxColumn(lastLine);
-            editor.setSelection(new monacoInstance.Selection(1, 1, lastLine, lastColumn));
+            editor.setSelection(new monacoInstance.Selection(1, 1, model.getLineCount(), model.getLineMaxColumn(model.getLineCount())));
             editor.focus();
         }
 
         function executeCopyAll() {
             if (!editor || isSpecialActive()) return;
-            const content = editor.getValue();
-            navigator.clipboard.writeText(content).then(() => {
-                const status = document.getElementById("statusInfo");
-                status.innerText = "Copied All Text!";
-                setTimeout(() => { status.innerText = "Ready"; }, 1500);
-            }).catch(() => {
-                alert("コピーに失敗しました。");
+            navigator.clipboard.writeText(editor.getValue()).then(() => {
+                document.getElementById("statusInfo").innerText = "Copied All Text!";
+                setTimeout(() => { document.getElementById("statusInfo").innerText = "Ready"; }, 1500);
             });
         }
 
-        function isSpecialActive() {
-            return activeTab === "__settings__" || activeTab === "__diff__" || activeTab === "__welcome__" || activeTab === "__preview__";
-        }
+        function isSpecialActive() { return activeTab === "__settings__" || activeTab === "__diff__" || activeTab === "__welcome__" || activeTab === "__preview__"; }
 
         function insertSymbol(sym) {
             if (!editor || isSpecialActive()) return;
@@ -466,22 +605,12 @@
             let targetSelection = null;
 
             if (sym.length === 2 && ['<>', '{}', '[]', '()', '""', "''"].includes(sym)) {
-                const open = sym[0];
-                const close = sym[1];
-                textToInsert = open + selectedText + close;
-                targetSelection = new monacoInstance.Selection(
-                    selection.startLineNumber, selection.startColumn + 1,
-                    selection.endLineNumber, selection.endColumn + 1
-                );
+                textToInsert = sym[0] + selectedText + sym[1];
+                targetSelection = new monacoInstance.Selection(selection.startLineNumber, selection.startColumn + 1, selection.endLineNumber, selection.endColumn + 1);
             }
 
-            const range = new monacoInstance.Range(
-                selection.startLineNumber, selection.startColumn,
-                selection.endLineNumber, selection.endColumn
-            );
-
-            const op = { identifier: { major: 1, minor: 1 }, range: range, text: textToInsert, forceMoveMarkers: true };
-            editor.executeEdits("source", [op]);
+            const range = new monacoInstance.Range(selection.startLineNumber, selection.startColumn, selection.endLineNumber, selection.endColumn);
+            editor.executeEdits("source", [{ identifier: { major: 1, minor: 1 }, range: range, text: textToInsert, forceMoveMarkers: true }]);
             if (targetSelection) editor.setSelection(targetSelection);
             editor.focus();
         }
@@ -489,15 +618,10 @@
         function insertTemplate() {
             if (!editor || isSpecialActive()) return;
             const htmlTemplate = `<!DOCTYPE html>\n<html lang="ja">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>Document</title>\n</head>\n<body>\n    \n</body>\n</html>`;
-
             if (confirm("カーソル位置にHTMLの標準雛形を挿入しますか？")) {
                 const selection = editor.getSelection();
-                const range = new monacoInstance.Range(
-                    selection.startLineNumber, selection.startColumn,
-                    selection.endLineNumber, selection.endColumn
-                );
-                const op = { identifier: { major: 1, minor: 1 }, range: range, text: htmlTemplate, forceMoveMarkers: true };
-                editor.executeEdits("source", [op]);
+                const range = new monacoInstance.Range(selection.startLineNumber, selection.startColumn, selection.endLineNumber, selection.endColumn);
+                editor.executeEdits("source", [{ identifier: { major: 1, minor: 1 }, range: range, text: htmlTemplate, forceMoveMarkers: true }]);
                 editor.focus();
             }
         }
@@ -627,28 +751,20 @@
             renderUI();
         }
 
-        // 新機能：現在の状態を「差分の基準」として明示的に記憶する
         function setDiffCheckpoint() {
-            if (isSpecialActive() || !projectData.files[activeTab]) {
-                alert("現在開いているファイルの基準点を設定できません。");
-                return;
-            }
+            if (isSpecialActive() || !projectData.files[activeTab]) return alert("対象外のタブです。");
             if (editor) projectData.files[activeTab].content = editor.getValue();
             projectData.diffCheckpoints[activeTab] = projectData.files[activeTab].content;
             saveData();
-
-            const status = document.getElementById("statusInfo");
-            status.innerText = "📌 差分の基準点を記憶しました！";
-            setTimeout(() => { status.innerText = "Ready"; }, 1500);
+            document.getElementById("statusInfo").innerText = "📌 差分の基準点を記憶しました！";
+            setTimeout(() => { document.getElementById("statusInfo").innerText = "Ready"; }, 1500);
         }
 
         function openDiffMode(path) {
             if (!monacoInstance || !projectData.files[path]) return;
-            
-            // ユーザーが設定したチェックポイントがあればそれを使い、なければ前回のロード時の生データをフォールバック
             let originalContent = projectData.diffCheckpoints[path];
             if (originalContent === undefined) {
-                const rawData = localStorage.getItem("webstudio_pro_v12");
+                const rawData = localStorage.getItem("webstudio_pro_v13");
                 if (rawData) {
                     const parsed = JSON.parse(rawData);
                     if (parsed.files[path]) originalContent = parsed.files[path].content;
@@ -656,21 +772,16 @@
                 if (originalContent === undefined) originalContent = projectData.files[path].content;
             }
 
-            const currentContent = projectData.files[path].content;
-            const fileLang = projectData.files[path].lang;
-
-            const originalModel = monacoInstance.editor.createModel(originalContent, fileLang);
-            const modifiedModel = monacoInstance.editor.createModel(currentContent, fileLang);
+            const originalModel = monacoInstance.editor.createModel(originalContent, projectData.files[path].lang);
+            const modifiedModel = monacoInstance.editor.createModel(projectData.files[path].content, projectData.files[path].lang);
             diffEditor.setModel({ original: originalModel, modified: modifiedModel });
 
             if (originalModelForDiff) originalModelForDiff.dispose();
             originalModelForDiff = originalModel;
-
             switchTab("__diff__");
-            document.getElementById("topFileName").innerText = `Diff: ${path}`;
         }
 
-        // 新機能：Webプロジェクトのリアルタイム仮想プレビューを生成
+        // プレビュー＆インライン・バーチャルコンソール連携スクリプトの埋め込み
         function openLivePreview() {
             if (editor && projectData.files[activeTab] && !isSpecialActive()) {
                 projectData.files[activeTab].content = editor.getValue();
@@ -678,33 +789,51 @@
             }
 
             let htmlContent = "";
-            // 最も階層の浅いHTML、または現在開いているHTMLを探索
             const htmlFiles = Object.keys(projectData.files).filter(p => p.endsWith(".html"));
             if (htmlFiles.length > 0) {
-                const targetHtml = htmlFiles.includes(activeTab) ? activeTab : htmlFiles[0];
-                htmlContent = projectData.files[targetHtml].content;
+                htmlContent = htmlFiles.includes(activeTab) ? projectData.files[activeTab].content : projectData.files[htmlFiles[0]].content;
             } else {
-                htmlContent = "<!DOCTYPE html><html><body><h1 style='color:#333;font-family:sans-serif;text-align:center;margin-top:50px;'>HTMLファイルが見つかりません</h1></body></html>";
+                htmlContent = "<!DOCTYPE html><html><body><h1 style='color:#666;text-align:center;padding-top:40px;'>HTMLファイルがありません</h1></body></html>";
             }
 
-            // ワークスペース内の全てのCSSとJSを集約して仮想インジェクション
             let cssBundle = "";
             let jsBundle = "";
             Object.keys(projectData.files).forEach(path => {
-                if (path.endsWith(".css")) cssBundle += `\n/* --- ${path} --- */\n` + projectData.files[path].content;
-                if (path.endsWith(".js")) jsBundle += `\n// --- ${path} ---\n` + projectData.files[path].content;
+                if (path.endsWith(".css")) cssBundle += `\n/* ${path} */\n` + projectData.files[path].content;
+                if (path.endsWith(".js")) jsBundle += `\n// ${path}\n` + projectData.files[path].content;
             });
 
-            // iframe用のソースコードを組み立て
-            let finalSource = htmlContent;
-            if (cssBundle) {
-                finalSource = finalSource.replace("</head>", `<style>${cssBundle}</style></head>`);
-                if (!finalSource.includes("<style>")) finalSource += `<style>${cssBundle}</style>`;
-            }
-            if (jsBundle) {
-                finalSource = finalSource.replace("</body>", `<script>${jsBundle}<\/script></body>`);
-                if (!finalSource.includes("<script>")) finalSource += `<script>${jsBundle}<\/script>`;
-            }
+            // 仮想インジェクション：親ウィンドウのメッセージ通信へログをパス転送するカスタムインターセプター
+            const consoleHookScript = `
+                <script>
+                    (function() {
+                        function sendLog(method, args) {
+                            window.parent.postMessage({
+                                type: 'VIRTUAL_CONSOLE',
+                                method: method,
+                                args: Array.from(args).map(v => typeof v === 'object' ? JSON.stringify(v) : String(v))
+                            }, '*');
+                        }
+                        const _log = console.log;
+                        const _error = console.error;
+                        const _warn = console.warn;
+                        
+                        console.log = function() { sendLog('log', arguments); _log.apply(console, arguments); };
+                        console.error = function() { sendLog('error', arguments); _error.apply(console, arguments); };
+                        console.warn = function() { sendLog('warn', arguments); _warn.apply(console, arguments); };
+                        
+                        window.addEventListener('error', function(e) {
+                            window.parent.postMessage({ type: 'VIRTUAL_CONSOLE', method: 'error', args: [e.message + ' (at ' + e.filename + ':' + e.lineno + ')'] }, '*');
+                        });
+                    })();
+                <\/script>
+            `;
+
+            let finalSource = htmlContent.replace("<head>", `<head>${consoleHookScript}<style>${cssBundle}</style>`);
+            if (!finalSource.includes("<head>")) finalSource = consoleHookScript + `<style>${cssBundle}</style>` + finalSource;
+            
+            finalSource = finalSource.replace("</body>", `<script>${jsBundle}<\/script></body>`);
+            if (!finalSource.includes("</body>")) finalSource += `<script>${jsBundle}<\/script>`;
 
             switchTab("__preview__");
             
@@ -716,41 +845,28 @@
         }
 
         function switchTab(target) {
-            if (projectData.files[target] && !projectData.openTabs.includes(target)) {
-                projectData.openTabs.push(target);
-            }
-            
+            if (projectData.files[target] && !projectData.openTabs.includes(target)) projectData.openTabs.push(target);
             activeTab = target;
-            const layers = {
-                editor: document.getElementById("editorLayer"),
-                diff: document.getElementById("diffLayer"),
-                preview: document.getElementById("previewLayer"),
-                welcome: document.getElementById("welcomeLayer"),
-                settings: document.getElementById("settingsLayer")
-            };
-            const topFileName = document.getElementById("topFileName");
-
+            
+            const layers = { editor: document.getElementById("editorLayer"), diff: document.getElementById("diffLayer"), preview: document.getElementById("previewLayer"), welcome: document.getElementById("welcomeLayer"), settings: document.getElementById("settingsLayer") };
             Object.values(layers).forEach(l => l.classList.remove("active"));
+            
+            const topFileName = document.getElementById("topFileName");
 
             if (target === "__settings__") {
                 layers.settings.classList.add("active");
                 topFileName.innerText = "Settings";
                 syncSettingsUI();
-                updateFooterCounters();
             } else if (target === "__diff__") {
                 layers.diff.classList.add("active");
                 document.getElementById("langDisplay").innerText = "Diff Viewer";
-                updateFooterCounters();
             } else if (target === "__preview__") {
                 layers.preview.classList.add("active");
                 topFileName.innerText = "Live Preview";
                 document.getElementById("langDisplay").innerText = "Browser Container";
-                updateFooterCounters();
             } else if (target === "__welcome__") {
                 layers.welcome.classList.add("active");
                 topFileName.innerText = "Welcome";
-                document.getElementById("langDisplay").innerText = "Welcome";
-                updateFooterCounters();
             } else {
                 const file = projectData.files[target];
                 if (file && editor) {
@@ -760,17 +876,14 @@
                     if (!model) model = monacoInstance.editor.createModel(file.content, file.lang, monacoInstance.Uri.file(target));
                     editor.setModel(model);
                     document.getElementById("langDisplay").innerText = file.lang;
-                    updateFooterCounters();
                 } else {
                     activeTab = "__welcome__";
                     layers.welcome.classList.add("active");
-                    topFileName.innerText = "Welcome";
-                    document.getElementById("langDisplay").innerText = "Welcome";
-                    updateFooterCounters();
                 }
             }
             saveData();
             renderUI();
+            updateFooterCounters();
         }
 
         function closeTab(name) {
@@ -779,26 +892,19 @@
                 else renderUI();
                 return;
             }
-
             projectData.openTabs = projectData.openTabs.filter(t => t !== name);
             saveData();
-
             if (activeTab === name) fallbackToRemainingTab();
             else renderUI();
         }
 
         function fallbackToRemainingTab() {
-            if (projectData.openTabs.length > 0) {
-                switchTab(projectData.openTabs[projectData.openTabs.length - 1]);
-            } else {
-                switchTab("__welcome__");
-            }
+            if (projectData.openTabs.length > 0) switchTab(projectData.openTabs[projectData.openTabs.length - 1]);
+            else switchTab("__welcome__");
         }
 
         function openDownloadModal() {
-            if (editor && projectData.files[activeTab] && !isSpecialActive()) {
-                projectData.files[activeTab].content = editor.getValue();
-            }
+            if (editor && projectData.files[activeTab] && !isSpecialActive()) projectData.files[activeTab].content = editor.getValue();
             const listEl = document.getElementById("modalFileList");
             listEl.innerHTML = "";
             Object.keys(projectData.files).forEach(path => {
@@ -812,13 +918,10 @@
         }
 
         function closeDownloadModal() { document.getElementById("downloadModal").classList.add("hidden"); }
-
         function handleModalCheckboxChange(cb) {
             const path = cb.getAttribute("data-path");
-            if (cb.checked) selectedFiles.add(path);
-            else selectedFiles.delete(path);
+            if (cb.checked) selectedFiles.add(path); else selectedFiles.delete(path);
         }
-
         function toggleAllModalCheckboxes() {
             const checkboxes = document.querySelectorAll("#modalFileList input[type='checkbox']");
             const allChecked = Array.from(checkboxes).every(cb => cb.checked);
@@ -826,50 +929,41 @@
         }
 
         function downloadSelectedFilesFromModal() {
-            if (selectedFiles.size === 0) return alert("ダウンロードするファイルにチェックを入れてください。");
+            if (selectedFiles.size === 0) return alert("ファイルを選択してください。");
             selectedFiles.forEach(name => {
-                const file = projectData.files[name];
-                if (!file) return;
-                const blob = new Blob([file.content], { type: "text/plain;charset=utf-8" });
+                const blob = new Blob([projectData.files[name].content], { type: "text/plain;charset=utf-8" });
                 const a = document.createElement("a");
                 a.href = URL.createObjectURL(blob);
                 a.download = name.replace(/\//g, '_');
                 a.click();
-                URL.revokeObjectURL(a.href);
             });
             closeDownloadModal();
         }
 
         function exportSystemSnapshotFromModal() {
             saveData();
-            const html = document.documentElement.outerHTML;
-            const blob = new Blob([html], { type: "text/html" });
+            const blob = new Blob([document.documentElement.outerHTML], { type: "text/html" });
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
-            a.download = "WebStudio_Pro_v12.html";
+            a.download = "WebStudio_Pro_v13.html";
             a.click();
-            URL.revokeObjectURL(a.href);
             closeDownloadModal();
         }
 
         function promptNewFile(basePath = "") {
-            let name = prompt("作成するファイル名を入力してください:");
+            let name = prompt("ファイル名を入力してください:");
             if (!name) return;
             let fullPath = basePath ? `${basePath}/${name}` : name;
             fullPath = fullPath.replace(/\/+/g, '/').replace(/^\//, '');
-
-            if (projectData.files[fullPath]) return alert("そのファイルは既に存在します");
+            if (projectData.files[fullPath]) return alert("既に存在します");
             
-            const ext = fullPath.split('.').pop().toLowerCase();
-            projectData.files[fullPath] = { content: "", lang: EXT_MAP[ext] || 'plaintext' };
-            
-            if (!projectData.openTabs.includes(fullPath)) projectData.openTabs.push(fullPath);
+            projectData.files[fullPath] = { content: "", lang: EXT_MAP[fullPath.split('.').pop().toLowerCase()] || 'plaintext' };
             saveData();
             switchTab(fullPath);
         }
 
         function promptNewFolder() {
-            let name = prompt("作成するフォルダー名を入力してください:");
+            let name = prompt("フォルダー名を入力してください:");
             if (!name) return;
             name = name.replace(/\/+/g, '/').replace(/^\//, '').replace(/\/$/, '');
             projectData.foldersExpanded[name] = true;
@@ -878,11 +972,9 @@
         }
 
         function deleteFolder(folderPath) {
-            if (!confirm(`フォルダー内の全てのファイルも同時に削除されますがよろしいですか？`)) return;
+            if (!confirm(`フォルダ内すべてのファイルが削除されますがよろしいですか？`)) return;
             Object.keys(projectData.files).forEach(path => {
-                if (path.startsWith(folderPath + '/')) {
-                    executeActualFileDeletion(path);
-                }
+                if (path.startsWith(folderPath + '/')) executeActualFileDeletion(path);
             });
             delete projectData.foldersExpanded[folderPath];
             saveData();
@@ -890,7 +982,7 @@
         }
 
         function deleteFile(name) {
-            if (!confirm(`${name} を完全に削除しますか？`)) return;
+            if (!confirm(`${name} を削除しますか？`)) return;
             executeActualFileDeletion(name);
             saveData();
             refreshWorkspaceAfterDeletion();
@@ -909,77 +1001,42 @@
             if (projectData.openTabs.length > 0) {
                 if (!projectData.files[activeTab]) switchTab(projectData.openTabs[projectData.openTabs.length - 1]);
                 else renderUI();
-            } else {
-                switchTab("__welcome__");
-            }
+            } else switchTab("__welcome__");
         }
 
         function promptRenameFile(oldPath) {
-            const newPath = prompt(`新しいファイルパスを入力してください:`, oldPath);
+            const newPath = prompt(`新しいファイルパスを入力:`, oldPath);
             if (!newPath || newPath === oldPath) return;
-            if (projectData.files[newPath]) return alert("そのファイルパスは既に存在します");
+            if (projectData.files[newPath]) return alert("既に存在します");
 
-            const ext = newPath.split('.').pop().toLowerCase();
-            projectData.files[newPath] = { content: projectData.files[oldPath].content, lang: EXT_MAP[ext] || 'plaintext' };
-            if (projectData.diffCheckpoints[oldPath] !== undefined) {
-                projectData.diffCheckpoints[newPath] = projectData.diffCheckpoints[oldPath];
-                delete projectData.diffCheckpoints[oldPath];
-            }
-            delete projectData.files[oldPath];
-
-            projectData.openTabs = projectData.openTabs.map(t => t === oldPath ? newPath : t);
-            if (selectedFiles.has(oldPath)) { selectedFiles.delete(oldPath); selectedFiles.add(newPath); }
-
-            const oldModel = monacoInstance.editor.getModels().find(m => m.uri.path === `/${oldPath}`);
-            if (oldModel) oldModel.dispose();
-
+            projectData.files[newPath] = { content: projectData.files[oldPath].content, lang: EXT_MAP[newPath.split('.').pop().toLowerCase()] || 'plaintext' };
+            if (projectData.diffCheckpoints[oldPath] !== undefined) projectData.diffCheckpoints[newPath] = projectData.diffCheckpoints[oldPath];
+            executeActualFileDeletion(oldPath);
             saveData();
-            if (activeTab === oldPath) switchTab(newPath);
-            else renderUI();
+            switchTab(newPath);
         }
 
-        // 新機能：フォルダ構造・パスの再帰的リネーム機能
         function promptRenameFolder(oldFolderPath) {
-            const newFolderPath = prompt(`新しいフォルダ名（パス）を入力してください:`, oldFolderPath);
+            const newFolderPath = prompt(`新しいフォルダパスを入力:`, oldFolderPath);
             if (!newFolderPath || newFolderPath === oldFolderPath) return;
 
             const updatedFiles = {};
-            const updatedCheckpoints = {};
-
             Object.keys(projectData.files).forEach(path => {
-                if (path === oldFolderPath || path.startsWith(oldFolderPath + '/')) {
-                    const relativePart = path.substring(oldFolderPath.length);
-                    const newPath = newFolderPath + relativePart;
+                if (path.startsWith(oldFolderPath + '/')) {
+                    const newPath = newFolderPath + path.substring(oldFolderPath.length);
                     updatedFiles[newPath] = projectData.files[path];
-                    
-                    if (projectData.diffCheckpoints[path] !== undefined) {
-                        updatedCheckpoints[newPath] = projectData.diffCheckpoints[path];
-                    }
-
-                    // Monacoの旧モデルを破棄
-                    const oldModel = monacoInstance.editor.getModels().find(m => m.uri.path === `/${path}`);
-                    if (oldModel) oldModel.dispose();
-
-                    // オープン中タブの書き換え
                     projectData.openTabs = projectData.openTabs.map(t => t === path ? newPath : t);
                     if (activeTab === path) activeTab = newPath;
-                } else {
-                    updatedFiles[path] = projectData.files[path];
-                    if (projectData.diffCheckpoints[path] !== undefined) {
-                        updatedCheckpoints[path] = projectData.diffCheckpoints[path];
-                    }
-                }
+                    const model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${path}`);
+                    if (model) model.dispose();
+                } else updatedFiles[path] = projectData.files[path];
             });
 
             projectData.files = updatedFiles;
-            projectData.diffCheckpoints = updatedCheckpoints;
-
-            // フォルダ展開状態の移行
             if (projectData.foldersExpanded[oldFolderPath] !== undefined) {
                 projectData.foldersExpanded[newFolderPath] = projectData.foldersExpanded[oldFolderPath];
                 delete projectData.foldersExpanded[oldFolderPath];
             }
-
             saveData();
             switchTab(activeTab);
         }
@@ -987,72 +1044,45 @@
         function toggleSidebar() {
             const sidebar = document.getElementById("sidebar");
             const resizer = document.getElementById("resizer");
-            if (sidebar.classList.contains("collapsed")) {
-                sidebar.classList.remove("collapsed");
-                resizer.classList.remove("hidden");
-            } else {
-                sidebar.classList.add("collapsed");
-                resizer.classList.add("hidden");
-            }
+            if (sidebar.classList.contains("collapsed")) { sidebar.classList.remove("collapsed"); resizer.classList.remove("hidden"); }
+            else { sidebar.classList.add("collapsed"); resizer.classList.add("hidden"); }
             if (editor) editor.layout();
         }
 
         function applySidebarWidth(targetWidth) {
             const sidebar = document.getElementById("sidebar");
-            const windowWidth = window.innerWidth;
-            const minW = Math.floor(windowWidth * 0.125);
-            const maxW = Math.floor(windowWidth * 0.5);
-            let finalWidth = targetWidth;
-            if (finalWidth < minW) finalWidth = minW;
-            if (finalWidth > maxW) finalWidth = maxW;
+            const minW = Math.floor(window.innerWidth * 0.125), maxW = Math.floor(window.innerWidth * 0.5);
+            let finalWidth = Math.max(minW, Math.min(targetWidth, maxW));
             sidebar.style.width = finalWidth + "px";
             projectData.settings.sidebarWidth = finalWidth;
         }
 
         function setupResizer() {
-            const resizer = document.getElementById("resizer");
-            const sidebar = document.getElementById("sidebar");
+            const resizer = document.getElementById("resizer"), sidebar = document.getElementById("sidebar");
             let isResizing = false;
-
-            function startResize() { isResizing = true; resizer.classList.add("resizing"); document.body.style.cursor = "col-resize"; }
+            function startResize() { isResizing = true; resizer.classList.add("resizing"); }
             function resize(e) {
                 if (!isResizing) return;
-                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                applySidebarWidth(clientX - sidebar.getBoundingClientRect().left);
+                applySidebarWidth((e.touches ? e.touches[0].clientX : e.clientX) - sidebar.getBoundingClientRect().left);
                 if (editor) editor.layout();
             }
-            function stopResize() {
-                if (!isResizing) return;
-                isResizing = false;
-                resizer.classList.remove("resizing");
-                document.body.style.cursor = "default";
-                saveData();
-            }
-            resizer.addEventListener("mousedown", startResize);
-            document.addEventListener("mousemove", resize);
-            document.addEventListener("mouseup", stopResize);
-            resizer.addEventListener("touchstart", startResize);
-            document.addEventListener("touchmove", resize);
-            document.addEventListener("touchend", stopResize);
+            function stopResize() { if (!isResizing) { isResizing = false; resizer.classList.remove("resizing"); saveData(); } }
+            resizer.addEventListener("mousedown", startResize); document.addEventListener("mousemove", resize); document.addEventListener("mouseup", stopResize);
+            resizer.addEventListener("touchstart", startResize); document.addEventListener("touchmove", resize); document.addEventListener("touchend", stopResize);
         }
 
         window.addEventListener('resize', () => { if (projectData?.settings) applySidebarWidth(projectData.settings.sidebarWidth); });
 
         function switchSidebarView(view) {
             currentSidebarView = view;
-            const expView = document.getElementById("sideViewExplorer");
-            const scrView = document.getElementById("sideViewSearch");
-            const btnExp = document.getElementById("btnNavExplorer");
-            const btnScr = document.getElementById("btnNavSearch");
-
+            const expView = document.getElementById("sideViewExplorer"), scrView = document.getElementById("sideViewSearch");
+            const btnExp = document.getElementById("btnNavExplorer"), btnScr = document.getElementById("btnNavSearch");
             if (view === 'explorer') {
-                expView.classList.remove("hidden");
-                scrView.classList.add("hidden");
+                expView.classList.remove("hidden"); scrView.classList.add("hidden");
                 btnExp.className = "flex-1 py-2 text-center border-b-2 border-[#007acc] text-white bg-[#252526]";
                 btnScr.className = "flex-1 py-2 text-center border-b-2 border-transparent hover:text-white";
             } else {
-                scrView.classList.remove("hidden");
-                expView.classList.add("hidden");
+                scrView.classList.remove("hidden"); expView.classList.add("hidden");
                 btnScr.className = "flex-1 py-2 text-center border-b-2 border-[#007acc] text-white bg-[#252526]";
                 btnExp.className = "flex-1 py-2 text-center border-b-2 border-transparent hover:text-white";
                 execGlobalSearch();
@@ -1062,31 +1092,27 @@
         function getFileIconDom(name) {
             const ext = name.split('.').pop().toLowerCase();
             switch(ext) {
-                case 'html':   return '<i class="devicon-html5-plain icon-html"></i>';
-                case 'css':    return '<i class="devicon-css3-plain icon-css"></i>';
-                case 'js':     return '<i class="devicon-javascript-plain icon-js"></i>';
-                case 'ts':     return '<i class="devicon-typescript-plain icon-ts"></i>';
-                case 'py':     return '<i class="devicon-python-plain icon-python"></i>';
-                case 'json':   return '<i class="devicon-json-plain icon-json"></i>';
+                case 'html': return '<i class="devicon-html5-plain icon-html"></i>';
+                case 'css':  return '<i class="devicon-css3-plain icon-css"></i>';
+                case 'js':   return '<i class="devicon-javascript-plain icon-js"></i>';
+                case 'ts':   return '<i class="devicon-typescript-plain icon-ts"></i>';
+                case 'py':   return '<i class="devicon-python-plain icon-python"></i>';
+                case 'json': return '<i class="devicon-json-plain icon-json"></i>';
                 case 'cpp': case 'cc': case 'h': case 'hpp': return '<i class="devicon-cplusplus-plain icon-cpp"></i>';
-                case 'cs':     return '<i class="devicon-csharp-plain icon-csharp"></i>';
-                case 'md':     return '<i class="devicon-markdown-original icon-md"></i>';
+                case 'cs':   return '<i class="devicon-csharp-plain icon-csharp"></i>';
+                case 'md':   return '<i class="devicon-markdown-original icon-md"></i>';
                 case 'sh': case 'bash': return '<i class="devicon-bash-plain icon-sh"></i>';
-                case 'sql':    return '<i class="devicon-azuresqldatabase-plain icon-sql"></i>';
+                case 'sql':  return '<i class="devicon-azuresqldatabase-plain icon-sql"></i>';
                 case 'yaml': case 'yml': return '<i class="devicon-yaml-plain icon-yaml"></i>';
-                case 'xml':    return '<i class="devicon-xml-plain icon-xml"></i>';
-                default:       return '<i class="devicon-matcha-plain icon-txt"></i>';
+                default:     return '<i class="devicon-matcha-plain icon-txt"></i>';
             }
         }
 
         function execGlobalSearch() {
             const query = document.getElementById("searchInput").value;
-            const container = document.getElementById("searchResultsList");
-            const countEl = document.getElementById("searchResultsCount");
+            const container = document.getElementById("searchResultsList"), countEl = document.getElementById("searchResultsCount");
             container.innerHTML = "";
-
             if (!query) { countEl.innerText = "0 件のマッチ"; return; }
-            if (editor && projectData.files[activeTab] && !isSpecialActive()) projectData.files[activeTab].content = editor.getValue();
 
             let matchCount = 0;
             Object.keys(projectData.files).forEach(filename => {
@@ -1095,16 +1121,12 @@
                     if (line.includes(query)) {
                         matchCount++;
                         const item = document.createElement("div");
-                        item.className = "p-1.5 bg-[#1a1a1a] hover:bg-[#2d2d2d] rounded cursor-pointer border border-[#333] transition truncate";
+                        item.className = "p-1.5 bg-[#1a1a1a] hover:bg-[#2d2d2d] rounded cursor-pointer border border-[#333] truncate";
                         item.onclick = () => {
                             switchTab(filename);
-                            setTimeout(() => {
-                                editor.setPosition({ lineNumber: index + 1, column: line.indexOf(query) + 1 });
-                                editor.revealLineInCenter(index + 1);
-                                editor.focus();
-                            }, 50);
+                            setTimeout(() => { editor.setPosition({ lineNumber: index + 1, column: line.indexOf(query) + 1 }); editor.revealLineInCenter(index + 1); editor.focus(); }, 50);
                         };
-                        item.innerHTML = `<div class="text-[10px] text-[#007acc] font-bold truncate">${filename} (Ln ${index + 1})</div><div class="text-gray-400 font-mono text-[11px] truncate">${line.replace(query, `<span class="bg-yellow-500/40 text-white font-bold">${query}</span>`)}</div>`;
+                        item.innerHTML = `<div class="text-[10px] text-[#007acc] font-bold">${filename} (Ln ${index + 1})</div><div class="text-gray-400 font-mono text-[11px] truncate">${line.replace(query, `<span class="bg-yellow-500/40 text-white font-bold">${query}</span>`)}</div>`;
                         container.appendChild(item);
                     }
                 });
@@ -1113,13 +1135,9 @@
         }
 
         function execGlobalReplace() {
-            const searchStr = document.getElementById("searchInput").value;
-            const replaceStr = document.getElementById("replaceInput").value;
-
+            const searchStr = document.getElementById("searchInput").value, replaceStr = document.getElementById("replaceInput").value;
             if (!searchStr) return alert("検索キーワードを入力してください");
             if (!confirm(`すべての「${searchStr}」を「${replaceStr}」に一括置換しますか？`)) return;
-
-            if (editor && projectData.files[activeTab] && !isSpecialActive()) projectData.files[activeTab].content = editor.getValue();
 
             Object.keys(projectData.files).forEach(filename => {
                 const content = projectData.files[filename].content;
@@ -1129,25 +1147,16 @@
                     if (model) model.setValue(projectData.files[filename].content);
                 }
             });
-
-            saveData();
-            if (projectData.files[activeTab] && editor && !isSpecialActive()) editor.setValue(projectData.files[activeTab].content);
-            execGlobalSearch();
-            alert("一括置換が完了しました。");
+            saveData(); switchTab(activeTab); alert("一括置換完了しました。");
         }
 
         function handleFileUpload(input) {
-            const file = input.files[0];
-            if (!file) return;
+            const file = input.files[0]; if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
                 const name = file.name;
-                if (projectData.files[name] && !confirm(`「${name}」を上書きしますか？`)) return;
                 projectData.files[name] = { content: e.target.result, lang: EXT_MAP[name.split('.').pop().toLowerCase()] || 'plaintext' };
-                if (!projectData.openTabs.includes(name)) projectData.openTabs.push(name);
-                saveData();
-                switchTab(name);
-                input.value = "";
+                saveData(); switchTab(name); input.value = "";
             };
             reader.readAsText(file);
         }
@@ -1177,46 +1186,26 @@
                 theme: document.getElementById("themeSelect").value,
                 sidebarWidth: projectData.settings.sidebarWidth || 200
             };
-
             document.getElementById("fontSizeVal").innerText = projectData.settings.fontSize;
             document.getElementById("autoSaveVal").innerText = projectData.settings.autoSaveDelay + "ms";
 
-            const opt = { fontSize: projectData.settings.fontSize, tabSize: projectData.settings.tabSize, wordWrap: projectData.settings.wordWrap, lineNumbers: projectData.settings.lineNumbers, minimap: { enabled: projectData.settings.minimap === "on" } };
-            if (editor) editor.updateOptions(opt);
+            if (editor) editor.updateOptions({ fontSize: projectData.settings.fontSize, tabSize: projectData.settings.tabSize, wordWrap: projectData.settings.wordWrap, lineNumbers: projectData.settings.lineNumbers, minimap: { enabled: projectData.settings.minimap === "on" } });
             if (diffEditor) diffEditor.updateOptions({ fontSize: projectData.settings.fontSize });
             if (monacoInstance) monacoInstance.editor.setTheme(projectData.settings.theme);
             saveData();
         }
 
-        function saveData() { localStorage.setItem("webstudio_pro_v12", JSON.stringify(projectData)); }
-
+        function saveData() { localStorage.setItem("webstudio_pro_v13", JSON.stringify(projectData)); }
         function loadData() {
-            const saved = localStorage.getItem("webstudio_pro_v12");
+            const saved = localStorage.getItem("webstudio_pro_v13");
             if (saved) {
                 projectData = JSON.parse(saved);
                 if (!projectData.openTabs) projectData.openTabs = Object.keys(projectData.files);
-                if (!projectData.settings.sidebarWidth) projectData.settings.sidebarWidth = 200;
-                if (!projectData.foldersExpanded) projectData.foldersExpanded = {};
-                if (!projectData.diffCheckpoints) projectData.diffCheckpoints = {};
-                
-                if (projectData.openTabs.length > 0) {
-                    activeTab = projectData.openTabs[0];
-                } else {
-                    activeTab = "__welcome__";
-                }
-            } else {
-                projectData.openTabs = Object.keys(projectData.files);
-                projectData.diffCheckpoints = {};
+                if (!projectData.timeMachine) projectData.timeMachine = [];
                 activeTab = projectData.openTabs[0] || "__welcome__";
             }
         }
-
-        function resetAllData() {
-            if (confirm("すべてのファイルと設定を消去して初期化しますか？")) {
-                localStorage.removeItem("webstudio_pro_v12");
-                location.reload();
-            }
-        }
+        function resetAllData() { if (confirm("初期化しますか？")) { localStorage.removeItem("webstudio_pro_v13"); location.reload(); } }
     </script>
 </body>
 </html>
