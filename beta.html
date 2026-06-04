@@ -24,6 +24,7 @@
         .view-layer { display: none; height: 100%; width: 100%; }
         .view-layer.active { display: block; }
         
+        /* 言語別アイコンカラー定義 */
         .icon-html { color: #e34f26; }
         .icon-css { color: #1572b6; }
         .icon-js { color: #f7df1e; }
@@ -34,24 +35,15 @@
         .icon-csharp { color: #239120; }
         .icon-md { color: #ffffff; }
         .icon-txt { color: #858585; }
+        .icon-sh { color: #4ebd3a; }
+        .icon-sql { color: #00758f; }
+        .icon-yaml { color: #cb171e; }
+        .icon-xml { color: #0066b3; }
 
-        /* サイドバー開閉のアニメーションとリサイズ管理 */
-        #sidebar {
-            transition: transform 0.2s ease, width 0s;
-        }
-        #sidebar.collapsed {
-            width: 0px !important;
-            min-width: 0px !important;
-            border-right-width: 0px;
-        }
-        /* ドラッグ用の仕切り線 */
-        #resizer {
-            cursor: col-resize;
-            touch-action: none;
-        }
-        #resizer:hover, #resizer.resizing {
-            background-color: #007acc !important;
-        }
+        #sidebar { transition: transform 0.2s ease, width 0s; }
+        #sidebar.collapsed { width: 0px !important; min-width: 0px !important; border-right-width: 0px; }
+        #resizer { cursor: col-resize; touch-action: none; }
+        #resizer:hover, #resizer.resizing { background-color: #007acc !important; }
     </style>
 </head>
 <body class="text-[#cccccc] flex flex-col select-none text-sm">
@@ -69,26 +61,50 @@
 
     <div class="flex-1 flex overflow-hidden relative">
         
-        <aside id="sidebar" class="w-48 bg-[#252526] flex flex-col border-r border-[#2b2b2b] shrink-0 overflow-hidden z-10">
-            <div class="p-3 flex items-center justify-between border-b border-[#333] text-xs uppercase tracking-wider text-gray-400 font-bold whitespace-nowrap">
-                <span>Explorer</span>
-                <div class="flex items-center space-x-2">
-                    <button onclick="document.getElementById('fileUploadInput').click()" class="hover:bg-[#333] p-1 rounded text-white text-base" title="ファイルをアップロード">📤</button>
-                    <button onclick="promptNewFile()" class="hover:bg-[#333] p-1 rounded text-white text-xl" title="新規ファイル作成">＋</button>
+        <aside id="sidebar" class="w-52 bg-[#252526] flex flex-col border-r border-[#2b2b2b] shrink-0 overflow-hidden z-10">
+            <div class="flex bg-[#2d2d2d] border-b border-[#232324] text-xs font-bold uppercase tracking-wider text-gray-400 shrink-0">
+                <button id="btnNavExplorer" onclick="switchSidebarView('explorer')" class="flex-1 py-2 text-center border-b-2 border-[#007acc] text-white bg-[#252526]">Explorer</button>
+                <button id="btnNavSearch" onclick="switchSidebarView('search')" class="flex-1 py-2 text-center border-b-2 border-transparent hover:text-white">Search</button>
+            </div>
+
+            <div id="sideViewExplorer" class="flex-1 flex flex-col overflow-hidden">
+                <div class="p-2 flex items-center justify-between border-b border-[#333] text-xs font-bold text-gray-400 whitespace-nowrap">
+                    <span>Workspace</span>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="document.getElementById('fileUploadInput').click()" class="hover:bg-[#333] p-1 rounded text-white text-base" title="ファイルをアップロード">📤</button>
+                        <button onclick="promptNewFile()" class="hover:bg-[#333] p-1 rounded text-white text-xl" title="新規ファイル作成">＋</button>
+                    </div>
+                </div>
+                <div id="fileList" class="flex-1 overflow-y-auto no-scrollbar py-2 text-sm md:text-[14px]"></div>
+            </div>
+
+            <div id="sideViewSearch" class="flex-1 flex flex-col p-3 space-y-3 overflow-y-auto no-scrollbar hidden">
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1">Search</label>
+                    <input type="text" id="searchInput" oninput="execGlobalSearch()" placeholder="検索キーワード" class="w-full bg-[#3c3c3c] border border-[#555] p-1.5 rounded text-xs text-white outline-none">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1">Replace</label>
+                    <div class="flex space-x-1.5">
+                        <input type="text" id="replaceInput" placeholder="置換後の文字列" class="flex-1 bg-[#3c3c3c] border border-[#555] p-1.5 rounded text-xs text-white outline-none">
+                        <button onclick="execGlobalReplace()" class="bg-[#0e639c] hover:bg-[#1177bb] px-2 text-xs text-white rounded transition">一括</button>
+                    </div>
+                </div>
+                <div class="border-t border-[#333] pt-2">
+                    <div id="searchResultsCount" class="text-xs text-gray-400 mb-2 font-medium">0 件のマッチ</div>
+                    <div id="searchResultsList" class="space-y-2 text-xs max-h-[300px] overflow-y-auto no-scrollbar"></div>
                 </div>
             </div>
-            
-            <input type="file" id="fileUploadInput" class="hidden" onchange="handleFileUpload(this)">
-            
-            <div id="fileList" class="flex-1 overflow-y-auto no-scrollbar py-2 text-sm md:text-[14px]"></div>
 
-            <div class="p-2 bg-[#202021] border-t border-[#333] text-xs">
+            <input type="file" id="fileUploadInput" class="hidden" onchange="handleFileUpload(this)">
+
+            <div class="p-2 bg-[#202021] border-t border-[#333] text-xs shrink-0">
                 <button onclick="downloadSelectedFiles()" class="w-full bg-[#3c3c3c] hover:bg-[#4e4e4e] text-[#cccccc] py-1.5 rounded text-center border border-[#555] transition font-medium whitespace-nowrap">
                     選択ファイルをDL
                 </button>
             </div>
 
-            <div class="border-t border-[#333]">
+            <div class="border-t border-[#333] shrink-0">
                 <button onclick="openSettings()" class="w-full p-3 hover:bg-[#333] flex items-center space-x-3 transition whitespace-nowrap">
                     <span class="text-base">⚙️</span>
                     <span class="text-sm font-medium">Settings</span>
@@ -99,7 +115,6 @@
         <div id="resizer" class="w-[4px] bg-[#2b2b2b] shrink-0 z-20 transition-colors duration-150"></div>
 
         <main class="flex-1 flex flex-col overflow-hidden">
-            
             <div id="tabBar" class="flex bg-[#252526] h-10 overflow-x-auto no-scrollbar shrink-0 text-xs md:text-sm"></div>
             
             <div class="flex-1 relative bg-[#1e1e1e]">
@@ -188,12 +203,17 @@
     </footer>
 
     <script>
+        // マッピング拡張（シェルスクリプト, SQL, YAML, XMLを追加）
         const EXT_MAP = {
             'html': 'html', 'js': 'javascript', 'css': 'css',
             'py': 'python', 'json': 'json',
             'cpp': 'cpp', 'cc': 'cpp', 'h': 'cpp', 'hpp': 'cpp',
             'cs': 'csharp', 'md': 'markdown', 'ts': 'typescript', 
-            'txt': 'plaintext'
+            'txt': 'plaintext',
+            'sh': 'shell', 'bash': 'shell',
+            'sql': 'sql',
+            'yaml': 'yaml', 'yml': 'yaml',
+            'xml': 'xml'
         };
 
         let projectData = {
@@ -208,7 +228,7 @@
                 minimap: "off",
                 autoSaveDelay: 500,
                 theme: "vs-dark",
-                sidebarWidth: 192 // 横幅の設定値も保存可能に
+                sidebarWidth: 200
             }
         };
 
@@ -217,6 +237,7 @@
         let monacoInstance = null;
         let autoSaveTimer = null;
         let selectedFiles = new Set();
+        let currentSidebarView = 'explorer';
 
         require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' } });
         
@@ -236,9 +257,8 @@
                 lineNumbersMinChars: 3
             });
 
-            // 初期サイドバー横幅の適用
-            const sidebarEl = document.getElementById("sidebar");
-            sidebarEl.style.width = (projectData.settings.sidebarWidth || 192) + "px";
+            // 幅制限チェック付き初期幅適用
+            applySidebarWidth(projectData.settings.sidebarWidth || 200);
 
             editor.onDidChangeModelContent(() => {
                 if (projectData.files[activeTab]) {
@@ -247,6 +267,7 @@
                     clearTimeout(autoSaveTimer);
                     autoSaveTimer = setTimeout(() => {
                         saveData();
+                        if (currentSidebarView === 'search') execGlobalSearch(); // 検索画面ならリアルタイム同期
                         document.getElementById("statusInfo").innerText = "Auto Saved";
                         setTimeout(() => { document.getElementById("statusInfo").innerText = "Ready"; }, 1000);
                     }, projectData.settings.autoSaveDelay);
@@ -257,12 +278,11 @@
                 document.getElementById('cursorPos').innerText = `Ln ${e.position.lineNumber}, Col ${e.position.column}`;
             });
 
-            setupResizer(); // 幅可変システム初期化
+            setupResizer();
             renderUI();
             switchTab(activeTab);
         });
 
-        // --- サイドバーの開閉トグル ---
         function toggleSidebar() {
             const sidebar = document.getElementById("sidebar");
             const resizer = document.getElementById("resizer");
@@ -276,7 +296,21 @@
             if (editor) editor.layout();
         }
 
-        // --- サイドバーのドラッグリサイズシステム (マウス・タッチ対応) ---
+        // 1/8幅(12.5%)制限をかけた安全なリサイズ適用関数
+        function applySidebarWidth(targetWidth) {
+            const sidebar = document.getElementById("sidebar");
+            const windowWidth = window.innerWidth;
+            const minW = Math.floor(windowWidth * 0.125); // ウィンドウ幅の1/8が最小値
+            const maxW = Math.floor(windowWidth * 0.5);   // 最大値は半分まで
+
+            let finalWidth = targetWidth;
+            if (finalWidth < minW) finalWidth = minW;
+            if (finalWidth > maxW) finalWidth = maxW;
+
+            sidebar.style.width = finalWidth + "px";
+            projectData.settings.sidebarWidth = finalWidth;
+        }
+
         function setupResizer() {
             const resizer = document.getElementById("resizer");
             const sidebar = document.getElementById("sidebar");
@@ -290,16 +324,9 @@
 
             function resize(e) {
                 if (!isResizing) return;
-                // タッチイベントとマウスイベントの両方の座標を取得
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                
-                // 最小幅50px、最大幅400pxの範囲に制限
                 let newWidth = clientX - sidebar.getBoundingClientRect().left;
-                if (newWidth < 50) newWidth = 50;
-                if (newWidth > 400) newWidth = 400;
-
-                sidebar.style.width = newWidth + "px";
-                projectData.settings.sidebarWidth = newWidth;
+                applySidebarWidth(newWidth);
                 if (editor) editor.layout();
             }
 
@@ -308,20 +335,47 @@
                 isResizing = false;
                 resizer.classList.remove("resizing");
                 document.body.style.cursor = "default";
-                saveData(); // 幅の変更が完了したら自動保存
+                saveData();
             }
 
-            // マウスイベント登録
             resizer.addEventListener("mousedown", startResize);
             document.addEventListener("mousemove", resize);
             document.addEventListener("mouseup", stopResize);
 
-            // タッチイベント登録 (iPad対応)
             resizer.addEventListener("touchstart", startResize);
             document.addEventListener("touchmove", resize);
             document.addEventListener("touchend", stopResize);
         }
 
+        // ウィンドウ幅が変動したときも1/8最小幅を強制維持する追従システム
+        window.addEventListener('resize', () => {
+            if (projectData && projectData.settings) {
+                applySidebarWidth(projectData.settings.sidebarWidth);
+            }
+        });
+
+        function switchSidebarView(view) {
+            currentSidebarView = view;
+            const expView = document.getElementById("sideViewExplorer");
+            const scrView = document.getElementById("sideViewSearch");
+            const btnExp = document.getElementById("btnNavExplorer");
+            const btnScr = document.getElementById("btnNavSearch");
+
+            if (view === 'explorer') {
+                expView.classList.remove("hidden");
+                scrView.classList.add("hidden");
+                btnExp.className = "flex-1 py-2 text-center border-b-2 border-[#007acc] text-white bg-[#252526]";
+                btnScr.className = "flex-1 py-2 text-center border-b-2 border-transparent hover:text-white";
+            } else {
+                scrView.classList.remove("hidden");
+                expView.classList.add("hidden");
+                btnScr.className = "flex-1 py-2 text-center border-b-2 border-[#007acc] text-white bg-[#252526]";
+                btnExp.className = "flex-1 py-2 text-center border-b-2 border-transparent hover:text-white";
+                execGlobalSearch();
+            }
+        }
+
+        // ファイルアイコン対応強化
         function getFileIconDom(name) {
             const ext = name.split('.').pop().toLowerCase();
             switch(ext) {
@@ -335,6 +389,12 @@
                                return '<i class="devicon-cplusplus-plain icon-cpp text-base md:text-lg"></i>';
                 case 'cs':     return '<i class="devicon-csharp-plain icon-csharp text-base md:text-lg"></i>';
                 case 'md':     return '<i class="devicon-markdown-original icon-md text-base md:text-lg"></i>';
+                case 'sh': case 'bash': 
+                               return '<i class="devicon-bash-plain icon-sh text-base md:text-lg"></i>';
+                case 'sql':    return '<i class="devicon-azuresqldatabase-plain icon-sql text-base md:text-lg"></i>';
+                case 'yaml': case 'yml': 
+                               return '<i class="devicon-yaml-plain icon-yaml text-base md:text-lg"></i>';
+                case 'xml':    return '<i class="devicon-xml-plain icon-xml text-base md:text-lg"></i>';
                 default:       return '<i class="devicon-matcha-plain icon-txt text-base md:text-lg"></i>';
             }
         }
@@ -353,11 +413,14 @@
                 item.className = `group px-2 py-1.5 flex items-center cursor-pointer ${isActive ? 'bg-[#37373d] text-white font-medium' : 'hover:bg-[#2a2d2e]'}`;
                 item.innerHTML = `
                     <input type="checkbox" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation(); toggleFileSelect('${name}')" class="mr-1.5 accent-[#007acc] w-3.5 h-3.5 rounded cursor-pointer shrink-0">
-                    <div class="flex items-center truncate flex-1 py-0.5" onclick="switchTab('${name}')">
+                    <div class="flex items-center truncate flex-1 py-0.5" onclick="switchTab('${name}')" ondblclick="promptRenameFile('${name}')">
                         <span class="mr-1.5 flex items-center justify-center w-5 h-5 shrink-0">${getFileIconDom(name)}</span>
-                        <span class="truncate text-xs md:text-sm">${name}</span>
+                        <span class="truncate text-xs md:text-sm" title="ダブルクリックでリネーム">${name}</span>
                     </div>
-                    <button onclick="deleteFile('${name}')" class="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-500 px-1 text-sm transition shrink-0">✕</button>
+                    <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition shrink-0">
+                        <button onclick="promptRenameFile('${name}')" class="text-gray-500 hover:text-white px-0.5 text-xs" title="名前を変更">✏️</button>
+                        <button onclick="deleteFile('${name}')" class="text-gray-500 hover:text-red-500 px-1 text-sm" title="削除">✕</button>
+                    </div>
                 `;
                 fileList.appendChild(item);
 
@@ -376,9 +439,123 @@
             }
         }
 
+        // --- ファイル名変更 (新機能: リネーム) ---
+        function promptRenameFile(oldName) {
+            const newName = prompt(`「${oldName}」の新しいファイル名を入力してください:`, oldName);
+            if (!newName || newName === oldName) return;
+            if (projectData.files[newName]) return alert("そのファイル名は既に存在します");
+
+            // データの複製と旧データの削除
+            const ext = newName.split('.').pop().toLowerCase();
+            const lang = EXT_MAP[ext] || 'plaintext';
+
+            projectData.files[newName] = {
+                content: projectData.files[oldName].content,
+                lang: lang
+            };
+            delete projectData.files[oldName];
+
+            // 選択状態の引き継ぎ
+            if (selectedFiles.has(oldName)) {
+                selectedFiles.delete(oldName);
+                selectedFiles.add(newName);
+            }
+
+            // 旧エディタモデルの破棄
+            const oldModel = monacoInstance.editor.getModels().find(m => m.uri.path === `/${oldName}`);
+            if (oldModel) oldModel.dispose();
+
+            saveData();
+            if (activeTab === oldName) {
+                switchTab(newName);
+            } else {
+                renderUI();
+            }
+        }
+
+        // --- プロジェクト内一括全文検索システム (新機能) ---
+        function execGlobalSearch() {
+            const query = document.getElementById("searchInput").value;
+            const container = document.getElementById("searchResultsList");
+            const countEl = document.getElementById("searchResultsCount");
+            container.innerHTML = "";
+
+            if (!query) {
+                countEl.innerText = "0 件のマッチ";
+                return;
+            }
+
+            // 現在開いているエディタの内容を期日前同期
+            if (editor && projectData.files[activeTab]) {
+                projectData.files[activeTab].content = editor.getValue();
+            }
+
+            let matchCount = 0;
+
+            Object.keys(projectData.files).forEach(filename => {
+                const content = projectData.files[filename].content;
+                const lines = content.split('\n');
+
+                lines.forEach((line, index) => {
+                    if (line.includes(query)) {
+                        matchCount++;
+                        const item = document.createElement("div");
+                        item.className = "p-1.5 bg-[#1a1a1a] hover:bg-[#2d2d2d] rounded cursor-pointer border border-[#333] transition truncate";
+                        item.onclick = () => {
+                            switchTab(filename);
+                            setTimeout(() => {
+                                editor.setPosition({ lineNumber: index + 1, column: line.indexOf(query) + 1 });
+                                editor.revealLineInCenter(index + 1);
+                                editor.focus();
+                            }, 50);
+                        };
+                        item.innerHTML = `
+                            <div class="text-[10px] text-[#007acc] font-bold truncate">${filename} (Ln ${index + 1})</div>
+                            <div class="text-gray-400 font-mono text-[11px] truncate">${line.replace(query, `<span class="bg-yellow-500/40 text-white font-bold">${query}</span>`)}</div>
+                        `;
+                        container.appendChild(item);
+                    }
+                });
+            });
+
+            countEl.innerText = `${matchCount} 件のマッチ`;
+        }
+
+        // --- プロジェクト内一括置換システム (新機能) ---
+        function execGlobalReplace() {
+            const searchStr = document.getElementById("searchInput").value;
+            const replaceStr = document.getElementById("replaceInput").value;
+
+            if (!searchStr) return alert("検索キーワードを入力してください");
+            if (!confirm(`プロジェクト内のすべての「${searchStr}」を「${replaceStr}」に一括置換しますか？`)) return;
+
+            if (editor && projectData.files[activeTab]) {
+                projectData.files[activeTab].content = editor.getValue();
+            }
+
+            Object.keys(projectData.files).forEach(filename => {
+                const content = projectData.files[filename].content;
+                if (content.includes(searchStr)) {
+                    // グローバル全置換
+                    projectData.files[filename].content = content.split(searchStr).join(replaceStr);
+                    
+                    // 読み込み済みのMonacoモデルがあれば中身を更新
+                    const model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${filename}`);
+                    if (model) model.setValue(projectData.files[filename].content);
+                }
+            });
+
+            saveData();
+            // 置換後に最新化
+            if (projectData.files[activeTab] && editor) {
+                editor.setValue(projectData.files[activeTab].content);
+            }
+            execGlobalSearch();
+            alert("一括置換が完了しました。");
+        }
+
         function switchTab(target) {
             activeTab = target;
-            
             const editorLayer = document.getElementById("editorLayer");
             const settingsLayer = document.getElementById("settingsLayer");
             const topFileName = document.getElementById("topFileName");
@@ -426,15 +603,12 @@
 
         function downloadSelectedFiles() {
             if (selectedFiles.size === 0) return alert("ダウンロードするファイルにチェックを入れてください。");
-            
             if (editor && projectData.files[activeTab]) {
                 projectData.files[activeTab].content = editor.getValue();
             }
-
             selectedFiles.forEach(name => {
                 const file = projectData.files[name];
                 if (!file) return;
-
                 const blob = new Blob([file.content], { type: "text/plain;charset=utf-8" });
                 const a = document.createElement("a");
                 a.href = URL.createObjectURL(blob);
@@ -442,25 +616,19 @@
                 a.click();
                 URL.revokeObjectURL(a.href);
             });
-            
-            document.getElementById("statusInfo").innerText = `${selectedFiles.size}個のファイルをDLしました`;
-            setTimeout(() => { document.getElementById("statusInfo").innerText = "Ready"; }, 2000);
         }
 
         function handleFileUpload(input) {
             const file = input.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 const name = file.name;
                 if (projectData.files[name]) {
                     if (!confirm(`同名のファイル「${name}」が既に存在します。上書きしますか？`)) return;
                 }
-
                 const ext = name.split('.').pop().toLowerCase();
                 const lang = EXT_MAP[ext] || 'plaintext';
-
                 projectData.files[name] = { content: e.target.result, lang: lang };
                 saveData();
                 switchTab(name);
@@ -470,13 +638,11 @@
         }
 
         function promptNewFile() {
-            const name = prompt("ファイル名を入力してください (例: script.py, main.cpp)");
+            const name = prompt("ファイル名を入力してください (例: script.sh, queries.sql, config.yaml)");
             if (!name) return;
             if (projectData.files[name]) return alert("そのファイル名は既に存在します");
-
             const ext = name.split('.').pop().toLowerCase();
             const lang = EXT_MAP[ext] || 'plaintext';
-
             projectData.files[name] = { content: "", lang: lang };
             saveData();
             switchTab(name);
@@ -485,21 +651,16 @@
         function deleteFile(name) {
             if (Object.keys(projectData.files).length <= 1) return alert("最後の1ファイルは削除できません");
             if (!confirm(`${name} を削除しますか？`)) return;
-
             delete projectData.files[name];
             selectedFiles.delete(name);
-            
             const model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${name}`);
             if (model) model.dispose();
-
             if (activeTab === name) switchTab(Object.keys(projectData.files)[0]);
             else renderUI();
             saveData();
         }
 
-        function openSettings() {
-            switchTab("__settings__");
-        }
+        function openSettings() { switchTab("__settings__"); }
 
         function syncSettingsUI() {
             document.getElementById("fontSizeRange").value = projectData.settings.fontSize || 16;
@@ -522,7 +683,7 @@
                 minimap: document.getElementById("minimapSelect").value,
                 autoSaveDelay: parseInt(document.getElementById("autoSaveRange").value),
                 theme: document.getElementById("themeSelect").value,
-                sidebarWidth: projectData.settings.sidebarWidth || 192
+                sidebarWidth: projectData.settings.sidebarWidth || 200
             };
 
             document.getElementById("fontSizeVal").innerText = projectData.settings.fontSize;
@@ -541,12 +702,10 @@
             saveData();
         }
 
-        function saveData() {
-            localStorage.setItem("webstudio_pro_v7", JSON.stringify(projectData));
-        }
+        function saveData() { localStorage.setItem("webstudio_pro_v8", JSON.stringify(projectData)); }
 
         function loadData() {
-            const saved = localStorage.getItem("webstudio_pro_v7");
+            const saved = localStorage.getItem("webstudio_pro_v8");
             if (saved) {
                 projectData = JSON.parse(saved);
                 if (Object.keys(projectData.files).length === 0) {
@@ -556,16 +715,15 @@
                 if (!projectData.settings.wordWrap) projectData.settings.wordWrap = "on";
                 if (!projectData.settings.lineNumbers) projectData.settings.lineNumbers = "on";
                 if (!projectData.settings.minimap) projectData.settings.minimap = "off";
-                if (!projectData.settings.sidebarWidth) projectData.settings.sidebarWidth = 192;
+                if (!projectData.settings.sidebarWidth) projectData.settings.sidebarWidth = 200;
                 if (projectData.settings.autoSaveDelay === undefined) projectData.settings.autoSaveDelay = 500;
-                
                 activeTab = Object.keys(projectData.files)[0];
             }
         }
 
         function resetAllData() {
             if (confirm("すべてのファイルと設定を消去して初期化しますか？")) {
-                localStorage.removeItem("webstudio_pro_v7");
+                localStorage.removeItem("webstudio_pro_v8");
                 location.reload();
             }
         }
@@ -576,7 +734,7 @@
             const blob = new Blob([html], { type: "text/html" });
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
-            a.download = "WebStudio_Pro_v7.html";
+            a.download = "WebStudio_Pro_v8.html";
             a.click();
         }
     </script>
