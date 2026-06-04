@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Web Code Studio Pro v11</title>
+    <title>Web Code Studio Pro v12</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
@@ -45,7 +45,6 @@
         #resizer { cursor: col-resize; touch-action: none; }
         #resizer:hover, #resizer.resizing { background-color: #007acc !important; }
 
-        /* コンテナクエリを利用した「一括」ボタンのレイアウト柔軟化 */
         #searchContainer { container-type: inline-size; }
         @container (max-width: 170px) {
             #replaceWrapper { flex-direction: column !important; }
@@ -127,6 +126,10 @@
             <div id="tabBar" class="flex bg-[#252526] h-10 overflow-x-auto no-scrollbar shrink-0 text-xs md:text-sm"></div>
             
             <div id="quickInputBar" class="bg-[#2d2d2d] border-b border-[#232324] h-9 px-2 flex items-center space-x-1.5 overflow-x-auto no-scrollbar shrink-0">
+                <button onclick="openLivePreview()" class="bg-emerald-700 hover:bg-emerald-600 text-white text-xs px-2 py-1 rounded transition shrink-0 font-bold flex items-center space-x-1"><span>👀</span><span>プレビュー</span></button>
+                <button onclick="setDiffCheckpoint()" class="bg-indigo-700 hover:bg-indigo-600 text-white text-xs px-2 py-1 rounded transition shrink-0 font-medium flex items-center space-x-1" title="現在の状態を差分の基準点に設定します"><span>📌</span><span>基準設定</span></button>
+                <div class="h-4 w-[1px] bg-[#555] shrink-0"></div>
+
                 <button onclick="executeSelectAll()" class="bg-[#444] hover:bg-[#555] text-white text-xs px-2 py-1 rounded transition shrink-0 font-medium">全選択</button>
                 <button onclick="executeCopyAll()" class="bg-[#444] hover:bg-[#555] text-white text-xs px-2 py-1 rounded transition shrink-0 font-medium">全コピー</button>
                 <div class="h-4 w-[1px] bg-[#555] shrink-0"></div>
@@ -160,12 +163,16 @@
                     <div id="diffContainer" class="w-full h-full"></div>
                 </div>
 
+                <div id="previewLayer" class="view-layer bg-white">
+                    <iframe id="previewIframe" class="w-full h-full border-none bg-white"></iframe>
+                </div>
+
                 <div id="welcomeLayer" class="view-layer bg-[#1e1e1e] flex flex-col items-center justify-center p-6 text-center">
                     <div class="max-w-md space-y-6">
                         <div>
                             <div class="text-5xl mb-3">🚀</div>
                             <h2 class="text-2xl font-bold text-white tracking-wide">Web Code Studio Pro</h2>
-                            <p class="text-gray-400 text-xs mt-1">Pocket IDE Environment v11</p>
+                            <p class="text-gray-400 text-xs mt-1">Pocket IDE Environment v12</p>
                         </div>
                         <p class="text-sm text-gray-400 leading-relaxed">
                             開いているファイルがありません。左のエクスプローラーからファイルを選択するか、新しく作成してコーディングを開始しましょう。
@@ -312,8 +319,8 @@
         let projectData = {
             files: {
                 "main.js": { content: "// Welcome to WebStudio Pro\nconsole.log('Happy Coding!');", lang: "javascript" },
-                "src/index.html": { content: "<!DOCTYPE html>\n<html>\n<body>\n  <h1>Hello World</h1>\n</body>\n</html>", lang: "html" },
-                "src/styles/app.css": { content: "body { background: #111; color: white; }", lang: "css" }
+                "src/index.html": { content: "<!DOCTYPE html>\n<html>\n<head>\n  <link rel='stylesheet' href='styles/app.css'>\n</head>\n<body>\n  <h1>Hello World</h1>\n  <script src='../main.js'><\/script>\n</body>\n</html>", lang: "html" },
+                "src/styles/app.css": { content: "body { background: #111; color: #007acc; text-align: center; padding-top: 50px; }", lang: "css" }
             },
             settings: {
                 fontSize: 16,
@@ -329,8 +336,9 @@
                 "src": true,
                 "src/styles": true
             },
-            // 新機能：現在「閉じられずにタブバーに残っている」ファイルを管理する配列
-            openTabs: ["main.js", "src/index.html", "src/styles/app.css"]
+            openTabs: ["main.js", "src/index.html", "src/styles/app.css"],
+            // 差分の基準点を保存するオブジェクト
+            diffCheckpoints: {}
         };
 
         let activeTab = "main.js";
@@ -371,7 +379,7 @@
             applySidebarWidth(projectData.settings.sidebarWidth || 200);
 
             editor.onDidChangeModelContent(() => {
-                if (projectData.files[activeTab] && activeTab !== "__settings__" && activeTab !== "__diff__") {
+                if (projectData.files[activeTab] && !isSpecialActive()) {
                     projectData.files[activeTab].content = editor.getValue();
                     updateFooterCounters();
                     
@@ -447,7 +455,7 @@
         }
 
         function isSpecialActive() {
-            return activeTab === "__settings__" || activeTab === "__diff__" || activeTab === "__welcome__";
+            return activeTab === "__settings__" || activeTab === "__diff__" || activeTab === "__welcome__" || activeTab === "__preview__";
         }
 
         function insertSymbol(sym) {
@@ -549,14 +557,15 @@
                         folderHeader.className = "flex items-center justify-between px-2 py-1 hover:bg-[#2a2d2e] cursor-pointer text-gray-300";
                         folderHeader.style.paddingLeft = `${(depth * 8) + 8}px`;
                         folderHeader.innerHTML = `
-                            <div class="flex items-center truncate flex-1" onclick="toggleFolder('${item.path}')">
+                            <div class="flex items-center truncate flex-1" onclick="toggleFolder('${item.path}')" ondblclick="promptRenameFolder('${item.path}')">
                                 <span class="mr-1 text-gray-500 scale-90">${isExpanded ? '▼' : '▶'}</span>
                                 <span class="mr-1.5 text-yellow-600 font-bold text-sm">📁</span>
                                 <span class="truncate font-medium">${key}</span>
                             </div>
-                            <div class="opacity-0 group-hover:opacity-100 flex items-center space-x-1 shrink-0">
-                                <button onclick="promptNewFile('${item.path}')" class="text-gray-400 hover:text-white px-0.5 text-xs">＋</button>
-                                <button onclick="deleteFolder('${item.path}')" class="text-gray-500 hover:text-red-500 px-1 text-xs">✕</button>
+                            <div class="flex items-center space-x-1 shrink-0 pr-1 text-gray-400">
+                                <button onclick="promptNewFile('${item.path}')" class="hover:text-white px-0.5 text-xs" title="ファイル追加">＋</button>
+                                <button onclick="promptRenameFolder('${item.path}')" class="hover:text-white px-0.5 text-xs" title="フォルダ名変更">✏️</button>
+                                <button onclick="deleteFolder('${item.path}')" class="hover:text-red-500 px-1 text-xs" title="フォルダ削除">✕</button>
                             </div>
                         `;
                         element.appendChild(folderHeader);
@@ -571,10 +580,10 @@
                                 <span class="mr-1.5 flex items-center justify-center w-4 h-4 shrink-0">${getFileIconDom(key)}</span>
                                 <span class="truncate text-xs md:text-sm">${key}</span>
                             </div>
-                            <div class="flex items-center space-x-1.5 opacity-0 group-hover:opacity-100 transition shrink-0">
-                                <button onclick="openDiffMode('${item.path}')" class="text-gray-400 hover:text-sky-400 text-[11px]">⚖️</button>
-                                <button onclick="promptRenameFile('${item.path}')" class="text-gray-500 hover:text-white text-xs">✏️</button>
-                                <button onclick="deleteFile('${item.path}')" class="text-gray-500 hover:text-red-500 text-sm">✕</button>
+                            <div class="flex items-center space-x-1.5 text-gray-400 transition shrink-0">
+                                <button onclick="openDiffMode('${item.path}')" class="hover:text-sky-400 text-xs" title="差分を見る">⚖️</button>
+                                <button onclick="promptRenameFile('${item.path}')" class="hover:text-white text-xs" title="名前変更">✏️</button>
+                                <button onclick="deleteFile('${item.path}')" class="hover:text-red-500 text-sm" title="削除">✕</button>
                             </div>
                         `;
                     }
@@ -585,7 +594,6 @@
 
             fileList.appendChild(renderNode(tree));
 
-            // バグ修正点：projectData.openTabs 配列をベースにして実存するタブのみをレンダリング
             projectData.openTabs.forEach(path => {
                 if (!projectData.files[path]) return;
                 const isActive = (path === activeTab);
@@ -601,6 +609,7 @@
             if (activeTab === "__settings__") renderSpecialTab("⚙️ Settings", "__settings__");
             if (activeTab === "__diff__") renderSpecialTab("⚖️ Diff View", "__diff__");
             if (activeTab === "__welcome__") renderSpecialTab("🚀 Welcome", "__welcome__");
+            if (activeTab === "__preview__") renderSpecialTab("💻 Preview", "__preview__");
         }
 
         function renderSpecialTab(label, id) {
@@ -608,6 +617,7 @@
             const sTab = document.createElement("div");
             sTab.className = `h-full px-4 flex items-center space-x-2 border-r border-[#252526] cursor-pointer shrink-0 bg-[#1e1e1e] text-white border-t-2 border-[#007acc]`;
             sTab.innerHTML = `<span class="text-xs">${label}</span><span onclick="event.stopPropagation(); closeTab('${id}')" class="hover:text-white ml-1.5 text-xs p-0.5">×</span>`;
+            sTab.onclick = () => switchTab(id);
             tabBar.appendChild(sTab);
         }
 
@@ -617,14 +627,35 @@
             renderUI();
         }
 
+        // 新機能：現在の状態を「差分の基準」として明示的に記憶する
+        function setDiffCheckpoint() {
+            if (isSpecialActive() || !projectData.files[activeTab]) {
+                alert("現在開いているファイルの基準点を設定できません。");
+                return;
+            }
+            if (editor) projectData.files[activeTab].content = editor.getValue();
+            projectData.diffCheckpoints[activeTab] = projectData.files[activeTab].content;
+            saveData();
+
+            const status = document.getElementById("statusInfo");
+            status.innerText = "📌 差分の基準点を記憶しました！";
+            setTimeout(() => { status.innerText = "Ready"; }, 1500);
+        }
+
         function openDiffMode(path) {
             if (!monacoInstance || !projectData.files[path]) return;
-            const rawData = localStorage.getItem("webstudio_pro_v11");
-            let originalContent = "";
-            if (rawData) {
-                const parsed = JSON.parse(rawData);
-                if (parsed.files[path]) originalContent = parsed.files[path].content;
+            
+            // ユーザーが設定したチェックポイントがあればそれを使い、なければ前回のロード時の生データをフォールバック
+            let originalContent = projectData.diffCheckpoints[path];
+            if (originalContent === undefined) {
+                const rawData = localStorage.getItem("webstudio_pro_v12");
+                if (rawData) {
+                    const parsed = JSON.parse(rawData);
+                    if (parsed.files[path]) originalContent = parsed.files[path].content;
+                }
+                if (originalContent === undefined) originalContent = projectData.files[path].content;
             }
+
             const currentContent = projectData.files[path].content;
             const fileLang = projectData.files[path].lang;
 
@@ -639,8 +670,52 @@
             document.getElementById("topFileName").innerText = `Diff: ${path}`;
         }
 
+        // 新機能：Webプロジェクトのリアルタイム仮想プレビューを生成
+        function openLivePreview() {
+            if (editor && projectData.files[activeTab] && !isSpecialActive()) {
+                projectData.files[activeTab].content = editor.getValue();
+                saveData();
+            }
+
+            let htmlContent = "";
+            // 最も階層の浅いHTML、または現在開いているHTMLを探索
+            const htmlFiles = Object.keys(projectData.files).filter(p => p.endsWith(".html"));
+            if (htmlFiles.length > 0) {
+                const targetHtml = htmlFiles.includes(activeTab) ? activeTab : htmlFiles[0];
+                htmlContent = projectData.files[targetHtml].content;
+            } else {
+                htmlContent = "<!DOCTYPE html><html><body><h1 style='color:#333;font-family:sans-serif;text-align:center;margin-top:50px;'>HTMLファイルが見つかりません</h1></body></html>";
+            }
+
+            // ワークスペース内の全てのCSSとJSを集約して仮想インジェクション
+            let cssBundle = "";
+            let jsBundle = "";
+            Object.keys(projectData.files).forEach(path => {
+                if (path.endsWith(".css")) cssBundle += `\n/* --- ${path} --- */\n` + projectData.files[path].content;
+                if (path.endsWith(".js")) jsBundle += `\n// --- ${path} ---\n` + projectData.files[path].content;
+            });
+
+            // iframe用のソースコードを組み立て
+            let finalSource = htmlContent;
+            if (cssBundle) {
+                finalSource = finalSource.replace("</head>", `<style>${cssBundle}</style></head>`);
+                if (!finalSource.includes("<style>")) finalSource += `<style>${cssBundle}</style>`;
+            }
+            if (jsBundle) {
+                finalSource = finalSource.replace("</body>", `<script>${jsBundle}<\/script></body>`);
+                if (!finalSource.includes("<script>")) finalSource += `<script>${jsBundle}<\/script>`;
+            }
+
+            switchTab("__preview__");
+            
+            const iframe = document.getElementById("previewIframe");
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            doc.open();
+            doc.write(finalSource);
+            doc.close();
+        }
+
         function switchTab(target) {
-            // タブ配列に含まれておらず、特殊ビューでもない場合はopenTabsに追記
             if (projectData.files[target] && !projectData.openTabs.includes(target)) {
                 projectData.openTabs.push(target);
             }
@@ -649,6 +724,7 @@
             const layers = {
                 editor: document.getElementById("editorLayer"),
                 diff: document.getElementById("diffLayer"),
+                preview: document.getElementById("previewLayer"),
                 welcome: document.getElementById("welcomeLayer"),
                 settings: document.getElementById("settingsLayer")
             };
@@ -665,8 +741,12 @@
                 layers.diff.classList.add("active");
                 document.getElementById("langDisplay").innerText = "Diff Viewer";
                 updateFooterCounters();
+            } else if (target === "__preview__") {
+                layers.preview.classList.add("active");
+                topFileName.innerText = "Live Preview";
+                document.getElementById("langDisplay").innerText = "Browser Container";
+                updateFooterCounters();
             } else if (target === "__welcome__") {
-                // 新機能：Welcomeレイヤーの有効化
                 layers.welcome.classList.add("active");
                 topFileName.innerText = "Welcome";
                 document.getElementById("langDisplay").innerText = "Welcome";
@@ -682,7 +762,6 @@
                     document.getElementById("langDisplay").innerText = file.lang;
                     updateFooterCounters();
                 } else {
-                    // ファイルが完全に存在しない・空の時はWelcomeへフォールバック
                     activeTab = "__welcome__";
                     layers.welcome.classList.add("active");
                     topFileName.innerText = "Welcome";
@@ -694,23 +773,18 @@
             renderUI();
         }
 
-        // 徹底改修：タブを閉じる(×ボタン)の独立制御ロジック
         function closeTab(name) {
-            if (name === "__settings__" || name === "__diff__" || name === "__welcome__") {
+            if (name === "__settings__" || name === "__diff__" || name === "__welcome__" || name === "__preview__") {
                 if (activeTab === name) fallbackToRemainingTab();
                 else renderUI();
                 return;
             }
 
-            // 配列から該当ファイルを排除
             projectData.openTabs = projectData.openTabs.filter(t => t !== name);
             saveData();
 
-            if (activeTab === name) {
-                fallbackToRemainingTab();
-            } else {
-                renderUI();
-            }
+            if (activeTab === name) fallbackToRemainingTab();
+            else renderUI();
         }
 
         function fallbackToRemainingTab() {
@@ -772,7 +846,7 @@
             const blob = new Blob([html], { type: "text/html" });
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
-            a.download = "WebStudio_Pro_v11.html";
+            a.download = "WebStudio_Pro_v12.html";
             a.click();
             URL.revokeObjectURL(a.href);
             closeDownloadModal();
@@ -824,6 +898,7 @@
 
         function executeActualFileDeletion(path) {
             delete projectData.files[path];
+            delete projectData.diffCheckpoints[path];
             projectData.openTabs = projectData.openTabs.filter(t => t !== path);
             selectedFiles.delete(path);
             const model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${path}`);
@@ -846,6 +921,10 @@
 
             const ext = newPath.split('.').pop().toLowerCase();
             projectData.files[newPath] = { content: projectData.files[oldPath].content, lang: EXT_MAP[ext] || 'plaintext' };
+            if (projectData.diffCheckpoints[oldPath] !== undefined) {
+                projectData.diffCheckpoints[newPath] = projectData.diffCheckpoints[oldPath];
+                delete projectData.diffCheckpoints[oldPath];
+            }
             delete projectData.files[oldPath];
 
             projectData.openTabs = projectData.openTabs.map(t => t === oldPath ? newPath : t);
@@ -857,6 +936,52 @@
             saveData();
             if (activeTab === oldPath) switchTab(newPath);
             else renderUI();
+        }
+
+        // 新機能：フォルダ構造・パスの再帰的リネーム機能
+        function promptRenameFolder(oldFolderPath) {
+            const newFolderPath = prompt(`新しいフォルダ名（パス）を入力してください:`, oldFolderPath);
+            if (!newFolderPath || newFolderPath === oldFolderPath) return;
+
+            const updatedFiles = {};
+            const updatedCheckpoints = {};
+
+            Object.keys(projectData.files).forEach(path => {
+                if (path === oldFolderPath || path.startsWith(oldFolderPath + '/')) {
+                    const relativePart = path.substring(oldFolderPath.length);
+                    const newPath = newFolderPath + relativePart;
+                    updatedFiles[newPath] = projectData.files[path];
+                    
+                    if (projectData.diffCheckpoints[path] !== undefined) {
+                        updatedCheckpoints[newPath] = projectData.diffCheckpoints[path];
+                    }
+
+                    // Monacoの旧モデルを破棄
+                    const oldModel = monacoInstance.editor.getModels().find(m => m.uri.path === `/${path}`);
+                    if (oldModel) oldModel.dispose();
+
+                    // オープン中タブの書き換え
+                    projectData.openTabs = projectData.openTabs.map(t => t === path ? newPath : t);
+                    if (activeTab === path) activeTab = newPath;
+                } else {
+                    updatedFiles[path] = projectData.files[path];
+                    if (projectData.diffCheckpoints[path] !== undefined) {
+                        updatedCheckpoints[path] = projectData.diffCheckpoints[path];
+                    }
+                }
+            });
+
+            projectData.files = updatedFiles;
+            projectData.diffCheckpoints = updatedCheckpoints;
+
+            // フォルダ展開状態の移行
+            if (projectData.foldersExpanded[oldFolderPath] !== undefined) {
+                projectData.foldersExpanded[newFolderPath] = projectData.foldersExpanded[oldFolderPath];
+                delete projectData.foldersExpanded[oldFolderPath];
+            }
+
+            saveData();
+            switchTab(activeTab);
         }
 
         function toggleSidebar() {
@@ -1063,15 +1188,16 @@
             saveData();
         }
 
-        function saveData() { localStorage.setItem("webstudio_pro_v11", JSON.stringify(projectData)); }
+        function saveData() { localStorage.setItem("webstudio_pro_v12", JSON.stringify(projectData)); }
 
         function loadData() {
-            const saved = localStorage.getItem("webstudio_pro_v11");
+            const saved = localStorage.getItem("webstudio_pro_v12");
             if (saved) {
                 projectData = JSON.parse(saved);
                 if (!projectData.openTabs) projectData.openTabs = Object.keys(projectData.files);
                 if (!projectData.settings.sidebarWidth) projectData.settings.sidebarWidth = 200;
                 if (!projectData.foldersExpanded) projectData.foldersExpanded = {};
+                if (!projectData.diffCheckpoints) projectData.diffCheckpoints = {};
                 
                 if (projectData.openTabs.length > 0) {
                     activeTab = projectData.openTabs[0];
@@ -1079,15 +1205,15 @@
                     activeTab = "__welcome__";
                 }
             } else {
-                // 完全な初期状態
                 projectData.openTabs = Object.keys(projectData.files);
+                projectData.diffCheckpoints = {};
                 activeTab = projectData.openTabs[0] || "__welcome__";
             }
         }
 
         function resetAllData() {
             if (confirm("すべてのファイルと設定を消去して初期化しますか？")) {
-                localStorage.removeItem("webstudio_pro_v11");
+                localStorage.removeItem("webstudio_pro_v12");
                 location.reload();
             }
         }
