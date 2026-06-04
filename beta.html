@@ -3,237 +3,332 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Web Code Studio</title>
+    <title>Web Code Studio Pro</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
     
     <style>
-        /* iPadのセーフエリア対応とスクロール抑制 */
         body {
             padding-top: env(safe-area-inset-top);
             padding-bottom: env(safe-area-inset-bottom);
             overflow: hidden;
             touch-action: none;
+            background-color: #1e1e1e;
         }
-        .sidebar, .tabs {
-            -webkit-overflow-scrolling: touch;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        /* Monacoエディタと設定画面の切り替え用 */
+        .view-layer { display: none; height: 100%; width: 100%; }
+        .view-layer.active { display: block; }
     </style>
 </head>
-<body class="bg-[#1e1e1e] text-[#cccccc] h-screen flex flex-col select-none">
+<body class="text-[#cccccc] h-screen flex flex-col select-none">
 
-    <header class="bg-[#3c3c3c] text-white text-xs px-4 h-9 flex items-center justify-between border-b border-[#2b2b2b]">
-        <div class="flex items-center space-x-4">
-            <span class="font-bold text-[#007acc]">WebStudio</span>
-            <button onclick="saveAllToLocalStorage()" class="bg-[#0e639c] hover:bg-[#1177bb] px-2 py-1 rounded text-white font-medium transition">設定・データを保存</button>
-            <button onclick="exportSystemSnapshot()" class="bg-[#333333] hover:bg-[#444444] px-2 py-1 rounded text-[#cccccc] border border-[#555555] transition">システム一括DL</button>
+    <header class="bg-[#3c3c3c] text-white text-[11px] px-3 h-8 flex items-center justify-between border-b border-[#2b2b2b] shrink-0">
+        <div class="flex items-center space-x-3">
+            <span class="font-bold text-[#007acc]">WebStudio Pro</span>
+            <span id="topFileName" class="opacity-60">main.js</span>
         </div>
-        <div class="flex items-center space-x-2">
-            <label class="text-[11px]">フォントサイズ:</label>
-            <input type="number" id="fontSizeInput" value="14" min="10" max="30" onchange="updateSettings()" class="bg-[#2d2d2d] border border-[#555555] text-white w-12 text-center rounded">
-            <label class="text-[11px] ml-2">テーマ:</label>
-            <select id="themeInput" onchange="updateSettings()" class="bg-[#2d2d2d] border border-[#555555] text-white rounded px-1">
-                <option value="vs-dark">vs-dark</option>
-                <option value="vs-light">vs-light</option>
-                <option value="hc-black">High Contrast</option>
-            </select>
+        <div class="flex items-center space-x-3">
+            <button onclick="exportSystemSnapshot()" class="hover:text-[#007acc] transition">一括DL保存</button>
         </div>
     </header>
 
     <div class="flex-1 flex overflow-hidden">
         
-        <aside class="w-60 bg-[#252526] flex flex-col border-r border-[#2b2b2b] select-none">
-            <div class="p-2 text-xs font-bold uppercase tracking-wider text-[#858585] flex justify-between items-center">
-                <span>エクスプローラー</span>
+        <aside class="w-12 md:w-56 bg-[#252526] flex flex-col border-r border-[#2b2b2b] shrink-0">
+            <div class="p-2 flex items-center justify-between border-b border-[#333] hidden md:flex text-[11px] uppercase tracking-tighter text-gray-400">
+                <span>Explorer</span>
+                <button onclick="promptNewFile()" class="hover:bg-[#333] px-1 rounded text-white text-lg">＋</button>
             </div>
-            <div id="fileList" class="flex-1 overflow-y-auto text-sm">
-                </div>
+            
+            <div id="fileList" class="flex-1 overflow-y-auto no-scrollbar py-2"></div>
+
+            <div class="border-t border-[#333]">
+                <button onclick="openSettings()" class="w-full p-3 hover:bg-[#333] flex justify-center md:justify-start items-center space-x-2 transition">
+                    <span>⚙️</span>
+                    <span class="hidden md:inline text-xs">Settings</span>
+                </button>
+            </div>
         </aside>
 
-        <main class="flex-1 flex flex-col overflow-hidden bg-[#1e1e1e]">
-            <div id="tabBar" class="flex bg-[#2d2d2d] h-9 overflow-x-auto border-b border-[#2b2b2b] scrollbar-none">
+        <main class="flex-1 flex flex-col overflow-hidden">
+            
+            <div id="tabBar" class="flex bg-[#252526] h-9 overflow-x-auto no-scrollbar shrink-0">
                 </div>
             
-            <div id="editorContainer" class="flex-1 w-full h-full"></div>
+            <div class="flex-1 relative bg-[#1e1e1e]">
+                <div id="editorLayer" class="view-layer active">
+                    <div id="editorContainer" class="w-full h-full"></div>
+                </div>
+
+                <div id="settingsLayer" class="view-layer bg-[#1e1e1e] p-6 md:p-10 overflow-y-auto">
+                    <h2 class="text-2xl mb-6 font-light">Settings</h2>
+                    <div class="max-w-xl space-y-8">
+                        <section>
+                            <label class="block text-sm font-bold mb-2 text-gray-400">Editor: Font Size</label>
+                            <div class="flex items-center space-x-4">
+                                <input type="range" id="fontSizeRange" min="10" max="30" step="1" oninput="updateSettingsFromUI()" class="flex-1">
+                                <span id="fontSizeVal" class="w-8 text-center">14</span>
+                            </div>
+                        </section>
+                        <section>
+                            <label class="block text-sm font-bold mb-2 text-gray-400">Editor: Color Theme</label>
+                            <select id="themeSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2 rounded outline-none">
+                                <option value="vs-dark">Visual Studio Dark</option>
+                                <option value="vs-light">Visual Studio Light</option>
+                                <option value="hc-black">High Contrast</option>
+                            </select>
+                        </section>
+                        <section class="pt-6 border-t border-[#333]">
+                            <p class="text-xs text-gray-500 mb-4">データは端末のLocalStorageに自動保存されます。</p>
+                            <button onclick="resetAllData()" class="bg-red-900/30 hover:bg-red-900/50 text-red-400 px-4 py-2 rounded text-xs transition">
+                                すべてのデータを初期化
+                            </button>
+                        </section>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
-    <footer class="bg-[#007acc] text-white text-xs px-3 h-6 flex items-center justify-between">
+    <footer class="bg-[#007acc] text-white text-[10px] px-3 h-5 flex items-center justify-between shrink-0">
         <div id="statusInfo">Ready</div>
-        <div id="languageInfo" class="uppercase">Plain Text</div>
+        <div class="flex space-x-4">
+            <span id="cursorPos">Ln 1, Col 1</span>
+            <span id="langDisplay" class="uppercase">JavaScript</span>
+        </div>
     </footer>
 
     <script>
-        // --- 初期データ構造（指定された全言語に対応するサンプル） ---
-        const defaultFiles = {
-            "index.html": { content: "<!DOCTYPE html>\n<html>\n<head>\n  <title>Hello</title>\n</head>\n<body>\n  <h1>Hello World</h1>\n</body>\n</html>", lang: "html" },
-            "script.js": { content: "function sayHello() {\n    console.log('Hello, iPad!');\n}", lang: "javascript" },
-            "style.css": { content: "body {\n    background-color: #1e1e1e;\n    color: white;\n}", lang: "css" },
-            "main.cpp": { content: "#include <iostream>\n\nint main() {\n    std::cout << \"Hello World\" << std::endl;\n    return 0;\n}", lang: "cpp" },
-            "Program.cs": { content: "using System;\n\nclass Program {\n    static void Main() {\n        Console.WriteLine(\"Hello C#\");\n    }\n}", lang: "csharp" },
-            "document.md": { content: "# WebStudio MarkDown\n\n- iPadでも快適に動作します\n- コード補完も対応しています", lang: "markdown" },
-            "app.ts": { content: "const appName: string = 'WebStudio';\nconsole.log(`Welcome to ${appName}`);", lang: "typescript" },
-            "note.txt": { content: "これは普通のプレーンテキストファイルです。", lang: "plaintext" }
+        // --- 設定・ファイル管理データ ---
+        const EXT_MAP = {
+            'html': 'html', 'js': 'javascript', 'css': 'css',
+            'cpp': 'cpp', 'cs': 'csharp', 'md': 'markdown',
+            'ts': 'typescript', 'txt': 'plaintext'
         };
 
         let projectData = {
-            files: JSON.parse(JSON.stringify(defaultFiles)),
+            files: {
+                "main.js": { content: "// Welcome to WebStudio Pro\nconsole.log('Happy Coding!');", lang: "javascript" }
+            },
             settings: {
-                fontSize: 14,
+                fontSize: 16,
                 theme: "vs-dark"
             }
         };
 
-        let currentFileName = "index.html";
+        let activeTab = "main.js"; // 現在開いているファイル名、または "__settings__"
         let editor = null;
         let monacoInstance = null;
 
-        // --- Monaco Editor の初期化とCDNセットアップ ---
+        // --- 初期化 ---
         require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' } });
         
         require(['vs/editor/editor.main'], function() {
             monacoInstance = monaco;
-            
-            // ローカルストレージからデータを復元
-            loadFromLocalStorage();
+            loadData();
 
-            // エディタの生成
             editor = monaco.editor.create(document.getElementById('editorContainer'), {
                 automaticLayout: true,
                 fontSize: projectData.settings.fontSize,
                 theme: projectData.settings.theme,
-                minimap: { enabled: false }, // 画面の狭いiPad向けにミニマップは非表示
-                tabSize: 4,
-                renderWhitespace: "all",
-                stickyScroll: { enabled: true }
+                minimap: { enabled: false },
+                padding: { top: 10 },
+                lineNumbersMinChars: 3
             });
 
-            // エディタ内のコードが変更されたら、メモリ上のデータを更新
+            // 内容変更の自動保存
             editor.onDidChangeModelContent(() => {
-                if (projectData.files[currentFileName]) {
-                    projectData.files[currentFileName].content = editor.getValue();
+                if (projectData.files[activeTab]) {
+                    projectData.files[activeTab].content = editor.getValue();
+                    saveData();
                 }
             });
 
-            // 初期ファイルの展開
-            buildFileTree();
-            switchFile(currentFileName);
+            // カーソル位置の表示
+            editor.onDidChangeCursorPosition((e) => {
+                document.getElementById('cursorPos').innerText = `Ln ${e.position.lineNumber}, Col ${e.position.column}`;
+            });
+
+            renderUI();
+            switchTab(activeTab);
         });
 
-        // --- ファイル切り替え・UI構築ロジック ---
-        function buildFileTree() {
+        // --- タブ・ファイル切り替えロジック ---
+        function renderUI() {
             const fileList = document.getElementById("fileList");
             const tabBar = document.getElementById("tabBar");
             fileList.innerHTML = "";
             tabBar.innerHTML = "";
 
-            Object.keys(projectData.files).forEach(fileName => {
-                // サイドバーアイテム
-                const isSelected = fileName === currentFileName;
-                const fileEl = document.createElement("div");
-                fileEl.className = `px-4 py-1.5 cursor-pointer flex items-center space-x-2 text-xs transition ${isSelected ? 'bg-[#37373d] text-white font-semibold' : 'hover:bg-[#2a2d2e] text-[#cccccc]'}`;
-                fileEl.innerHTML = `<span>📄</span> <span class="truncate">${fileName}</span>`;
-                fileEl.onclick = () => switchFile(fileName);
-                fileList.appendChild(fileEl);
+            // ファイルリストの描画
+            Object.keys(projectData.files).forEach(name => {
+                const isActive = (name === activeTab);
+                
+                // サイドバー
+                const item = document.createElement("div");
+                item.className = `group px-3 py-2 flex justify-between items-center cursor-pointer text-sm ${isActive ? 'bg-[#37373d] text-white' : 'hover:bg-[#2a2d2e]'}`;
+                item.innerHTML = `
+                    <div class="flex items-center truncate" onclick="switchTab('${name}')">
+                        <span class="mr-2 opacity-70">${getFileIcon(name)}</span>
+                        <span class="truncate">${name}</span>
+                    </div>
+                    <button onclick="deleteFile('${name}')" class="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-500 px-1 text-xs">✕</button>
+                `;
+                fileList.appendChild(item);
 
-                // タブアイテム
-                if (isSelected || true) { // 簡易的に全ファイルをタブ表示（本家風）
-                    const tabEl = document.createElement("div");
-                    tabEl.className = `h-full px-4 flex items-center space-x-2 text-xs border-r border-[#252526] cursor-pointer transition select-none shrink-0 ${isSelected ? 'bg-[#1e1e1e] text-white border-t-2 border-[#007acc]' : 'bg-[#2d2d2d] text-[#969696] hover:bg-[#2b2b2b]'}`;
-                    tabEl.innerHTML = `<span>${fileName}</span>`;
-                    tabEl.onclick = () => switchFile(fileName);
-                    tabBar.appendChild(tabEl);
-                }
+                // タブバー
+                const tab = document.createElement("div");
+                tab.className = `h-full px-4 flex items-center space-x-2 text-xs border-r border-[#252526] cursor-pointer transition shrink-0 ${isActive ? 'bg-[#1e1e1e] text-white border-t-2 border-[#007acc]' : 'bg-[#2d2d2d] text-gray-500 hover:bg-[#2b2b2b]'}`;
+                tab.innerHTML = `<span>${name}</span><span onclick="event.stopPropagation(); closeTab('${name}')" class="hover:text-white ml-2">×</span>`;
+                tab.onclick = () => switchTab(name);
+                tabBar.appendChild(tab);
             });
-        }
 
-        function switchFile(fileName) {
-            if (!editor || !monacoInstance || !projectData.files[fileName]) return;
-            
-            currentFileName = fileName;
-            const file = projectData.files[fileName];
-
-            // 新しいモデルを作成するか、既存のモデルをセット
-            let model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${fileName}`);
-            if (!model) {
-                model = monacoInstance.editor.createModel(file.content, file.lang, monacoInstance.Uri.file(fileName));
-            } else {
-                model.setValue(file.content);
+            // 設定タブがアクティブな場合
+            if (activeTab === "__settings__") {
+                const sTab = document.createElement("div");
+                sTab.className = `h-full px-4 flex items-center space-x-2 text-xs border-r border-[#252526] cursor-pointer shrink-0 bg-[#1e1e1e] text-white border-t-2 border-[#007acc]`;
+                sTab.innerHTML = `<span>⚙️ Settings</span><span onclick="event.stopPropagation(); switchTab('${Object.keys(projectData.files)[0]}')" class="ml-2">×</span>`;
+                tabBar.appendChild(sTab);
             }
-
-            editor.setModel(model);
-            
-            // 下部ステータスバーの更新
-            document.getElementById("languageInfo").innerText = file.lang;
-            document.getElementById("statusInfo").innerText = `Opened: ${fileName}`;
-
-            // アクティブなUI表示を更新
-            buildFileTree();
         }
 
-        // --- 設定の反映 ---
-        function updateSettings() {
-            const size = parseInt(document.getElementById("fontSizeInput").value) || 14;
-            const theme = document.getElementById("themeInput").value;
+        function switchTab(target) {
+            activeTab = target;
+            
+            const editorLayer = document.getElementById("editorLayer");
+            const settingsLayer = document.getElementById("settingsLayer");
+            const topFileName = document.getElementById("topFileName");
 
-            projectData.settings.fontSize = size;
+            if (target === "__settings__") {
+                editorLayer.classList.remove("active");
+                settingsLayer.classList.add("active");
+                topFileName.innerText = "Settings";
+                syncSettingsUI();
+            } else {
+                settingsLayer.classList.remove("active");
+                editorLayer.classList.add("active");
+                topFileName.innerText = target;
+
+                const file = projectData.files[target];
+                if (file && editor) {
+                    let model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${target}`);
+                    if (!model) {
+                        model = monacoInstance.editor.createModel(file.content, file.lang, monacoInstance.Uri.file(target));
+                    }
+                    editor.setModel(model);
+                    document.getElementById("langDisplay").innerText = file.lang;
+                }
+            }
+            renderUI();
+        }
+
+        // --- ファイル操作 ---
+        function promptNewFile() {
+            const name = prompt("ファイル名を入力してください (例: index.html, style.css, main.cpp)");
+            if (!name) return;
+            if (projectData.files[name]) return alert("そのファイル名は既に存在します");
+
+            const ext = name.split('.').pop();
+            const lang = EXT_MAP[ext] || 'plaintext';
+
+            projectData.files[name] = { content: "", lang: lang };
+            saveData();
+            switchTab(name);
+        }
+
+        function deleteFile(name) {
+            if (Object.keys(projectData.files).length <= 1) return alert("最後の1ファイルは削除できません");
+            if (!confirm(`${name} を削除しますか？`)) return;
+
+            delete projectData.files[name];
+            
+            // モデルも削除
+            const model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${name}`);
+            if (model) model.dispose();
+
+            if (activeTab === name) {
+                switchTab(Object.keys(projectData.files)[0]);
+            } else {
+                renderUI();
+            }
+            saveData();
+        }
+
+        function getFileIcon(name) {
+            const ext = name.split('.').pop();
+            switch(ext) {
+                case 'html': return '🌐';
+                case 'js': case 'ts': return '📜';
+                case 'css': return '🎨';
+                case 'md': return '📝';
+                case 'cpp': case 'cs': return '⚙️';
+                default: return '📄';
+            }
+        }
+
+        // --- 設定管理 ---
+        function openSettings() {
+            switchTab("__settings__");
+        }
+
+        function syncSettingsUI() {
+            document.getElementById("fontSizeRange").value = projectData.settings.fontSize;
+            document.getElementById("fontSizeVal").innerText = projectData.settings.fontSize;
+            document.getElementById("themeSelect").value = projectData.settings.theme;
+        }
+
+        function updateSettingsFromUI() {
+            const size = document.getElementById("fontSizeRange").value;
+            const theme = document.getElementById("themeSelect").value;
+
+            projectData.settings.fontSize = parseInt(size);
             projectData.settings.theme = theme;
+            document.getElementById("fontSizeVal").innerText = size;
 
-            if (editor && monacoInstance) {
-                editor.updateOptions({ fontSize: size });
+            if (editor) {
+                editor.updateOptions({ fontSize: projectData.settings.fontSize });
                 monacoInstance.editor.setTheme(theme);
             }
+            saveData();
         }
 
-        // --- ローカルストレージへの自動・手動保存 ---
-        function saveAllToLocalStorage() {
-            localStorage.setItem("web_studio_project", JSON.stringify(projectData));
-            document.getElementById("statusInfo").innerText = "すべてのデータと設定をローカルに保存しました";
-            setTimeout(() => { document.getElementById("statusInfo").innerText = "Ready"; }, 3000);
+        // --- ストレージ保存 ---
+        function saveData() {
+            localStorage.setItem("webstudio_pro_v2", JSON.stringify(projectData));
         }
 
-        function loadFromLocalStorage() {
-            const saved = localStorage.getItem("web_studio_project");
+        function loadData() {
+            const saved = localStorage.getItem("webstudio_pro_v2");
             if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    if (parsed.files && parsed.settings) {
-                        projectData = parsed;
-                        document.getElementById("fontSizeInput").value = projectData.settings.fontSize;
-                        document.getElementById("themeInput").value = projectData.settings.theme;
-                    }
-                } catch (e) {
-                    console.error("ストレージデータの読み込みに失敗しました。デフォルトを使用します。", e);
+                projectData = JSON.parse(saved);
+                // 既存のファイルがない場合の保護
+                if (Object.keys(projectData.files).length === 0) {
+                    projectData.files["main.js"] = { content: "", lang: "javascript" };
                 }
+                activeTab = Object.keys(projectData.files)[0];
             }
         }
 
-        // --- 究極の保存機能：このページ自身のHTMLと全データをまとめて1ファイルでダウンロード ---
-        function exportSystemSnapshot() {
-            // 現在の全ファイルを最新状態にしてメモリに格納
-            if (editor) {
-                projectData.files[currentFileName].content = editor.getValue();
+        function resetAllData() {
+            if (confirm("すべてのファイルと設定を消去して初期化しますか？")) {
+                localStorage.removeItem("webstudio_pro_v2");
+                location.reload();
             }
+        }
 
-            // 現在のHTMLソースコード（このファイル自体）を取得
-            let currentHtml = document.documentElement.outerHTML;
-
-            // ローカルストレージに最新状態を書き込む（次回起動時に読み込ませるため）
-            localStorage.setItem("web_studio_project", JSON.stringify(projectData));
-
-            // 保存用スクリプトを安全に埋め込むため、既存のデータを動的に置換してエクスポート可能
-            // ※これにより、次回このDLしたHTMLを開いた時も、全く同じ状態からスタンドアロンで起動します。
-            
-            const blob = new Blob([currentHtml], { type: "text/html" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "WebCodeStudio_Snapshot.html";
-            link.click();
-            URL.revokeObjectURL(link.href);
+        function exportSystemSnapshot() {
+            saveData();
+            const html = document.documentElement.outerHTML;
+            const blob = new Blob([html], { type: "text/html" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "WebStudio_Pro_Backup.html";
+            a.click();
         }
     </script>
 </body>
