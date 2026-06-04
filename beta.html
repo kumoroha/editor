@@ -8,10 +8,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
     
     <style>
-        /* vh から dvh(Dynamic Viewport Height) に変更し、iPadブラウザのバー問題を解決 */
         body {
             padding-top: env(safe-area-inset-top);
             padding-bottom: env(safe-area-inset-bottom);
@@ -23,6 +24,18 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .view-layer { display: none; height: 100%; width: 100%; }
         .view-layer.active { display: block; }
+        
+        /* 本家風アイコンの色付け用スタイル */
+        .icon-html { color: #e34f26; }
+        .icon-css { color: #1572b6; }
+        .icon-js { color: #f7df1e; }
+        .icon-ts { color: #3178c6; }
+        .icon-python { color: #3776ab; }
+        .icon-json { color: #cbcb41; }
+        .icon-cpp { color: #00599c; }
+        .icon-csharp { color: #239120; }
+        .icon-md { color: #ffffff; }
+        .icon-txt { color: #858585; }
     </style>
 </head>
 <body class="text-[#cccccc] flex flex-col select-none">
@@ -54,7 +67,7 @@
 
             <div class="border-t border-[#333]">
                 <button onclick="openSettings()" class="w-full p-3 hover:bg-[#333] flex justify-center md:justify-start items-center space-x-2 transition">
-                    <span>⚙️</span>
+                    <span class="text-sm">⚙️</span>
                     <span class="hidden md:inline text-xs">Settings</span>
                 </button>
             </div>
@@ -108,8 +121,10 @@
     </footer>
 
     <script>
+        // --- 拡張子と内部言語の紐付けマッピング（Python, JSONを追加） ---
         const EXT_MAP = {
             'html': 'html', 'js': 'javascript', 'css': 'css',
+            'py': 'python', 'json': 'json',
             'cpp': 'cpp', 'cc': 'cpp', 'h': 'cpp', 'hpp': 'cpp',
             'cs': 'csharp', 'md': 'markdown', 'ts': 'typescript', 
             'txt': 'plaintext'
@@ -159,6 +174,24 @@
             switchTab(activeTab);
         });
 
+        // --- 本家VSCode風のロゴアイコンを生成する関数 ---
+        function getFileIconDom(name) {
+            const ext = name.split('.').pop().toLowerCase();
+            switch(ext) {
+                case 'html':   return '<i class="devicon-html5-plain icon-html text-base"></i>';
+                case 'css':    return '<i class="devicon-css3-plain icon-css text-base"></i>';
+                case 'js':     return '<i class="devicon-javascript-plain icon-js text-base"></i>';
+                case 'ts':     return '<i class="devicon-typescript-plain icon-ts text-base"></i>';
+                case 'py':     return '<i class="devicon-python-plain icon-python text-base"></i>';
+                case 'json':   return '<i class="devicon-json-plain icon-json text-base"></i>';
+                case 'cpp': case 'cc': case 'h': case 'hpp': 
+                               return '<i class="devicon-cplusplus-plain icon-cpp text-base"></i>';
+                case 'cs':     return '<i class="devicon-csharp-plain icon-csharp text-base"></i>';
+                case 'md':     return '<i class="devicon-markdown-original icon-md text-base"></i>';
+                default:       return '<i class="devicon-matcha-plain icon-txt text-base"></i>'; // デフォルトは汎用ファイル
+            }
+        }
+
         function renderUI() {
             const fileList = document.getElementById("fileList");
             const tabBar = document.getElementById("tabBar");
@@ -169,10 +202,10 @@
                 const isActive = (name === activeTab);
                 
                 const item = document.createElement("div");
-                item.className = `group px-3 py-2 flex justify-between items-center cursor-pointer text-sm ${isActive ? 'bg-[#37373d] text-white' : 'hover:bg-[#2a2d2e]'}`;
+                item.className = `group px-3 py-1.5 flex justify-between items-center cursor-pointer text-sm ${isActive ? 'bg-[#37373d] text-white font-medium' : 'hover:bg-[#2a2d2e]'}`;
                 item.innerHTML = `
                     <div class="flex items-center truncate flex-1 py-0.5" onclick="switchTab('${name}')">
-                        <span class="mr-2 opacity-70">${getFileIcon(name)}</span>
+                        <span class="mr-2 flex items-center justify-center w-5 h-5">${getFileIconDom(name)}</span>
                         <span class="truncate">${name}</span>
                     </div>
                     <button onclick="deleteFile('${name}')" class="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-500 px-1 text-xs transition">✕</button>
@@ -181,7 +214,7 @@
 
                 const tab = document.createElement("div");
                 tab.className = `h-full px-4 flex items-center space-x-2 text-xs border-r border-[#252526] cursor-pointer transition shrink-0 ${isActive ? 'bg-[#1e1e1e] text-white border-t-2 border-[#007acc]' : 'bg-[#2d2d2d] text-gray-500 hover:bg-[#2b2b2b]'}`;
-                tab.innerHTML = `<span>${name}</span><span onclick="event.stopPropagation(); closeTab('${name}')" class="hover:text-white ml-2">×</span>`;
+                tab.innerHTML = `<span class="scale-90 opacity-80">${getFileIconDom(name)}</span><span class="ml-1">${name}</span><span onclick="event.stopPropagation(); closeTab('${name}')" class="hover:text-white ml-2">×</span>`;
                 tab.onclick = () => switchTab(name);
                 tabBar.appendChild(tab);
             });
@@ -189,7 +222,7 @@
             if (activeTab === "__settings__") {
                 const sTab = document.createElement("div");
                 sTab.className = `h-full px-4 flex items-center space-x-2 text-xs border-r border-[#252526] cursor-pointer shrink-0 bg-[#1e1e1e] text-white border-t-2 border-[#007acc]`;
-                sTab.innerHTML = `<span>⚙️ Settings</span>`;
+                sTab.innerHTML = `<span class="text-xs">⚙️</span><span>Settings</span>`;
                 tabBar.appendChild(sTab);
             }
         }
@@ -225,14 +258,12 @@
         }
 
         function closeTab(name) {
-            // タブを閉じる際、簡易的に別のファイルに切り替える処理
             if (activeTab === name) {
                 const remaining = Object.keys(projectData.files).filter(k => k !== name);
                 if (remaining.length > 0) switchTab(remaining[0]);
             }
         }
 
-        // --- ファイルアップロード処理 ---
         function handleFileUpload(input) {
             const file = input.files[0];
             if (!file) return;
@@ -245,7 +276,6 @@
                 }
 
                 const ext = name.split('.').pop().toLowerCase();
-                // 未対応の拡張子は 'plaintext' (.txt扱い) にフォールバック
                 const lang = EXT_MAP[ext] || 'plaintext';
 
                 projectData.files[name] = {
@@ -255,13 +285,13 @@
 
                 saveData();
                 switchTab(name);
-                input.value = ""; // 連続アップロード可能にするためリセット
+                input.value = "";
             };
             reader.readAsText(file);
         }
 
         function promptNewFile() {
-            const name = prompt("ファイル名を入力してください (例: index.html, main.cpp)");
+            const name = prompt("ファイル名を入力してください (例: script.py, data.json, index.html)");
             if (!name) return;
             if (projectData.files[name]) return alert("そのファイル名は既に存在します");
 
@@ -290,18 +320,6 @@
             saveData();
         }
 
-        function getFileIcon(name) {
-            const ext = name.split('.').pop().toLowerCase();
-            switch(ext) {
-                case 'html': return '🌐';
-                case 'js': case 'ts': return '📜';
-                case 'css': return '🎨';
-                case 'md': return '📝';
-                case 'cpp': case 'cc': case 'h': case 'cs': return '⚙️';
-                default: return '📄';
-            }
-        }
-
         function openSettings() {
             switchTab("__settings__");
         }
@@ -328,11 +346,11 @@
         }
 
         function saveData() {
-            localStorage.setItem("webstudio_pro_v3", JSON.stringify(projectData));
+            localStorage.setItem("webstudio_pro_v4", JSON.stringify(projectData));
         }
 
         function loadData() {
-            const saved = localStorage.getItem("webstudio_pro_v3");
+            const saved = localStorage.getItem("webstudio_pro_v4");
             if (saved) {
                 projectData = JSON.parse(saved);
                 if (Object.keys(projectData.files).length === 0) {
@@ -344,7 +362,7 @@
 
         function resetAllData() {
             if (confirm("すべてのファイルと設定を消去して初期化しますか？")) {
-                localStorage.removeItem("webstudio_pro_v3");
+                localStorage.removeItem("webstudio_pro_v4");
                 location.reload();
             }
         }
@@ -355,7 +373,7 @@
             const blob = new Blob([html], { type: "text/html" });
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
-            a.download = "WebStudio_Pro_v3.html";
+            a.download = "WebStudio_Pro_v4.html";
             a.click();
         }
     </script>
