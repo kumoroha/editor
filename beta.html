@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Web Code Studio Pro v13.2</title>
+    <title>Web Code Studio Pro v13.3</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
@@ -62,12 +62,22 @@
 <body class="text-[#cccccc] flex flex-col select-none text-sm">
 
     <header class="bg-[#3c3c3c] text-white text-sm px-4 h-10 flex items-center justify-between border-b border-[#2b2b2b] shrink-0">
-        <div class="flex items-center space-x-4">
-            <button onclick="toggleSidebar()" class="hover:bg-[#4e4e4e] px-2 py-1 rounded text-base transition" title="サイドバーの開閉">☰</button>
-            <span class="font-bold text-[#007acc] text-base tracking-wide">WebStudio Pro</span>
-            <span id="topFileName" class="opacity-60 text-xs md:text-sm">main.js</span>
+        <div class="flex items-center space-x-4 flex-1 min-w-0">
+            <button onclick="toggleSidebar()" class="hover:bg-[#4e4e4e] px-2 py-1 rounded text-base transition shrink-0" title="サイドバーの開閉">☰</button>
+            <span class="font-bold text-[#007acc] text-base tracking-wide shrink-0">WebStudio Pro</span>
+            
+            <div class="flex items-center space-x-2 truncate">
+                <span id="topFileName" class="opacity-60 text-xs md:text-sm shrink-0">main.js</span>
+            </div>
+
+            <div id="headerFunctionButtons" class="flex items-center space-x-1.5 ml-4 overflow-x-auto no-scrollbar py-1">
+                <button onclick="openLivePreview()" class="bg-emerald-700 hover:bg-emerald-600 text-white text-[11px] px-2 py-0.5 rounded transition shrink-0 font-bold flex items-center space-x-1"><span>👀</span><span class="hidden sm:inline">プレビュー</span></button>
+                <button onclick="setDiffCheckpoint()" class="bg-indigo-700 hover:bg-indigo-600 text-white text-[11px] px-2 py-0.5 rounded transition shrink-0 font-medium flex items-center space-x-1" title="現在の状態を差分の基準点に設定"><span>📌</span><span class="hidden sm:inline">基準設定</span></button>
+                <button onclick="openHistoryModal()" class="bg-amber-700 hover:bg-amber-600 text-white text-[11px] px-2 py-0.5 rounded transition shrink-0 font-medium flex items-center space-x-1" title="自動履歴（タイムマシーン）を開く"><span>⏳</span><span class="hidden sm:inline">履歴</span></button>
+                <button onclick="formatCodeWithConfirm()" class="bg-purple-700 hover:bg-purple-600 text-white text-[11px] px-2 py-0.5 rounded transition shrink-0 font-medium flex items-center space-x-1" title="コードを自動整形"><span>✨</span><span class="hidden sm:inline">整形</span></button>
+            </div>
         </div>
-        <div class="flex items-center space-x-3 text-xs md:text-sm">
+        <div class="flex items-center space-x-3 text-xs md:text-sm shrink-0 ml-2">
             <span id="wakeLockStatus" class="text-[11px] text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800/50 flex items-center space-x-1">
                 <span>☕</span><span class="hidden sm:inline">Awake</span>
             </span>
@@ -133,12 +143,6 @@
             <div id="tabBar" class="flex bg-[#252526] h-10 overflow-x-auto no-scrollbar shrink-0 text-xs md:text-sm"></div>
             
             <div id="quickInputBar" class="bg-[#2d2d2d] border-b border-[#232324] h-9 px-2 flex items-center space-x-1.5 overflow-x-auto no-scrollbar shrink-0">
-                <button onclick="openLivePreview()" class="bg-emerald-700 hover:bg-emerald-600 text-white text-xs px-2 py-1 rounded transition shrink-0 font-bold flex items-center space-x-1"><span>👀</span><span>プレビュー</span></button>
-                <button onclick="setDiffCheckpoint()" class="bg-indigo-700 hover:bg-indigo-600 text-white text-xs px-2 py-1 rounded transition shrink-0 font-medium flex items-center space-x-1" title="現在の状態を差分の基準点に設定します"><span>📌</span><span>基準設定</span></button>
-                <button onclick="openHistoryModal()" class="bg-amber-700 hover:bg-amber-600 text-white text-xs px-2 py-1 rounded transition shrink-0 font-medium flex items-center space-x-1" title="自動履歴（タイムマシーン）を開く"><span>⏳</span><span>履歴</span></button>
-                <button onclick="formatCodeWithConfirm()" class="bg-purple-700 hover:bg-purple-600 text-white text-xs px-2 py-1 rounded transition shrink-0 font-medium flex items-center space-x-1" title="コードをきれいに整形します"><span>✨</span><span>整形</span></button>
-                <div class="h-4 w-[1px] bg-[#555] shrink-0"></div>
-
                 <button onclick="executeSelectAll()" class="bg-[#444] hover:bg-[#555] text-white text-xs px-2 py-1 rounded transition shrink-0 font-medium">全選択</button>
                 <button onclick="executeCopyAll()" class="bg-[#444] hover:bg-[#555] text-white text-xs px-2 py-1 rounded transition shrink-0 font-medium">全コピー</button>
                 <div class="h-4 w-[1px] bg-[#555] shrink-0"></div>
@@ -146,12 +150,16 @@
                 <button onclick="insertTemplate()" class="bg-[#0e639c] hover:bg-[#1177bb] text-white text-xs px-2 py-1 rounded transition shrink-0 font-bold">📄 HTML雛形</button>
                 <div class="h-4 w-[1px] bg-[#444] shrink-0 mr-1"></div>
                 
-                <button onclick="insertSymbol('<>')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">&lt;&gt;</button>
-                <button onclick="insertSymbol('{}')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">{}</button>
-                <button onclick="insertSymbol('[]')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">[]</button>
-                <button onclick="insertSymbol('()')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">()</button>
-                <button onclick="insertSymbol('\"\"')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">""</button>
-                <button onclick="insertSymbol('\'\'')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">''</button>
+                <button onclick="insertSymbol('<')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">&lt;</button>
+                <button onclick="insertSymbol('>')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">&gt;</button>
+                <button onclick="insertSymbol('{')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">{</button>
+                <button onclick="insertSymbol('}')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">}</button>
+                <button onclick="insertSymbol('[')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">[</button>
+                <button onclick="insertSymbol(']')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">]</button>
+                <button onclick="insertSymbol('(')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">(</button>
+                <button onclick="insertSymbol(')')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">)</button>
+                <button onclick="insertSymbol('&quot;')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">"</button>
+                <button onclick="insertSymbol('\'')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">'</button>
                 <button onclick="insertSymbol('`')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">`</button>
                 <button onclick="insertSymbol('*')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">*</button>
                 <button onclick="insertSymbol('~')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">~</button>
@@ -182,7 +190,7 @@
                             <div>
                                 <div class="text-5xl mb-3">🚀</div>
                                 <h2 class="text-2xl font-bold text-white tracking-wide">Web Code Studio Pro</h2>
-                                <p class="text-gray-400 text-xs mt-1">Pocket IDE Environment v13.2</p>
+                                <p class="text-gray-400 text-xs mt-1">Pocket IDE Environment v13.3</p>
                             </div>
                             <p class="text-sm text-gray-400 leading-relaxed">
                                 開いているファイルがありません。左のエクスプローラーからファイルを選択するか、新しく作成してコーディングを開始しましょう。
@@ -422,7 +430,6 @@
             if (editor) setTimeout(() => editor.layout(), 200);
         }
 
-        // C++等の自動補完サジェストを有効化するためのWebワーカーマッピング設定
         window.MonacoEnvironment = {
             getWorkerUrl: function (moduleId, label) {
                 return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
@@ -435,6 +442,46 @@
         
         require(['vs/editor/editor.main'], function() {
             monacoInstance = monaco;
+
+            // CDN版MonacoでC++のローカルサジェスト（インテリセンス）を強力に稼働させる補完レジストリ
+            monacoInstance.languages.registerCompletionItemProvider('cpp', {
+                provideCompletionItems: function(model, position) {
+                    const textUntilPosition = model.getValueInRange({
+                        startLineNumber: 1, startColumn: 1,
+                        endLineNumber: position.lineNumber, endColumn: position.column
+                    });
+                    
+                    // C++標準予約語および主要キーワードのインテリセンス定義
+                    const cppKeywords = [
+                        'include', 'define', 'main', 'std', 'cout', 'cin', 'endl', 'vector', 'string',
+                        'int', 'float', 'double', 'char', 'bool', 'void', 'class', 'struct', 'public',
+                        'private', 'protected', 'if', 'else', 'for', 'while', 'do', 'switch', 'case',
+                        'break', 'continue', 'return', 'true', 'false', 'namespace', 'using', 'template',
+                        'typename', 'auto', 'const', 'static', 'virtual', 'override', 'nullptr'
+                    ];
+
+                    const suggestions = cppKeywords.map(keyword => {
+                        let insertText = keyword;
+                        let kind = monacoInstance.languages.CompletionItemKind.Keyword;
+
+                        if (keyword === 'include') { insertText = 'include <${1:iostream}>'; kind = monacoInstance.languages.CompletionItemKind.Snippet; }
+                        else if (keyword === 'main') { insertText = 'main() {\n\t${1}\n\treturn 0;\n}'; kind = monacoInstance.languages.CompletionItemKind.Snippet; }
+                        else if (keyword === 'cout') { insertText = 'cout << ${1}'; kind = monacoInstance.languages.CompletionItemKind.Field; }
+                        else if (keyword === 'endl') { insertText = 'endl;'; kind = monacoInstance.languages.CompletionItemKind.Property; }
+
+                        return {
+                            label: keyword,
+                            kind: kind,
+                            insertText: insertText,
+                            insertTextRules: insertText.includes('$') ? monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet : undefined,
+                            range: new monacoInstance.Range(position.lineNumber, position.column, position.lineNumber, position.column)
+                        };
+                    });
+
+                    return { suggestions: suggestions };
+                }
+            });
+
             loadData();
 
             editor = monaco.editor.create(document.getElementById('editorContainer'), {
@@ -447,7 +494,9 @@
                 theme: projectData.settings.theme,
                 padding: { top: 10 },
                 lineNumbersMinChars: 3,
-                colorDecorators: true // カラーピッカーの装飾表示を強制有効化
+                colorDecorators: true,
+                suggestOnTriggerCharacters: true,
+                snippetSuggestions: "inline"
             });
 
             diffEditor = monaco.editor.createDiffEditor(document.getElementById('diffContainer'), {
@@ -480,7 +529,6 @@
                 }
             });
 
-            // リアルタイム選択文字数カウントのロジック改善
             editor.onDidChangeCursorSelection((e) => {
                 const position = editor.getPosition();
                 if (position) {
@@ -505,7 +553,6 @@
             setInterval(triggerTimeMachineBackup, 180000);
         });
 
-        // 世代反転対応：新しい世代が配列の末尾（数字大）になるように変更
         function triggerTimeMachineBackup() {
             if (editor && projectData.files[activeTab] && !isSpecialActive()) {
                 projectData.files[activeTab].content = editor.getValue();
@@ -513,14 +560,13 @@
             const snapshot = { timestamp: Date.now(), files: JSON.parse(JSON.stringify(projectData.files)) };
             if (!projectData.timeMachine) projectData.timeMachine = [];
             
-            projectData.timeMachine.push(snapshot); // 末尾に追加
+            projectData.timeMachine.push(snapshot);
             if (projectData.timeMachine.length > 10) {
-                projectData.timeMachine.shift(); // 10を超えたら先頭（古いもの）を削除
+                projectData.timeMachine.shift();
             }
             saveData();
         }
 
-        // 世代反転対応：数字が大きいほど最新として表示
         function openHistoryModal() {
             const listEl = document.getElementById("historyList");
             listEl.innerHTML = "";
@@ -530,19 +576,18 @@
                 return;
             }
             
-            // 表示は最新（インデックスが大きい＝Gen番号が大きい）順に並べる
             for (let idx = projectData.timeMachine.length - 1; idx >= 0; idx--) {
                 const snap = projectData.timeMachine[idx];
                 const timeStr = new Date(snap.timestamp).toLocaleString();
                 const fileCount = Object.keys(snap.files).length;
-                const genNumber = idx + 1; // 1-indexed (配列サイズ10の時最大Gen10)
+                const genNumber = idx + 1;
                 
                 const row = document.createElement("div");
                 row.className = "bg-[#252526] p-2 rounded border border-[#3c3c3c] flex items-center justify-between space-x-2";
                 row.innerHTML = `
                     <div class="flex flex-col min-w-0">
                         <span class="font-bold text-gray-200">${timeStr} <span class="text-[10px] text-amber-500 bg-amber-950/40 px-1 rounded ml-1">Gen ${genNumber}</span></span>
-                        <span class="text-[11px] text-gray-400 mt-0.5 truncate">ワークスペース内スナップショット (${fileCount} 個のファイル)</span>
+                        <span class="text-[11px] text-gray-400 mt-0.5 truncate">ワークスペース内スナップショット (${fileCount} 個의 ファイル)</span>
                     </div>
                     <div class="flex items-center space-x-1.5 shrink-0">
                         <button onclick="viewHistoryDiff(${idx})" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-white px-2 py-1 rounded text-[11px] transition">差分</button>
@@ -618,20 +663,14 @@
             });
         }
 
+        // 特別な特殊タブレイヤーであるかどうかの判別
         function isSpecialActive() { return activeTab === "__settings__" || activeTab === "__diff__" || activeTab === "__welcome__" || activeTab === "__preview__"; }
 
         function insertSymbol(sym) {
             if (!editor || isSpecialActive()) return;
             const selection = editor.getSelection();
-            const selectedText = editor.getModel().getValueInRange(selection);
-            let textToInsert = sym, targetSelection = null;
-            if (sym.length === 2 && ['<>', '{}', '[]', '()', '""', "''"].includes(sym)) {
-                textToInsert = sym[0] + selectedText + sym[1];
-                targetSelection = new monacoInstance.Selection(selection.startLineNumber, selection.startColumn + 1, selection.endLineNumber, selection.endColumn + 1);
-            }
             const range = new monacoInstance.Range(selection.startLineNumber, selection.startColumn, selection.endLineNumber, selection.endColumn);
-            editor.executeEdits("source", [{ identifier: { major: 1, minor: 1 }, range: range, text: textToInsert, forceMoveMarkers: true }]);
-            if (targetSelection) editor.setSelection(targetSelection);
+            editor.executeEdits("source", [{ identifier: { major: 1, minor: 1 }, range: range, text: sym, forceMoveMarkers: true }]);
             editor.focus();
         }
 
@@ -824,12 +863,16 @@
             Object.values(layers).forEach(l => l.classList.remove("active"));
             const topFileName = document.getElementById("topFileName");
 
-            // 設定画面・ようこそ画面・プレビュー等ではEmmet/記号のボタン列を非表示にする制御
+            // 特殊画面（設定、ようこそ画面、プレビューなど）では、最上部ヘッダーの機能ボタンおよび中段ツールバーを非表示にする制御
             const quickInputBar = document.getElementById("quickInputBar");
+            const headerFunctionButtons = document.getElementById("headerFunctionButtons");
+            
             if (isSpecialActive()) {
-                quickInputBar.style.display = "none";
+                if(quickInputBar) quickInputBar.style.display = "none";
+                if(headerFunctionButtons) headerFunctionButtons.style.display = "none";
             } else {
-                quickInputBar.style.display = "flex";
+                if(quickInputBar) quickInputBar.style.display = "flex";
+                if(headerFunctionButtons) headerFunctionButtons.style.display = "flex";
             }
 
             if (target === "__settings__") { layers.settings.classList.add("active"); topFileName.innerText = "Settings"; syncSettingsUI(); }
@@ -843,7 +886,7 @@
                     let model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${target}`);
                     if (!model) model = monacoInstance.editor.createModel(file.content, file.lang, monacoInstance.Uri.file(target));
                     editor.setModel(model); document.getElementById("langDisplay").innerText = file.lang;
-                } else { activeTab = "__welcome__"; layers.welcome.classList.add("active"); if(quickInputBar) quickInputBar.style.display = "none"; }
+                } else { activeTab = "__welcome__"; layers.welcome.classList.add("active"); if(quickInputBar) quickInputBar.style.display = "none"; if(headerFunctionButtons) headerFunctionButtons.style.display = "none"; }
             }
             saveData(); renderUI(); updateFooterCounters();
         }
@@ -889,7 +932,7 @@
         function exportSystemSnapshotFromModal() {
             saveData();
             const blob = new Blob([document.documentElement.outerHTML], { type: "text/html" });
-            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "WebStudio_Pro_v13_2.html"; a.click();
+            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "WebStudio_Pro_v13_3.html"; a.click();
             closeDownloadModal();
         }
 
@@ -1059,7 +1102,6 @@
 
         function openSettings() { switchTab("__settings__"); }
 
-        // 設定のローカルストレージ互換性維持
         function syncSettingsUI() {
             document.getElementById("fontSizeRange").value = projectData.settings.fontSize || 16;
             document.getElementById("fontSizeVal").innerText = projectData.settings.fontSize || 16;
