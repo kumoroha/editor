@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Web Code Studio Pro v13</title>
+    <title>Web Code Studio Pro v13.2</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
@@ -50,11 +50,13 @@
             #btnReplaceAll { width: 100% !important; height: 28px; margin-top: 4px; }
         }
         
-        /* スクロールバグ改修用：タッチ操作を有効化 */
         .scrollable-area {
             touch-action: pan-y !important;
             -webkit-overflow-scrolling: touch;
         }
+
+        #consolePanel { transition: height 0.18s ease-out; }
+        #consolePanel.collapsed { height: 26px !important; }
     </style>
 </head>
 <body class="text-[#cccccc] flex flex-col select-none text-sm">
@@ -180,7 +182,7 @@
                             <div>
                                 <div class="text-5xl mb-3">🚀</div>
                                 <h2 class="text-2xl font-bold text-white tracking-wide">Web Code Studio Pro</h2>
-                                <p class="text-gray-400 text-xs mt-1">Pocket IDE Environment v13</p>
+                                <p class="text-gray-400 text-xs mt-1">Pocket IDE Environment v13.2</p>
                             </div>
                             <p class="text-sm text-gray-400 leading-relaxed">
                                 開いているファイルがありません。左のエクスプローラーからファイルを選択するか、新しく作成してコーディングを開始しましょう。
@@ -267,11 +269,14 @@
                 </div>
 
                 <div id="consolePanel" class="h-32 bg-[#181818] border-t border-[#2d2d2d] flex flex-col overflow-hidden shrink-0">
-                    <div class="bg-[#202020] h-7 px-3 flex items-center justify-between border-b border-[#2d2d2d] text-[11px] shrink-0 font-bold uppercase tracking-wider text-gray-400">
+                    <div class="bg-[#202020] h-7 px-3 flex items-center justify-between border-b border-[#2d2d2d] text-[11px] shrink-0 font-bold uppercase tracking-wider text-gray-400 cursor-pointer" onclick="toggleConsolePanel()">
                         <div class="flex items-center space-x-2">
-                            <span class="text-emerald-500">💻</span><span>Console Output</span>
+                            <span class="text-emerald-500">💻</span><span id="consoleTitleText">Console Output</span>
                         </div>
-                        <button onclick="clearVirtualConsole()" class="hover:text-white px-2 py-0.5 rounded bg-[#2d2d2d] transition text-[10px]">Clear</button>
+                        <div class="flex items-center space-x-3" onclick="event.stopPropagation()">
+                            <button onclick="clearVirtualConsole()" class="hover:text-white px-2 py-0.5 rounded bg-[#2d2d2d] transition text-[10px]">Clear</button>
+                            <button id="btnToggleConsole" onclick="toggleConsolePanel()" class="hover:text-white px-1 text-[11px] font-bold text-gray-400">🔽 閉じる</button>
+                        </div>
                     </div>
                     <div id="consoleLogs" class="flex-1 p-2 font-mono text-[11px] overflow-y-auto no-scrollbar space-y-1 bg-[#151515] text-gray-300 scrollable-area"></div>
                 </div>
@@ -330,7 +335,7 @@
             </div>
             <div class="p-4 space-y-4">
                 <p class="text-xs text-gray-400 leading-relaxed">
-                    3分ごとに自動生成されたバックアップ履歴（最大10世代）です。現在の最新コードを破壊することなく、過去の状態と差分比較したり、その時点へ復元（リバート）できます。
+                    3分ごとに自動生成されたバックアップ履歴（最大10世代）です。**世代を表す数字（Gen）が大きいほど最新の状態**となります。
                 </p>
                 <div class="border border-[#3c3c3c] bg-[#1e1e1e] rounded max-h-56 overflow-y-auto no-scrollbar p-1.5 scrollable-area">
                     <div id="historyList" class="space-y-1.5 text-xs"></div>
@@ -353,11 +358,10 @@
                 "src/index.html": { content: "<!DOCTYPE html>\n<html>\n<head>\n  <link rel='stylesheet' href='styles/app.css'>\n</head>\n<body>\n  <h1>Hello World</h1>\n  <script src='../main.js'><\/script>\n</body>\n</html>", lang: "html" },
                 "src/styles/app.css": { content: "body { background: #111; color: #007acc; text-align: center; padding-top: 50px; }", lang: "css" }
             },
-            settings: { fontSize: 16, tabSize: 4, wordWrap: "on", lineNumbers: "on", minimap: "off", autoSaveDelay: 500, theme: "vs-dark", sidebarWidth: 200 },
+            settings: { fontSize: 16, tabSize: 4, wordWrap: "on", lineNumbers: "on", minimap: "off", autoSaveDelay: 500, theme: "vs-dark", sidebarWidth: 200, consoleCollapsed: false },
             foldersExpanded: { "src": true, "src/styles": true },
             openTabs: ["main.js", "src/index.html", "src/styles/app.css"],
             diffCheckpoints: {},
-            // タイムマシーン履歴管理（配列）
             timeMachine: []
         };
 
@@ -371,7 +375,6 @@
         let currentSidebarView = 'explorer';
         let wakeLock = null;
 
-        // 仮想コンソールフックシステム
         (function() {
             window.addEventListener('message', function(e) {
                 if (e.data && e.data.type === 'VIRTUAL_CONSOLE') {
@@ -399,6 +402,35 @@
             document.getElementById("consoleLogs").innerHTML = `<div class="text-gray-500 italic text-[10px]">Console cleared.</div>`;
         }
 
+        function toggleConsolePanel() {
+            const panel = document.getElementById("consolePanel");
+            const btn = document.getElementById("btnToggleConsole");
+            const title = document.getElementById("consoleTitleText");
+            
+            if (panel.classList.contains("collapsed")) {
+                panel.classList.remove("collapsed");
+                btn.innerText = "🔽 閉じる";
+                title.classList.remove("hidden");
+                projectData.settings.consoleCollapsed = false;
+            } else {
+                panel.classList.add("collapsed");
+                btn.innerText = "🔼 💻 Console";
+                title.classList.add("hidden");
+                projectData.settings.consoleCollapsed = true;
+            }
+            saveData();
+            if (editor) setTimeout(() => editor.layout(), 200);
+        }
+
+        // C++等の自動補完サジェストを有効化するためのWebワーカーマッピング設定
+        window.MonacoEnvironment = {
+            getWorkerUrl: function (moduleId, label) {
+                return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
+                    self.importScripts('https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs/base/worker/workerMain.js');
+                `)}`;
+            }
+        };
+
         require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' } });
         
         require(['vs/editor/editor.main'], function() {
@@ -414,7 +446,8 @@
                 minimap: { enabled: projectData.settings.minimap === "on" },
                 theme: projectData.settings.theme,
                 padding: { top: 10 },
-                lineNumbersMinChars: 3
+                lineNumbersMinChars: 3,
+                colorDecorators: true // カラーピッカーの装飾表示を強制有効化
             });
 
             diffEditor = monaco.editor.createDiffEditor(document.getElementById('diffContainer'), {
@@ -425,6 +458,12 @@
             });
 
             applySidebarWidth(projectData.settings.sidebarWidth || 200);
+
+            if (projectData.settings.consoleCollapsed) {
+                document.getElementById("consolePanel").classList.add("collapsed");
+                document.getElementById("btnToggleConsole").innerText = "🔼 💻 Console";
+                document.getElementById("consoleTitleText").classList.add("hidden");
+            }
 
             editor.onDidChangeModelContent(() => {
                 if (projectData.files[activeTab] && !isSpecialActive()) {
@@ -441,17 +480,20 @@
                 }
             });
 
+            // リアルタイム選択文字数カウントのロジック改善
             editor.onDidChangeCursorSelection((e) => {
                 const position = editor.getPosition();
-                document.getElementById('cursorPos').innerText = `Ln ${position.lineNumber}, Col ${position.column}`;
+                if (position) {
+                    document.getElementById('cursorPos').innerText = `Ln ${position.lineNumber}, Col ${position.column}`;
+                }
                 const selection = e.selection;
-                if (selection && !selection.isEmpty()) {
+                const el = document.getElementById('statSelected');
+                if (selection && !selection.isEmpty() && editor.getModel()) {
                     const selectedText = editor.getModel().getValueInRange(selection);
-                    const el = document.getElementById('statSelected');
                     el.innerText = `${selectedText.length} selected`;
                     el.classList.remove('hidden');
                 } else {
-                    document.getElementById('statSelected').classList.add('hidden');
+                    el.classList.add('hidden');
                 }
             });
 
@@ -460,50 +502,46 @@
             renderUI();
             switchTab(activeTab);
             
-            // タイムマシーン自動定期バックアップ（3分ごと）
             setInterval(triggerTimeMachineBackup, 180000);
         });
 
-        // タイムマシーン：自動バックアップ実行ロジック
+        // 世代反転対応：新しい世代が配列の末尾（数字大）になるように変更
         function triggerTimeMachineBackup() {
             if (editor && projectData.files[activeTab] && !isSpecialActive()) {
                 projectData.files[activeTab].content = editor.getValue();
             }
-            
-            const snapshot = {
-                timestamp: Date.now(),
-                files: JSON.parse(JSON.stringify(projectData.files))
-            };
-            
+            const snapshot = { timestamp: Date.now(), files: JSON.parse(JSON.stringify(projectData.files)) };
             if (!projectData.timeMachine) projectData.timeMachine = [];
-            projectData.timeMachine.unshift(snapshot);
             
-            // 最大10世代制限
+            projectData.timeMachine.push(snapshot); // 末尾に追加
             if (projectData.timeMachine.length > 10) {
-                projectData.timeMachine.pop();
+                projectData.timeMachine.shift(); // 10を超えたら先頭（古いもの）を削除
             }
             saveData();
         }
 
+        // 世代反転対応：数字が大きいほど最新として表示
         function openHistoryModal() {
             const listEl = document.getElementById("historyList");
             listEl.innerHTML = "";
-            
             if (!projectData.timeMachine || projectData.timeMachine.length === 0) {
                 listEl.innerHTML = `<div class="text-gray-500 italic p-3 text-center">まだ自動履歴履歴が存在しません。 (3分ごとに自動巡回生成されます)</div>`;
                 document.getElementById("historyModal").classList.remove("hidden");
                 return;
             }
             
-            projectData.timeMachine.forEach((snap, idx) => {
+            // 表示は最新（インデックスが大きい＝Gen番号が大きい）順に並べる
+            for (let idx = projectData.timeMachine.length - 1; idx >= 0; idx--) {
+                const snap = projectData.timeMachine[idx];
                 const timeStr = new Date(snap.timestamp).toLocaleString();
                 const fileCount = Object.keys(snap.files).length;
+                const genNumber = idx + 1; // 1-indexed (配列サイズ10の時最大Gen10)
                 
                 const row = document.createElement("div");
                 row.className = "bg-[#252526] p-2 rounded border border-[#3c3c3c] flex items-center justify-between space-x-2";
                 row.innerHTML = `
                     <div class="flex flex-col min-w-0">
-                        <span class="font-bold text-gray-200">${timeStr} <span class="text-[10px] text-amber-500 bg-amber-950/40 px-1 rounded ml-1">Gen ${idx+1}</span></span>
+                        <span class="font-bold text-gray-200">${timeStr} <span class="text-[10px] text-amber-500 bg-amber-950/40 px-1 rounded ml-1">Gen ${genNumber}</span></span>
                         <span class="text-[11px] text-gray-400 mt-0.5 truncate">ワークスペース内スナップショット (${fileCount} 個のファイル)</span>
                     </div>
                     <div class="flex items-center space-x-1.5 shrink-0">
@@ -512,7 +550,7 @@
                     </div>
                 `;
                 listEl.appendChild(row);
-            });
+            }
             document.getElementById("historyModal").classList.remove("hidden");
         }
 
@@ -520,46 +558,31 @@
 
         function viewHistoryDiff(idx) {
             const snap = projectData.timeMachine[idx];
-            if (!snap || !snap.files[activeTab]) {
-                alert("この履歴データ内に対象ファイルが存在しないため比較できません。");
-                return;
-            }
+            if (!snap || !snap.files[activeTab]) return alert("この履歴データ内に対象ファイルが存在しないため比較できません。");
             closeHistoryModal();
-            
             const originalContent = snap.files[activeTab].content;
             const currentContent = projectData.files[activeTab].content;
             const fileLang = projectData.files[activeTab].lang;
-
             const originalModel = monacoInstance.editor.createModel(originalContent, fileLang);
             const modifiedModel = monacoInstance.editor.createModel(currentContent, fileLang);
             diffEditor.setModel({ original: originalModel, modified: modifiedModel });
-
             if (originalModelForDiff) originalModelForDiff.dispose();
             originalModelForDiff = originalModel;
-
             switchTab("__diff__");
             document.getElementById("topFileName").innerText = `Diff: 履歴世代との比較`;
         }
 
         function restoreHistorySnapshot(idx) {
             if (!confirm("本当にこの世代の状態へワークスペース全体を復元しますか？\n（現在の最新コードは上書きされます）")) return;
-            const snap = projectData.timeMachine[idx];
-            if (!snap) return;
-            
+            const snap = projectData.timeMachine[idx]; if (!snap) return;
             projectData.files = JSON.parse(JSON.stringify(snap.files));
-            saveData();
-            closeHistoryModal();
-            
-            // 現在のモデル達を全てリフレッシュ破棄
+            saveData(); closeHistoryModal();
             monacoInstance.editor.getModels().forEach(m => m.dispose());
-            switchTab(activeTab);
-            alert("タイムマシーン：指定世代への復元が完了しました。");
+            switchTab(activeTab); alert("タイムマシーン：指定世代への復元が完了しました。");
         }
 
-        // 新機能：実行前確認ダイアログ付き自動整形（Prettier風コアロジック）
         function formatCodeWithConfirm() {
             if (isSpecialActive() || !projectData.files[activeTab]) return;
-            
             if (confirm("✨ コードを自動整形（フォーマット）しますか？\n（インデント構造が上書きされます）")) {
                 editor.getAction('editor.action.formatDocument').run().then(() => {
                     const status = document.getElementById("statusInfo");
@@ -601,14 +624,11 @@
             if (!editor || isSpecialActive()) return;
             const selection = editor.getSelection();
             const selectedText = editor.getModel().getValueInRange(selection);
-            let textToInsert = sym;
-            let targetSelection = null;
-
+            let textToInsert = sym, targetSelection = null;
             if (sym.length === 2 && ['<>', '{}', '[]', '()', '""', "''"].includes(sym)) {
                 textToInsert = sym[0] + selectedText + sym[1];
                 targetSelection = new monacoInstance.Selection(selection.startLineNumber, selection.startColumn + 1, selection.endLineNumber, selection.endColumn + 1);
             }
-
             const range = new monacoInstance.Range(selection.startLineNumber, selection.startColumn, selection.endLineNumber, selection.endColumn);
             editor.executeEdits("source", [{ identifier: { major: 1, minor: 1 }, range: range, text: textToInsert, forceMoveMarkers: true }]);
             if (targetSelection) editor.setSelection(targetSelection);
@@ -640,21 +660,15 @@
         }
 
         function renderUI() {
-            const fileList = document.getElementById("fileList");
-            const tabBar = document.getElementById("tabBar");
-            fileList.innerHTML = "";
-            tabBar.innerHTML = "";
-
+            const fileList = document.getElementById("fileList"), tabBar = document.getElementById("tabBar");
+            fileList.innerHTML = ""; tabBar.innerHTML = "";
             const tree = {};
             Object.keys(projectData.files).forEach(path => {
-                const parts = path.split('/');
-                let current = tree;
-                let currentPath = "";
+                const parts = path.split('/'); let current = tree, currentPath = "";
                 parts.forEach((part, i) => {
                     currentPath = currentPath ? `${currentPath}/${part}` : part;
-                    if (i === parts.length - 1) {
-                        current[part] = { __isFile: true, path: path };
-                    } else {
+                    if (i === parts.length - 1) { current[part] = { __isFile: true, path: path }; }
+                    else {
                         if (!current[part]) current[part] = { __isFolder: true, path: currentPath, children: {} };
                         current = current[part].children;
                     }
@@ -664,16 +678,12 @@
             function renderNode(node, depth = 0) {
                 const container = document.createDocumentFragment();
                 const keys = Object.keys(node).sort((a, b) => {
-                    const aIsFile = node[a].__isFile;
-                    const bIsFile = node[b].__isFile;
+                    const aIsFile = node[a].__isFile, bIsFile = node[b].__isFile;
                     if (aIsFile !== bIsFile) return aIsFile ? 1 : -1;
                     return a.localeCompare(b);
                 });
-
                 keys.forEach(key => {
-                    const item = node[key];
-                    const element = document.createElement("div");
-                    
+                    const item = node[key], element = document.createElement("div");
                     if (item.__isFolder) {
                         const isExpanded = projectData.foldersExpanded[item.path] !== false;
                         element.className = `group flex flex-col w-full text-xs md:text-sm`;
@@ -697,8 +707,7 @@
                     } else {
                         const isActive = (item.path === activeTab);
                         element.className = `group flex items-center cursor-pointer py-1 text-gray-300 ${isActive ? 'bg-[#37373d] text-white font-medium' : 'hover:bg-[#2a2d2e]'}`;
-                        element.style.paddingLeft = `${(depth * 8) + 8}px`;
-                        element.style.paddingRight = `8px`;
+                        element.style.paddingLeft = `${(depth * 8) + 8}px`; element.style.paddingRight = `8px`;
                         element.innerHTML = `
                             <div class="flex items-center truncate flex-1 py-0.5" onclick="switchTab('${item.path}')" ondblclick="promptRenameFile('${item.path}')">
                                 <span class="mr-1.5 flex items-center justify-center w-4 h-4 shrink-0">${getFileIconDom(key)}</span>
@@ -720,9 +729,7 @@
 
             projectData.openTabs.forEach(path => {
                 if (!projectData.files[path]) return;
-                const isActive = (path === activeTab);
-                const filename = path.split('/').pop();
-                
+                const isActive = (path === activeTab), filename = path.split('/').pop();
                 const tab = document.createElement("div");
                 tab.className = `h-full px-3 flex items-center space-x-1.5 border-r border-[#252526] cursor-pointer transition shrink-0 ${isActive ? 'bg-[#1e1e1e] text-white border-t-2 border-[#007acc]' : 'bg-[#2d2d2d] text-gray-500 hover:bg-[#2b2b2b]'}`;
                 tab.innerHTML = `<span class="scale-75 opacity-80 shrink-0">${getFileIconDom(filename)}</span><span class="text-xs font-medium">${filename}</span><span onclick="event.stopPropagation(); closeTab('${path}')" class="hover:text-white ml-1.5 text-xs p-0.5">×</span>`;
@@ -745,18 +752,13 @@
             tabBar.appendChild(sTab);
         }
 
-        function toggleFolder(path) {
-            projectData.foldersExpanded[path] = projectData.foldersExpanded[path] === false;
-            saveData();
-            renderUI();
-        }
+        function toggleFolder(path) { projectData.foldersExpanded[path] = projectData.foldersExpanded[path] === false; saveData(); renderUI(); }
 
         function setDiffCheckpoint() {
             if (isSpecialActive() || !projectData.files[activeTab]) return alert("対象外のタブです。");
             if (editor) projectData.files[activeTab].content = editor.getValue();
             projectData.diffCheckpoints[activeTab] = projectData.files[activeTab].content;
-            saveData();
-            document.getElementById("statusInfo").innerText = "📌 差分の基準点を記憶しました！";
+            saveData(); document.getElementById("statusInfo").innerText = "📌 差分の基準点を記憶しました！";
             setTimeout(() => { document.getElementById("statusInfo").innerText = "Ready"; }, 1500);
         }
 
@@ -764,46 +766,27 @@
             if (!monacoInstance || !projectData.files[path]) return;
             let originalContent = projectData.diffCheckpoints[path];
             if (originalContent === undefined) {
-                const rawData = localStorage.getItem("webstudio_pro_v13");
-                if (rawData) {
-                    const parsed = JSON.parse(rawData);
-                    if (parsed.files[path]) originalContent = parsed.files[path].content;
-                }
+                const rawData = localStorage.getItem("webstudio_pro_v13.2");
+                if (rawData) { const parsed = JSON.parse(rawData); if (parsed.files[path]) originalContent = parsed.files[path].content; }
                 if (originalContent === undefined) originalContent = projectData.files[path].content;
             }
-
             const originalModel = monacoInstance.editor.createModel(originalContent, projectData.files[path].lang);
             const modifiedModel = monacoInstance.editor.createModel(projectData.files[path].content, projectData.files[path].lang);
             diffEditor.setModel({ original: originalModel, modified: modifiedModel });
-
             if (originalModelForDiff) originalModelForDiff.dispose();
-            originalModelForDiff = originalModel;
-            switchTab("__diff__");
+            originalModelForDiff = originalModel; switchTab("__diff__");
         }
 
-        // プレビュー＆インライン・バーチャルコンソール連携スクリプトの埋め込み
         function openLivePreview() {
-            if (editor && projectData.files[activeTab] && !isSpecialActive()) {
-                projectData.files[activeTab].content = editor.getValue();
-                saveData();
-            }
-
-            let htmlContent = "";
-            const htmlFiles = Object.keys(projectData.files).filter(p => p.endsWith(".html"));
-            if (htmlFiles.length > 0) {
-                htmlContent = htmlFiles.includes(activeTab) ? projectData.files[activeTab].content : projectData.files[htmlFiles[0]].content;
-            } else {
-                htmlContent = "<!DOCTYPE html><html><body><h1 style='color:#666;text-align:center;padding-top:40px;'>HTMLファイルがありません</h1></body></html>";
-            }
-
-            let cssBundle = "";
-            let jsBundle = "";
+            if (editor && projectData.files[activeTab] && !isSpecialActive()) { projectData.files[activeTab].content = editor.getValue(); saveData(); }
+            let htmlContent = ""; const htmlFiles = Object.keys(projectData.files).filter(p => p.endsWith(".html"));
+            if (htmlFiles.length > 0) { htmlContent = htmlFiles.includes(activeTab) ? projectData.files[activeTab].content : projectData.files[htmlFiles[0]].content; }
+            else { htmlContent = "<!DOCTYPE html><html><body><h1 style='color:#666;text-align:center;padding-top:40px;'>HTMLファイルがありません</h1></body></html>"; }
+            let cssBundle = "", jsBundle = "";
             Object.keys(projectData.files).forEach(path => {
                 if (path.endsWith(".css")) cssBundle += `\n/* ${path} */\n` + projectData.files[path].content;
                 if (path.endsWith(".js")) jsBundle += `\n// ${path}\n` + projectData.files[path].content;
             });
-
-            // 仮想インジェクション：親ウィンドウのメッセージ通信へログをパス転送するカスタムインターセプター
             const consoleHookScript = `
                 <script>
                     (function() {
@@ -814,99 +797,68 @@
                                 args: Array.from(args).map(v => typeof v === 'object' ? JSON.stringify(v) : String(v))
                             }, '*');
                         }
-                        const _log = console.log;
-                        const _error = console.error;
-                        const _warn = console.warn;
-                        
+                        const _log = console.log; const _error = console.error; const _warn = console.warn;
                         console.log = function() { sendLog('log', arguments); _log.apply(console, arguments); };
                         console.error = function() { sendLog('error', arguments); _error.apply(console, arguments); };
                         console.warn = function() { sendLog('warn', arguments); _warn.apply(console, arguments); };
-                        
                         window.addEventListener('error', function(e) {
                             window.parent.postMessage({ type: 'VIRTUAL_CONSOLE', method: 'error', args: [e.message + ' (at ' + e.filename + ':' + e.lineno + ')'] }, '*');
                         });
                     })();
                 <\/script>
             `;
-
             let finalSource = htmlContent.replace("<head>", `<head>${consoleHookScript}<style>${cssBundle}</style>`);
             if (!finalSource.includes("<head>")) finalSource = consoleHookScript + `<style>${cssBundle}</style>` + finalSource;
-            
             finalSource = finalSource.replace("</body>", `<script>${jsBundle}<\/script></body>`);
             if (!finalSource.includes("</body>")) finalSource += `<script>${jsBundle}<\/script>`;
-
             switchTab("__preview__");
-            
             const iframe = document.getElementById("previewIframe");
             const doc = iframe.contentDocument || iframe.contentWindow.document;
-            doc.open();
-            doc.write(finalSource);
-            doc.close();
+            doc.open(); doc.write(finalSource); doc.close();
         }
 
         function switchTab(target) {
             if (projectData.files[target] && !projectData.openTabs.includes(target)) projectData.openTabs.push(target);
             activeTab = target;
-            
             const layers = { editor: document.getElementById("editorLayer"), diff: document.getElementById("diffLayer"), preview: document.getElementById("previewLayer"), welcome: document.getElementById("welcomeLayer"), settings: document.getElementById("settingsLayer") };
             Object.values(layers).forEach(l => l.classList.remove("active"));
-            
             const topFileName = document.getElementById("topFileName");
 
-            if (target === "__settings__") {
-                layers.settings.classList.add("active");
-                topFileName.innerText = "Settings";
-                syncSettingsUI();
-            } else if (target === "__diff__") {
-                layers.diff.classList.add("active");
-                document.getElementById("langDisplay").innerText = "Diff Viewer";
-            } else if (target === "__preview__") {
-                layers.preview.classList.add("active");
-                topFileName.innerText = "Live Preview";
-                document.getElementById("langDisplay").innerText = "Browser Container";
-            } else if (target === "__welcome__") {
-                layers.welcome.classList.add("active");
-                topFileName.innerText = "Welcome";
+            // 設定画面・ようこそ画面・プレビュー等ではEmmet/記号のボタン列を非表示にする制御
+            const quickInputBar = document.getElementById("quickInputBar");
+            if (isSpecialActive()) {
+                quickInputBar.style.display = "none";
             } else {
+                quickInputBar.style.display = "flex";
+            }
+
+            if (target === "__settings__") { layers.settings.classList.add("active"); topFileName.innerText = "Settings"; syncSettingsUI(); }
+            else if (target === "__diff__") { layers.diff.classList.add("active"); document.getElementById("langDisplay").innerText = "Diff Viewer"; }
+            else if (target === "__preview__") { layers.preview.classList.add("active"); topFileName.innerText = "Live Preview"; document.getElementById("langDisplay").innerText = "Browser Container"; }
+            else if (target === "__welcome__") { layers.welcome.classList.add("active"); topFileName.innerText = "Welcome"; }
+            else {
                 const file = projectData.files[target];
                 if (file && editor) {
-                    layers.editor.classList.add("active");
-                    topFileName.innerText = target;
+                    layers.editor.classList.add("active"); topFileName.innerText = target;
                     let model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${target}`);
                     if (!model) model = monacoInstance.editor.createModel(file.content, file.lang, monacoInstance.Uri.file(target));
-                    editor.setModel(model);
-                    document.getElementById("langDisplay").innerText = file.lang;
-                } else {
-                    activeTab = "__welcome__";
-                    layers.welcome.classList.add("active");
-                }
+                    editor.setModel(model); document.getElementById("langDisplay").innerText = file.lang;
+                } else { activeTab = "__welcome__"; layers.welcome.classList.add("active"); if(quickInputBar) quickInputBar.style.display = "none"; }
             }
-            saveData();
-            renderUI();
-            updateFooterCounters();
+            saveData(); renderUI(); updateFooterCounters();
         }
 
         function closeTab(name) {
-            if (name === "__settings__" || name === "__diff__" || name === "__welcome__" || name === "__preview__") {
-                if (activeTab === name) fallbackToRemainingTab();
-                else renderUI();
-                return;
-            }
-            projectData.openTabs = projectData.openTabs.filter(t => t !== name);
-            saveData();
-            if (activeTab === name) fallbackToRemainingTab();
-            else renderUI();
+            if (name === "__settings__" || name === "__diff__" || name === "__welcome__" || name === "__preview__") { if (activeTab === name) fallbackToRemainingTab(); else renderUI(); return; }
+            projectData.openTabs = projectData.openTabs.filter(t => t !== name); saveData();
+            if (activeTab === name) fallbackToRemainingTab(); else renderUI();
         }
 
-        function fallbackToRemainingTab() {
-            if (projectData.openTabs.length > 0) switchTab(projectData.openTabs[projectData.openTabs.length - 1]);
-            else switchTab("__welcome__");
-        }
+        function fallbackToRemainingTab() { if (projectData.openTabs.length > 0) switchTab(projectData.openTabs[projectData.openTabs.length - 1]); else switchTab("__welcome__"); }
 
         function openDownloadModal() {
             if (editor && projectData.files[activeTab] && !isSpecialActive()) projectData.files[activeTab].content = editor.getValue();
-            const listEl = document.getElementById("modalFileList");
-            listEl.innerHTML = "";
+            const listEl = document.getElementById("modalFileList"); listEl.innerHTML = "";
             Object.keys(projectData.files).forEach(path => {
                 const isChecked = selectedFiles.has(path);
                 const row = document.createElement("label");
@@ -918,10 +870,7 @@
         }
 
         function closeDownloadModal() { document.getElementById("downloadModal").classList.add("hidden"); }
-        function handleModalCheckboxChange(cb) {
-            const path = cb.getAttribute("data-path");
-            if (cb.checked) selectedFiles.add(path); else selectedFiles.delete(path);
-        }
+        function handleModalCheckboxChange(cb) { const path = cb.getAttribute("data-path"); if (cb.checked) selectedFiles.add(path); else selectedFiles.delete(path); }
         function toggleAllModalCheckboxes() {
             const checkboxes = document.querySelectorAll("#modalFileList input[type='checkbox']");
             const allChecked = Array.from(checkboxes).every(cb => cb.checked);
@@ -932,10 +881,7 @@
             if (selectedFiles.size === 0) return alert("ファイルを選択してください。");
             selectedFiles.forEach(name => {
                 const blob = new Blob([projectData.files[name].content], { type: "text/plain;charset=utf-8" });
-                const a = document.createElement("a");
-                a.href = URL.createObjectURL(blob);
-                a.download = name.replace(/\//g, '_');
-                a.click();
+                const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name.replace(/\//g, '_'); a.click();
             });
             closeDownloadModal();
         }
@@ -943,83 +889,53 @@
         function exportSystemSnapshotFromModal() {
             saveData();
             const blob = new Blob([document.documentElement.outerHTML], { type: "text/html" });
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
-            a.download = "WebStudio_Pro_v13.html";
-            a.click();
+            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "WebStudio_Pro_v13_2.html"; a.click();
             closeDownloadModal();
         }
 
         function promptNewFile(basePath = "") {
-            let name = prompt("ファイル名を入力してください:");
-            if (!name) return;
-            let fullPath = basePath ? `${basePath}/${name}` : name;
-            fullPath = fullPath.replace(/\/+/g, '/').replace(/^\//, '');
+            let name = prompt("ファイル名を入力してください:"); if (!name) return;
+            let fullPath = basePath ? `${basePath}/${name}` : name; fullPath = fullPath.replace(/\/+/g, '/').replace(/^\//, '');
             if (projectData.files[fullPath]) return alert("既に存在します");
-            
             projectData.files[fullPath] = { content: "", lang: EXT_MAP[fullPath.split('.').pop().toLowerCase()] || 'plaintext' };
-            saveData();
-            switchTab(fullPath);
+            saveData(); switchTab(fullPath);
         }
 
         function promptNewFolder() {
-            let name = prompt("フォルダー名を入力してください:");
-            if (!name) return;
+            let name = prompt("フォルダー名を入力してください:"); if (!name) return;
             name = name.replace(/\/+/g, '/').replace(/^\//, '').replace(/\/$/, '');
-            projectData.foldersExpanded[name] = true;
-            saveData();
-            renderUI();
+            projectData.foldersExpanded[name] = true; saveData(); renderUI();
         }
 
         function deleteFolder(folderPath) {
             if (!confirm(`フォルダ内すべてのファイルが削除されますがよろしいですか？`)) return;
-            Object.keys(projectData.files).forEach(path => {
-                if (path.startsWith(folderPath + '/')) executeActualFileDeletion(path);
-            });
-            delete projectData.foldersExpanded[folderPath];
-            saveData();
-            refreshWorkspaceAfterDeletion();
+            Object.keys(projectData.files).forEach(path => { if (path.startsWith(folderPath + '/')) executeActualFileDeletion(path); });
+            delete projectData.foldersExpanded[folderPath]; saveData(); refreshWorkspaceAfterDeletion();
         }
 
-        function deleteFile(name) {
-            if (!confirm(`${name} を削除しますか？`)) return;
-            executeActualFileDeletion(name);
-            saveData();
-            refreshWorkspaceAfterDeletion();
-        }
+        function deleteFile(name) { if (!confirm(`${name} を削除しますか？`)) return; executeActualFileDeletion(name); saveData(); refreshWorkspaceAfterDeletion(); }
 
         function executeActualFileDeletion(path) {
-            delete projectData.files[path];
-            delete projectData.diffCheckpoints[path];
-            projectData.openTabs = projectData.openTabs.filter(t => t !== path);
-            selectedFiles.delete(path);
-            const model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${path}`);
-            if (model) model.dispose();
+            delete projectData.files[path]; delete projectData.diffCheckpoints[path];
+            projectData.openTabs = projectData.openTabs.filter(t => t !== path); selectedFiles.delete(path);
+            const model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${path}`); if (model) model.dispose();
         }
 
         function refreshWorkspaceAfterDeletion() {
-            if (projectData.openTabs.length > 0) {
-                if (!projectData.files[activeTab]) switchTab(projectData.openTabs[projectData.openTabs.length - 1]);
-                else renderUI();
-            } else switchTab("__welcome__");
+            if (projectData.openTabs.length > 0) { if (!projectData.files[activeTab]) switchTab(projectData.openTabs[projectData.openTabs.length - 1]); else renderUI(); }
+            else switchTab("__welcome__");
         }
 
         function promptRenameFile(oldPath) {
-            const newPath = prompt(`新しいファイルパスを入力:`, oldPath);
-            if (!newPath || newPath === oldPath) return;
+            const newPath = prompt(`新しいファイルパスを入力:`, oldPath); if (!newPath || newPath === oldPath) return;
             if (projectData.files[newPath]) return alert("既に存在します");
-
             projectData.files[newPath] = { content: projectData.files[oldPath].content, lang: EXT_MAP[newPath.split('.').pop().toLowerCase()] || 'plaintext' };
             if (projectData.diffCheckpoints[oldPath] !== undefined) projectData.diffCheckpoints[newPath] = projectData.diffCheckpoints[oldPath];
-            executeActualFileDeletion(oldPath);
-            saveData();
-            switchTab(newPath);
+            executeActualFileDeletion(oldPath); saveData(); switchTab(newPath);
         }
 
         function promptRenameFolder(oldFolderPath) {
-            const newFolderPath = prompt(`新しいフォルダパスを入力:`, oldFolderPath);
-            if (!newFolderPath || newFolderPath === oldFolderPath) return;
-
+            const newFolderPath = prompt(`新しいフォルダパスを入力:`, oldFolderPath); if (!newFolderPath || newFolderPath === oldFolderPath) return;
             const updatedFiles = {};
             Object.keys(projectData.files).forEach(path => {
                 if (path.startsWith(oldFolderPath + '/')) {
@@ -1027,23 +943,16 @@
                     updatedFiles[newPath] = projectData.files[path];
                     projectData.openTabs = projectData.openTabs.map(t => t === path ? newPath : t);
                     if (activeTab === path) activeTab = newPath;
-                    const model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${path}`);
-                    if (model) model.dispose();
+                    const model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${path}`); if (model) model.dispose();
                 } else updatedFiles[path] = projectData.files[path];
             });
-
             projectData.files = updatedFiles;
-            if (projectData.foldersExpanded[oldFolderPath] !== undefined) {
-                projectData.foldersExpanded[newFolderPath] = projectData.foldersExpanded[oldFolderPath];
-                delete projectData.foldersExpanded[oldFolderPath];
-            }
-            saveData();
-            switchTab(activeTab);
+            if (projectData.foldersExpanded[oldFolderPath] !== undefined) { projectData.foldersExpanded[newFolderPath] = projectData.foldersExpanded[oldFolderPath]; delete projectData.foldersExpanded[oldFolderPath]; }
+            saveData(); switchTab(activeTab);
         }
 
         function toggleSidebar() {
-            const sidebar = document.getElementById("sidebar");
-            const resizer = document.getElementById("resizer");
+            const sidebar = document.getElementById("sidebar"), resizer = document.getElementById("resizer");
             if (sidebar.classList.contains("collapsed")) { sidebar.classList.remove("collapsed"); resizer.classList.remove("hidden"); }
             else { sidebar.classList.add("collapsed"); resizer.classList.add("hidden"); }
             if (editor) editor.layout();
@@ -1053,8 +962,7 @@
             const sidebar = document.getElementById("sidebar");
             const minW = Math.floor(window.innerWidth * 0.125), maxW = Math.floor(window.innerWidth * 0.5);
             let finalWidth = Math.max(minW, Math.min(targetWidth, maxW));
-            sidebar.style.width = finalWidth + "px";
-            projectData.settings.sidebarWidth = finalWidth;
+            sidebar.style.width = finalWidth + "px"; projectData.settings.sidebarWidth = finalWidth;
         }
 
         function setupResizer() {
@@ -1066,7 +974,7 @@
                 applySidebarWidth((e.touches ? e.touches[0].clientX : e.clientX) - sidebar.getBoundingClientRect().left);
                 if (editor) editor.layout();
             }
-            function stopResize() { if (!isResizing) { isResizing = false; resizer.classList.remove("resizing"); saveData(); } }
+            function stopResize() { if (isResizing) { isResizing = false; resizer.classList.remove("resizing"); saveData(); } }
             resizer.addEventListener("mousedown", startResize); document.addEventListener("mousemove", resize); document.addEventListener("mouseup", stopResize);
             resizer.addEventListener("touchstart", startResize); document.addEventListener("touchmove", resize); document.addEventListener("touchend", stopResize);
         }
@@ -1111,21 +1019,15 @@
         function execGlobalSearch() {
             const query = document.getElementById("searchInput").value;
             const container = document.getElementById("searchResultsList"), countEl = document.getElementById("searchResultsCount");
-            container.innerHTML = "";
-            if (!query) { countEl.innerText = "0 件のマッチ"; return; }
-
+            container.innerHTML = ""; if (!query) { countEl.innerText = "0 件のマッチ"; return; }
             let matchCount = 0;
             Object.keys(projectData.files).forEach(filename => {
                 const lines = projectData.files[filename].content.split('\n');
                 lines.forEach((line, index) => {
                     if (line.includes(query)) {
-                        matchCount++;
-                        const item = document.createElement("div");
+                        matchCount++; const item = document.createElement("div");
                         item.className = "p-1.5 bg-[#1a1a1a] hover:bg-[#2d2d2d] rounded cursor-pointer border border-[#333] truncate";
-                        item.onclick = () => {
-                            switchTab(filename);
-                            setTimeout(() => { editor.setPosition({ lineNumber: index + 1, column: line.indexOf(query) + 1 }); editor.revealLineInCenter(index + 1); editor.focus(); }, 50);
-                        };
+                        item.onclick = () => { switchTab(filename); setTimeout(() => { editor.setPosition({ lineNumber: index + 1, column: line.indexOf(query) + 1 }); editor.revealLineInCenter(index + 1); editor.focus(); }, 50); };
                         item.innerHTML = `<div class="text-[10px] text-[#007acc] font-bold">${filename} (Ln ${index + 1})</div><div class="text-gray-400 font-mono text-[11px] truncate">${line.replace(query, `<span class="bg-yellow-500/40 text-white font-bold">${query}</span>`)}</div>`;
                         container.appendChild(item);
                     }
@@ -1138,14 +1040,9 @@
             const searchStr = document.getElementById("searchInput").value, replaceStr = document.getElementById("replaceInput").value;
             if (!searchStr) return alert("検索キーワードを入力してください");
             if (!confirm(`すべての「${searchStr}」を「${replaceStr}」に一括置換しますか？`)) return;
-
             Object.keys(projectData.files).forEach(filename => {
                 const content = projectData.files[filename].content;
-                if (content.includes(searchStr)) {
-                    projectData.files[filename].content = content.split(searchStr).join(replaceStr);
-                    const model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${filename}`);
-                    if (model) model.setValue(projectData.files[filename].content);
-                }
+                if (content.includes(searchStr)) { projectData.files[filename].content = content.split(searchStr).join(replaceStr); const model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${filename}`); if (model) model.setValue(projectData.files[filename].content); }
             });
             saveData(); switchTab(activeTab); alert("一括置換完了しました。");
         }
@@ -1154,8 +1051,7 @@
             const file = input.files[0]; if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
-                const name = file.name;
-                projectData.files[name] = { content: e.target.result, lang: EXT_MAP[name.split('.').pop().toLowerCase()] || 'plaintext' };
+                const name = file.name; projectData.files[name] = { content: e.target.result, lang: EXT_MAP[name.split('.').pop().toLowerCase()] || 'plaintext' };
                 saveData(); switchTab(name); input.value = "";
             };
             reader.readAsText(file);
@@ -1163,6 +1059,7 @@
 
         function openSettings() { switchTab("__settings__"); }
 
+        // 設定のローカルストレージ互換性維持
         function syncSettingsUI() {
             document.getElementById("fontSizeRange").value = projectData.settings.fontSize || 16;
             document.getElementById("fontSizeVal").innerText = projectData.settings.fontSize || 16;
@@ -1184,28 +1081,29 @@
                 minimap: document.getElementById("minimapSelect").value,
                 autoSaveDelay: parseInt(document.getElementById("autoSaveRange").value),
                 theme: document.getElementById("themeSelect").value,
-                sidebarWidth: projectData.settings.sidebarWidth || 200
+                sidebarWidth: projectData.settings.sidebarWidth || 200,
+                consoleCollapsed: projectData.settings.consoleCollapsed || false
             };
             document.getElementById("fontSizeVal").innerText = projectData.settings.fontSize;
             document.getElementById("autoSaveVal").innerText = projectData.settings.autoSaveDelay + "ms";
-
             if (editor) editor.updateOptions({ fontSize: projectData.settings.fontSize, tabSize: projectData.settings.tabSize, wordWrap: projectData.settings.wordWrap, lineNumbers: projectData.settings.lineNumbers, minimap: { enabled: projectData.settings.minimap === "on" } });
             if (diffEditor) diffEditor.updateOptions({ fontSize: projectData.settings.fontSize });
             if (monacoInstance) monacoInstance.editor.setTheme(projectData.settings.theme);
             saveData();
         }
 
-        function saveData() { localStorage.setItem("webstudio_pro_v13", JSON.stringify(projectData)); }
+        function saveData() { localStorage.setItem("webstudio_pro_v13.2", JSON.stringify(projectData)); }
         function loadData() {
-            const saved = localStorage.getItem("webstudio_pro_v13");
+            const saved = localStorage.getItem("webstudio_pro_v13.2") || localStorage.getItem("webstudio_pro_v13.1") || localStorage.getItem("webstudio_pro_v13");
             if (saved) {
                 projectData = JSON.parse(saved);
                 if (!projectData.openTabs) projectData.openTabs = Object.keys(projectData.files);
                 if (!projectData.timeMachine) projectData.timeMachine = [];
+                if (projectData.settings.consoleCollapsed === undefined) projectData.settings.consoleCollapsed = false;
                 activeTab = projectData.openTabs[0] || "__welcome__";
             }
         }
-        function resetAllData() { if (confirm("初期化しますか？")) { localStorage.removeItem("webstudio_pro_v13"); location.reload(); } }
+        function resetAllData() { if (confirm("初期化しますか？")) { localStorage.removeItem("webstudio_pro_v13.2"); localStorage.removeItem("webstudio_pro_v13.1"); localStorage.removeItem("webstudio_pro_v13"); location.reload(); } }
     </script>
 </body>
 </html>
