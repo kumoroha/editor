@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Web Code Studio Pro</title>
+    <title>Web Code Studio Pro v10</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
@@ -62,29 +62,38 @@
             <span id="topFileName" class="opacity-60 text-xs md:text-sm">main.js</span>
         </div>
         <div class="flex items-center space-x-3 text-xs md:text-sm">
-            <button onclick="exportSystemSnapshot()" class="bg-[#0e639c] hover:bg-[#1177bb] px-2.5 py-1 rounded transition font-medium">一括DL保存</button>
+            <span id="wakeLockStatus" class="text-[11px] text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800/50 flex items-center space-x-1">
+                <span>☕</span><span class="hidden sm:inline">Awake</span>
+            </span>
+            <button onclick="openDownloadModal()" class="bg-[#0e639c] hover:bg-[#1177bb] px-2.5 py-1 rounded transition font-medium flex items-center space-x-1">
+                <span>💾</span><span>保存・DL</span>
+            </button>
         </div>
     </header>
 
     <div class="flex-1 flex overflow-hidden relative">
         
+        <!-- サイドバー -->
         <aside id="sidebar" class="w-52 bg-[#252526] flex flex-col border-r border-[#2b2b2b] shrink-0 overflow-hidden z-10">
             <div class="flex bg-[#2d2d2d] border-b border-[#232324] text-xs font-bold uppercase tracking-wider text-gray-400 shrink-0">
                 <button id="btnNavExplorer" onclick="switchSidebarView('explorer')" class="flex-1 py-2 text-center border-b-2 border-[#007acc] text-white bg-[#252526]">Explorer</button>
                 <button id="btnNavSearch" onclick="switchSidebarView('search')" class="flex-1 py-2 text-center border-b-2 border-transparent hover:text-white">Search</button>
             </div>
 
+            <!-- エクスプローラー -->
             <div id="sideViewExplorer" class="flex-1 flex flex-col overflow-hidden">
                 <div class="p-2 flex items-center justify-between border-b border-[#333] text-xs font-bold text-gray-400 whitespace-nowrap">
                     <span>Workspace</span>
                     <div class="flex items-center space-x-2">
                         <button onclick="document.getElementById('fileUploadInput').click()" class="hover:bg-[#333] p-1 rounded text-white text-base" title="ファイルをアップロード">📤</button>
+                        <button onclick="promptNewFolder()" class="hover:bg-[#333] p-1 rounded text-white text-sm" title="新規フォルダ作成">📁+</button>
                         <button onclick="promptNewFile()" class="hover:bg-[#333] p-1 rounded text-white text-xl" title="新規ファイル作成">＋</button>
                     </div>
                 </div>
                 <div id="fileList" class="flex-1 overflow-y-auto no-scrollbar py-2 text-sm md:text-[14px]"></div>
             </div>
 
+            <!-- 全文検索・置換パネル -->
             <div id="sideViewSearch" class="flex-1 flex flex-col p-3 space-y-3 overflow-y-auto no-scrollbar hidden">
                 <div id="searchContainer" class="w-full space-y-3">
                     <div>
@@ -107,12 +116,6 @@
 
             <input type="file" id="fileUploadInput" class="hidden" onchange="handleFileUpload(this)">
 
-            <div class="p-2 bg-[#202021] border-t border-[#333] text-xs shrink-0">
-                <button onclick="downloadSelectedFiles()" class="w-full bg-[#3c3c3c] hover:bg-[#4e4e4e] text-[#cccccc] py-1.5 rounded text-center border border-[#555] transition font-medium whitespace-nowrap">
-                    選択ファイルをDL
-                </button>
-            </div>
-
             <div class="border-t border-[#333] shrink-0">
                 <button onclick="openSettings()" class="w-full p-3 hover:bg-[#333] flex items-center space-x-3 transition whitespace-nowrap">
                     <span class="text-base">⚙️</span>
@@ -124,10 +127,17 @@
         <div id="resizer" class="w-[4px] bg-[#2b2b2b] shrink-0 z-20 transition-colors duration-150"></div>
 
         <main class="flex-1 flex flex-col overflow-hidden">
+            <!-- タブバー -->
             <div id="tabBar" class="flex bg-[#252526] h-10 overflow-x-auto no-scrollbar shrink-0 text-xs md:text-sm"></div>
             
+            <!-- クイック入力ツールバー -->
             <div id="quickInputBar" class="bg-[#2d2d2d] border-b border-[#232324] h-9 px-2 flex items-center space-x-1.5 overflow-x-auto no-scrollbar shrink-0">
-                <button onclick="insertTemplate()" class="bg-[#0e639c] hover:bg-[#1177bb] text-white text-xs px-2 py-1 rounded transition shrink-0 font-bold mr-1">📄 HTML雛形</button>
+                <!-- 全選択・全コピー -->
+                <button onclick="executeSelectAll()" class="bg-[#444] hover:bg-[#555] text-white text-xs px-2 py-1 rounded transition shrink-0 font-medium">全選択</button>
+                <button onclick="executeCopyAll()" class="bg-[#444] hover:bg-[#555] text-white text-xs px-2 py-1 rounded transition shrink-0 font-medium">全コピー</button>
+                <div class="h-4 w-[1px] bg-[#555] shrink-0"></div>
+                
+                <button onclick="insertTemplate()" class="bg-[#0e639c] hover:bg-[#1177bb] text-white text-xs px-2 py-1 rounded transition shrink-0 font-bold">📄 HTML雛形</button>
                 <div class="h-4 w-[1px] bg-[#444] shrink-0 mr-1"></div>
                 
                 <button onclick="insertSymbol('<>')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">&lt;&gt;</button>
@@ -148,15 +158,22 @@
             </div>
             
             <div class="flex-1 relative bg-[#1e1e1e]">
+                <!-- 通常エディタ層 -->
                 <div id="editorLayer" class="view-layer active">
                     <div id="editorContainer" class="w-full h-full"></div>
                 </div>
 
+                <!-- 差分ビューア層 (新機能) -->
+                <div id="diffLayer" class="view-layer">
+                    <div id="diffContainer" class="w-full h-full"></div>
+                </div>
+
+                <!-- 設定画面層 -->
                 <div id="settingsLayer" class="view-layer bg-[#1e1e1e] p-6 md:p-10 overflow-y-auto text-sm md:text-[15px]">
                     <h2 class="text-2xl md:text-3xl mb-6 font-light">Settings</h2>
                     <div class="max-w-xl space-y-8 pb-12">
                         <section>
-                            <label class="block font-bold mb-2 text-gray-400">Editor: Font Size (コード本文)</label>
+                            <label class="block font-bold mb-2 text-gray-400">Editor: Font Size</label>
                             <div class="flex items-center space-x-4">
                                 <input type="range" id="fontSizeRange" min="10" max="30" step="1" oninput="updateSettingsFromUI()" class="flex-1">
                                 <span id="fontSizeVal" class="w-12 text-center font-bold">16</span>
@@ -164,7 +181,7 @@
                         </section>
 
                         <section>
-                            <label class="block font-bold mb-2 text-gray-400">Editor: Tab Size (インデント字数)</label>
+                            <label class="block font-bold mb-2 text-gray-400">Editor: Tab Size</label>
                             <select id="tabSizeSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2.5 rounded outline-none text-sm">
                                 <option value="2">2 スペース</option>
                                 <option value="4">4 スペース</option>
@@ -173,31 +190,31 @@
                         </section>
 
                         <section>
-                            <label class="block font-bold mb-2 text-gray-400">Editor: Word Wrap (行の折り返し)</label>
+                            <label class="block font-bold mb-2 text-gray-400">Editor: Word Wrap</label>
                             <select id="wordWrapSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2.5 rounded outline-none text-sm">
-                                <option value="on">on (画面幅で折り返す)</option>
-                                <option value="off">off (折り返さない)</option>
+                                <option value="on">on</option>
+                                <option value="off">off</option>
                             </select>
                         </section>
 
                         <section>
-                            <label class="block font-bold mb-2 text-gray-400">Editor: Line Numbers (行番号の表示)</label>
+                            <label class="block font-bold mb-2 text-gray-400">Editor: Line Numbers</label>
                             <select id="lineNumbersSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2.5 rounded outline-none text-sm">
-                                <option value="on">on (表示する)</option>
-                                <option value="off">off (非表示)</option>
+                                <option value="on">on</option>
+                                <option value="off">off</option>
                             </select>
                         </section>
 
                         <section>
-                            <label class="block font-bold mb-2 text-gray-400">Editor: Minimap (ミニマップの表示)</label>
+                            <label class="block font-bold mb-2 text-gray-400">Editor: Minimap</label>
                             <select id="minimapSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2.5 rounded outline-none text-sm">
-                                <option value="off">off (非表示 - iPad推奨)</option>
-                                <option value="on">on (表示する)</option>
+                                <option value="off">off</option>
+                                <option value="on">on</option>
                             </select>
                         </section>
 
                         <section>
-                            <label class="block font-bold mb-2 text-gray-400">Files: Auto Save Delay (自動保存の間隔ミル秒)</label>
+                            <label class="block font-bold mb-2 text-gray-400">Files: Auto Save Delay</label>
                             <div class="flex items-center space-x-4">
                                 <input type="range" id="autoSaveRange" min="0" max="5000" step="100" oninput="updateSettingsFromUI()" class="flex-1">
                                 <span id="autoSaveVal" class="w-16 text-center font-bold">500ms</span>
@@ -224,13 +241,53 @@
         </main>
     </div>
 
-    <footer class="bg-[#007acc] text-white text-xs px-3 h-6 flex items-center justify-between shrink-0">
+    <!-- フッター (新機能: 英語カウンター構成強化) -->
+    <footer class="bg-[#007acc] text-white text-xs px-3 h-6 flex items-center justify-between shrink-0 select-none font-sans">
         <div id="statusInfo">Ready</div>
-        <div class="flex space-x-4">
-            <span id="cursorPos">Ln 1, Col 1</span>
-            <span id="langDisplay" class="uppercase">JavaScript</span>
+        <div class="flex items-center space-x-4">
+            <div id="editorStats" class="opacity-90 flex items-center space-x-3">
+                <span id="cursorPos">Ln 1, Col 1</span>
+                <span id="statSelected" class="hidden sm:inline bg-white/20 px-1 rounded text-[10px]">0 selected</span>
+                <span id="statTotalLines" class="opacity-75">0 lines</span>
+                <span id="statTotalChars" class="opacity-75">0 chars</span>
+            </div>
+            <span id="langDisplay" class="uppercase font-bold tracking-wider">JavaScript</span>
         </div>
     </footer>
+
+    <!-- 新機能：ポップアップ型保存・ダウンロードモーダル -->
+    <div id="downloadModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 hidden" onclick="closeDownloadModal()">
+        <div class="bg-[#252526] border border-[#444] rounded-lg w-11/12 max-w-lg overflow-hidden shadow-2xl transition-all scale-95 duration-200" onclick="event.stopPropagation()">
+            <div class="bg-[#2d2d2d] px-4 py-3 border-b border-[#333] flex justify-between items-center">
+                <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+                    <span>💾</span><span>Download & Backup Manager</span>
+                </h3>
+                <button onclick="closeDownloadModal()" class="text-gray-400 hover:text-white text-lg font-bold px-1">&times;</button>
+            </div>
+            <div class="p-4 space-y-4">
+                <p class="text-xs text-gray-400 leading-relaxed">
+                    ダウンロードするファイルを選択してください。複数のファイルを選択して個別に保存するか、システム全体の完全なスナップショット（HTML）を書き出せます。
+                </p>
+                
+                <div class="border border-[#3c3c3c] bg-[#1e1e1e] rounded max-h-48 overflow-y-auto no-scrollbar p-2">
+                    <div class="flex justify-between items-center border-b border-[#3c3c3c] pb-1.5 mb-1.5 px-1">
+                        <span class="text-xs font-bold text-gray-400">対象ファイル一覧</span>
+                        <button onclick="toggleAllModalCheckboxes()" class="text-[11px] text-[#007acc] hover:underline font-medium">すべて選択/解除</button>
+                    </div>
+                    <div id="modalFileList" class="space-y-1.5 text-xs"></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button onclick="downloadSelectedFilesFromModal()" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-white border border-[#555] py-2.5 rounded text-center transition font-medium text-xs flex items-center justify-center space-x-1.5">
+                        <span>📥</span><span>選択したファイルを保存</span>
+                    </button>
+                    <button onclick="exportSystemSnapshotFromModal()" class="bg-[#0e639c] hover:bg-[#1177bb] text-white py-2.5 rounded text-center transition font-bold text-xs flex items-center justify-center space-x-1.5">
+                        <span>📦</span><span>システム全体を一括保存</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         const EXT_MAP = {
@@ -244,7 +301,9 @@
 
         let projectData = {
             files: {
-                "main.js": { content: "// Welcome to WebStudio Pro\nconsole.log('Happy Coding!');", lang: "javascript" }
+                "main.js": { content: "// Welcome to WebStudio Pro\nconsole.log('Happy Coding!');", lang: "javascript" },
+                "src/index.html": { content: "<!DOCTYPE html>\n<html>\n<body>\n  <h1>Hello World</h1>\n</body>\n</html>", lang: "html" },
+                "src/styles/app.css": { content: "body { background: #111; color: white; }", lang: "css" }
             },
             settings: {
                 fontSize: 16,
@@ -255,15 +314,23 @@
                 autoSaveDelay: 500,
                 theme: "vs-dark",
                 sidebarWidth: 200
+            },
+            // フォルダ開閉ステート管理
+            foldersExpanded: {
+                "src": true,
+                "src/styles": true
             }
         };
 
         let activeTab = "main.js";
         let editor = null;
+        let diffEditor = null;
+        let originalModelForDiff = null;
         let monacoInstance = null;
         let autoSaveTimer = null;
         let selectedFiles = new Set();
         let currentSidebarView = 'explorer';
+        let wakeLock = null;
 
         require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' } });
         
@@ -271,6 +338,7 @@
             monacoInstance = monaco;
             loadData();
 
+            // 1. 通常エディタインスタンス
             editor = monaco.editor.create(document.getElementById('editorContainer'), {
                 automaticLayout: true,
                 fontSize: projectData.settings.fontSize,
@@ -283,11 +351,21 @@
                 lineNumbersMinChars: 3
             });
 
+            // 2. 差分エディタインスタンス (新機能)
+            diffEditor = monaco.editor.createDiffEditor(document.getElementById('diffContainer'), {
+                automaticLayout: true,
+                fontSize: projectData.settings.fontSize,
+                theme: projectData.settings.theme,
+                readOnly: true
+            });
+
             applySidebarWidth(projectData.settings.sidebarWidth || 200);
 
+            // エディタ変更ハンドラ
             editor.onDidChangeModelContent(() => {
-                if (projectData.files[activeTab]) {
+                if (projectData.files[activeTab] && activeTab !== "__settings__" && activeTab !== "__diff__") {
                     projectData.files[activeTab].content = editor.getValue();
+                    updateFooterCounters();
                     
                     clearTimeout(autoSaveTimer);
                     autoSaveTimer = setTimeout(() => {
@@ -299,18 +377,75 @@
                 }
             });
 
-            editor.onDidChangeCursorPosition((e) => {
-                document.getElementById('cursorPos').innerText = `Ln ${e.position.lineNumber}, Col ${e.position.column}`;
+            // カーソル及び選択範囲変更イベント（新機能: 英語カウンター連動）
+            editor.onDidChangeCursorSelection((e) => {
+                const position = editor.getPosition();
+                document.getElementById('cursorPos').innerText = `Ln ${position.lineNumber}, Col ${position.column}`;
+                
+                const selection = editor.getSelection();
+                if (selection && !selection.isEmpty()) {
+                    const model = editor.getModel();
+                    const selectedText = model.getValueInRange(selection);
+                    const el = document.getElementById('statSelected');
+                    el.innerText = `${selectedText.length} selected`;
+                    el.classList.remove('hidden');
+                } else {
+                    document.getElementById('statSelected').classList.add('hidden');
+                }
             });
 
             setupResizer();
+            setupWakeLock();
             renderUI();
             switchTab(activeTab);
         });
 
-        // --- 新機能：記号のスマート挿入ロジック ---
+        // --- 新機能：画面スリープ防止 (Wake Lock API) ---
+        async function setupWakeLock() {
+            if ('wakeLock' in navigator) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('visibility');
+                    document.getElementById("wakeLockStatus").innerHTML = "<span>☕</span><span class='hidden sm:inline'>Awake</span>";
+                    
+                    // タブ切り替えなどで切れた時の自動再取得
+                    document.addEventListener('visibilitychange', async () => {
+                        if (wakeLock !== null && document.visibilityState === 'visible') {
+                            wakeLock = await navigator.wakeLock.request('visibility');
+                        }
+                    });
+                } catch (err) {
+                    document.getElementById("wakeLockStatus").classList.add("hidden");
+                }
+            } else {
+                document.getElementById("wakeLockStatus").classList.add("hidden");
+            }
+        }
+
+        // --- 新機能：全選択 & 全コピー ---
+        function executeSelectAll() {
+            if (!editor || activeTab === "__settings__" || activeTab === "__diff__") return;
+            const model = editor.getModel();
+            const lastLine = model.getLineCount();
+            const lastColumn = model.getLineMaxColumn(lastLine);
+            editor.setSelection(new monacoInstance.Selection(1, 1, lastLine, lastColumn));
+            editor.focus();
+        }
+
+        function executeCopyAll() {
+            if (!editor || activeTab === "__settings__" || activeTab === "__diff__") return;
+            const content = editor.getValue();
+            navigator.clipboard.writeText(content).then(() => {
+                const status = document.getElementById("statusInfo");
+                status.innerText = "Copied All Text!";
+                setTimeout(() => { status.innerText = "Ready"; }, 1500);
+            }).catch(() => {
+                alert("コピーに失敗しました。範囲選択後に手動でコピーしてください。");
+            });
+        }
+
+        // --- クイック記号挿入ロジック ---
         function insertSymbol(sym) {
-            if (!editor || activeTab === "__settings__") return;
+            if (!editor || activeTab === "__settings__" || activeTab === "__diff__") return;
             
             const selection = editor.getSelection();
             const selectedText = editor.getModel().getValueInRange(selection);
@@ -318,13 +453,11 @@
             let textToInsert = sym;
             let targetSelection = null;
 
-            // ペア記号(括弧やクォーテーション)の包み込み対応
             if (sym.length === 2 && ['<>', '{}', '[]', '()', '""', "''"].includes(sym)) {
                 const open = sym[0];
                 const close = sym[1];
                 textToInsert = open + selectedText + close;
                 
-                // 挿入後、カーソルを括弧の「中」に美しく戻すか、選択範囲を再設定
                 targetSelection = new monacoInstance.Selection(
                     selection.startLineNumber,
                     selection.startColumn + 1,
@@ -334,26 +467,19 @@
             }
 
             const range = new monacoInstance.Range(
-                selection.startLineNumber,
-                selection.startColumn,
-                selection.endLineNumber,
-                selection.endColumn
+                selection.startLineNumber, selection.startColumn,
+                selection.endLineNumber, selection.endColumn
             );
 
-            const id = { major: 1, minor: 1 };
-            const op = { identifier: id, range: range, text: textToInsert, forceMoveMarkers: true };
+            const op = { identifier: { major: 1, minor: 1 }, range: range, text: textToInsert, forceMoveMarkers: true };
+            editor.executeEdits("source", [op]);
             
-            editor.executeEdits("my-source", [op]);
-            
-            if (targetSelection) {
-                editor.setSelection(targetSelection);
-            }
+            if (targetSelection) editor.setSelection(targetSelection);
             editor.focus();
         }
 
-        // --- 新機能：HTML5標準雛形の挿入 ---
         function insertTemplate() {
-            if (!editor || activeTab === "__settings__") return;
+            if (!editor || activeTab === "__settings__" || activeTab === "__diff__") return;
             
             const htmlTemplate = `<!DOCTYPE html>
 <html lang="ja">
@@ -367,17 +493,399 @@
 </body>
 </html>`;
 
-            // 現在のエディタの中身を完全に入れ替えるか、カーソル位置に挿入するか
-            if (confirm("現在開いているエディタのカーソル位置にHTMLの標準雛形を挿入しますか？")) {
+            if (confirm("カーソル位置にHTMLの標準雛形を挿入しますか？")) {
                 const selection = editor.getSelection();
                 const range = new monacoInstance.Range(
                     selection.startLineNumber, selection.startColumn,
                     selection.endLineNumber, selection.endColumn
                 );
                 const op = { identifier: { major: 1, minor: 1 }, range: range, text: htmlTemplate, forceMoveMarkers: true };
-                editor.executeEdits("my-source", [op]);
+                editor.executeEdits("source", [op]);
                 editor.focus();
             }
+        }
+
+        // フッター英語カウンター更新処理
+        function updateFooterCounters() {
+            if (!editor || activeTab === "__settings__" || activeTab === "__diff__") {
+                document.getElementById("statTotalLines").innerText = "0 lines";
+                document.getElementById("statTotalChars").innerText = "0 chars";
+                return;
+            }
+            const model = editor.getModel();
+            if (model) {
+                const lineCount = model.getLineCount();
+                const charCount = model.getValueLength();
+                document.getElementById("statTotalLines").innerText = `${lineCount} lines`;
+                document.getElementById("statTotalChars").innerText = `${charCount} chars`;
+            }
+        }
+
+        // --- 新機能：フォルダ＆ファイルツリー階層レンダリングシステム ---
+        function renderUI() {
+            const fileList = document.getElementById("fileList");
+            const tabBar = document.getElementById("tabBar");
+            fileList.innerHTML = "";
+            tabBar.innerHTML = "";
+
+            // 1. エクスプローラーの階層ツリー構築
+            const tree = {};
+            Object.keys(projectData.files).forEach(path => {
+                const parts = path.split('/');
+                let current = tree;
+                let currentPath = "";
+                
+                parts.forEach((part, i) => {
+                    currentPath = currentPath ? `${currentPath}/${part}` : part;
+                    if (i === parts.length - 1) {
+                        current[part] = { __isFile: true, path: path };
+                    } else {
+                        if (!current[part]) current[part] = { __isFolder: true, path: currentPath, children: {} };
+                        current = current[part].children;
+                    }
+                });
+            });
+
+            function renderNode(node, depth = 0) {
+                const container = document.createDocumentFragment();
+                
+                // フォルダとファイルを仕分けしてソート配置
+                const keys = Object.keys(node).sort((a, b) => {
+                    const aIsFile = node[a].__isFile;
+                    const bIsFile = node[b].__isFile;
+                    if (aIsFile !== bIsFile) return aIsFile ? 1 : -1;
+                    return a.localeCompare(b);
+                });
+
+                keys.forEach(key => {
+                    const item = node[key];
+                    const element = document.createElement("div");
+                    
+                    if (item.__isFolder) {
+                        const isExpanded = projectData.foldersExpanded[item.path] !== false;
+                        element.className = `group flex flex-col w-full text-xs md:text-sm`;
+                        
+                        const folderHeader = document.createElement("div");
+                        folderHeader.className = "flex items-center justify-between px-2 py-1 hover:bg-[#2a2d2e] cursor-pointer text-gray-300";
+                        folderHeader.style.paddingLeft = `${(depth * 8) + 8}px`;
+                        folderHeader.innerHTML = `
+                            <div class="flex items-center truncate flex-1" onclick="toggleFolder('${item.path}')">
+                                <span class="mr-1 text-gray-500 scale-90">${isExpanded ? '▼' : '▶'}</span>
+                                <span class="mr-1.5 text-yellow-600 font-bold text-sm">📁</span>
+                                <span class="truncate font-medium">${key}</span>
+                            </div>
+                            <div class="opacity-0 group-hover:opacity-100 flex items-center space-x-1 shrink-0">
+                                <button onclick="promptNewFile('${item.path}')" class="text-gray-400 hover:text-white px-0.5 text-xs" title="フォルダー内にファイル作成">＋</button>
+                                <button onclick="deleteFolder('${item.path}')" class="text-gray-500 hover:text-red-500 px-1 text-xs" title="フォルダー削除">✕</button>
+                            </div>
+                        `;
+                        element.appendChild(folderHeader);
+
+                        if (isExpanded) {
+                            const childContainer = renderNode(item.children, depth + 1);
+                            element.appendChild(childContainer);
+                        }
+                    } else {
+                        // ファイルノード
+                        const isActive = (item.path === activeTab);
+                        element.className = `group flex items-center cursor-pointer py-1 text-gray-300 ${isActive ? 'bg-[#37373d] text-white font-medium' : 'hover:bg-[#2a2d2e]'}`;
+                        element.style.paddingLeft = `${(depth * 8) + 8}px`;
+                        element.style.paddingRight = `8px`;
+                        element.innerHTML = `
+                            <div class="flex items-center truncate flex-1 py-0.5" onclick="switchTab('${item.path}')" ondblclick="promptRenameFile('${item.path}')">
+                                <span class="mr-1.5 flex items-center justify-center w-4 h-4 shrink-0">${getFileIconDom(key)}</span>
+                                <span class="truncate text-xs md:text-sm" title="${item.path}">${key}</span>
+                            </div>
+                            <div class="flex items-center space-x-1.5 opacity-0 group-hover:opacity-100 transition shrink-0">
+                                <button onclick="openDiffMode('${item.path}')" class="text-gray-400 hover:text-sky-400 text-[11px]" title="保存前との差分を見る">⚖️</button>
+                                <button onclick="promptRenameFile('${item.path}')" class="text-gray-500 hover:text-white text-xs" title="リネーム">✏️</button>
+                                <button onclick="deleteFile('${item.path}')" class="text-gray-500 hover:text-red-500 text-sm" title="削除">✕</button>
+                            </div>
+                        `;
+                    }
+                    container.appendChild(element);
+                });
+                return container;
+            }
+
+            fileList.appendChild(renderNode(tree));
+
+            // 2. タブバーのレンダリング
+            Object.keys(projectData.files).forEach(path => {
+                const isActive = (path === activeTab);
+                const filename = path.split('/').pop();
+                
+                const tab = document.createElement("div");
+                tab.className = `h-full px-3 flex items-center space-x-1.5 border-r border-[#252526] cursor-pointer transition shrink-0 ${isActive ? 'bg-[#1e1e1e] text-white border-t-2 border-[#007acc]' : 'bg-[#2d2d2d] text-gray-500 hover:bg-[#2b2b2b]'}`;
+                tab.innerHTML = `<span class="scale-75 opacity-80 shrink-0">${getFileIconDom(filename)}</span><span class="text-xs font-medium" title="${path}">${filename}</span><span onclick="event.stopPropagation(); closeTab('${path}')" class="hover:text-white ml-1.5 text-xs">×</span>`;
+                tab.onclick = () => switchTab(path);
+                tabBar.appendChild(tab);
+            });
+
+            // 特殊タブ (Settings / Diff Viewer)
+            if (activeTab === "__settings__") {
+                renderSpecialTab("⚙️ Settings", "__settings__");
+            } else if (activeTab === "__diff__") {
+                renderSpecialTab("⚖️ Diff View", "__diff__");
+            }
+        }
+
+        function renderSpecialTab(label, id) {
+            const tabBar = document.getElementById("tabBar");
+            const sTab = document.createElement("div");
+            sTab.className = `h-full px-4 flex items-center space-x-2 border-r border-[#252526] cursor-pointer shrink-0 bg-[#1e1e1e] text-white border-t-2 border-[#007acc]`;
+            sTab.innerHTML = `<span class="text-xs">${label}</span><span onclick="event.stopPropagation(); closeTab('${id}')" class="hover:text-white ml-1.5 text-xs">×</span>`;
+            tabBar.appendChild(sTab);
+        }
+
+        function toggleFolder(path) {
+            projectData.foldersExpanded[path] = projectData.foldersExpanded[path] === false;
+            saveData();
+            renderUI();
+        }
+
+        // --- 新機能：差分ビューア（Diff Editor）起動制御 ---
+        function openDiffMode(path) {
+            if (!monacoInstance || !projectData.files[path]) return;
+            
+            // ローカルストレージに最後に永続セーブされたデータを取得
+            const rawData = localStorage.getItem("webstudio_pro_v10");
+            let originalContent = "";
+            if (rawData) {
+                const parsed = JSON.parse(rawData);
+                if (parsed.files[path]) originalContent = parsed.files[path].content;
+            }
+            
+            const currentContent = projectData.files[path].content;
+            const fileLang = projectData.files[path].lang;
+
+            // 差分用モデルの生成とバインド
+            const originalModel = monacoInstance.editor.createModel(originalContent, fileLang);
+            const modifiedModel = monacoInstance.editor.createModel(currentContent, fileLang);
+
+            diffEditor.setModel({
+                original: originalModel,
+                modified: modifiedModel
+            });
+
+            if (originalModelForDiff) originalModelForDiff.dispose();
+            originalModelForDiff = originalModel;
+
+            switchTab("__diff__");
+            document.getElementById("topFileName").innerText = `Diff: ${path} (Left: Saved | Right: Modified)`;
+        }
+
+        function switchTab(target) {
+            activeTab = target;
+            const editorLayer = document.getElementById("editorLayer");
+            const diffLayer = document.getElementById("diffLayer");
+            const settingsLayer = document.getElementById("settingsLayer");
+            const topFileName = document.getElementById("topFileName");
+
+            // レイヤー全リセット
+            editorLayer.classList.remove("active");
+            diffLayer.classList.remove("active");
+            settingsLayer.classList.remove("active");
+
+            if (target === "__settings__") {
+                settingsLayer.classList.add("active");
+                topFileName.innerText = "Settings";
+                syncSettingsUI();
+                updateFooterCounters();
+            } else if (target === "__diff__") {
+                diffLayer.classList.add("active");
+                document.getElementById("langDisplay").innerText = "Diff Viewer";
+                updateFooterCounters();
+            } else {
+                editorLayer.classList.add("active");
+                topFileName.innerText = target;
+
+                const file = projectData.files[target];
+                if (file && editor) {
+                    let model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${target}`);
+                    if (!model) {
+                        model = monacoInstance.editor.createModel(file.content, file.lang, monacoInstance.Uri.file(target));
+                    }
+                    editor.setModel(model);
+                    document.getElementById("langDisplay").innerText = file.lang;
+                    updateFooterCounters();
+                }
+            }
+            renderUI();
+        }
+
+        // 新機能：ポップアップモーダル表示ロジック一式
+        function openDownloadModal() {
+            if (editor && projectData.files[activeTab] && activeTab !== "__settings__" && activeTab !== "__diff__") {
+                projectData.files[activeTab].content = editor.getValue();
+            }
+            
+            const listEl = document.getElementById("modalFileList");
+            listEl.innerHTML = "";
+            
+            Object.keys(projectData.files).forEach(path => {
+                const isChecked = selectedFiles.has(path);
+                const row = document.createElement("label");
+                row.className = "flex items-center space-x-2 p-1.5 rounded hover:bg-[#2d2d2d] cursor-pointer text-gray-300 transition truncate";
+                row.innerHTML = `
+                    <input type="checkbox" data-path="${path}" ${isChecked ? 'checked' : ''} onchange="handleModalCheckboxChange(this)" class="accent-[#007acc] w-3.5 h-3.5 rounded">
+                    <span class="truncate">${path}</span>
+                `;
+                listEl.appendChild(row);
+            });
+
+            const modal = document.getElementById("downloadModal");
+            modal.classList.remove("hidden");
+        }
+
+        function closeDownloadModal() {
+            document.getElementById("downloadModal").classList.add("hidden");
+        }
+
+        function handleModalCheckboxChange(cb) {
+            const path = cb.getAttribute("data-path");
+            if (cb.checked) selectedFiles.add(path);
+            else selectedFiles.delete(path);
+        }
+
+        function toggleAllModalCheckboxes() {
+            const checkboxes = document.querySelectorAll("#modalFileList input[type='checkbox']");
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            
+            checkboxes.forEach(cb => {
+                cb.checked = !allChecked;
+                handleModalCheckboxChange(cb);
+            });
+        }
+
+        function downloadSelectedFilesFromModal() {
+            if (selectedFiles.size === 0) return alert("ダウンロードするファイルにチェックを入れてください。");
+            
+            selectedFiles.forEach(name => {
+                const file = projectData.files[name];
+                if (!file) return;
+                const blob = new Blob([file.content], { type: "text/plain;charset=utf-8" });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = name.replace(/\//g, '_'); // 階層スラッシュをアンダースコアに安全変換
+                a.click();
+                URL.revokeObjectURL(a.href);
+            });
+            closeDownloadModal();
+        }
+
+        function exportSystemSnapshotFromModal() {
+            saveData();
+            const html = document.documentElement.outerHTML;
+            const blob = new Blob([html], { type: "text/html" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "WebStudio_Pro_v10.html";
+            a.click();
+            URL.revokeObjectURL(a.href);
+            closeDownloadModal();
+        }
+
+        // 新規作成・フォルダ作成・削除回り
+        function promptNewFile(basePath = "") {
+            let name = prompt("作成するファイル名を入力してください (階層指定も可能 例: components/Header.js):");
+            if (!name) return;
+            
+            let fullPath = basePath ? `${basePath}/${name}` : name;
+            // 連続するスラッシュをクレンジング
+            fullPath = fullPath.replace(/\/+/g, '/').replace(/^\//, '');
+
+            if (projectData.files[fullPath]) return alert("そのファイルは既に存在します");
+            
+            const ext = fullPath.split('.').pop().toLowerCase();
+            const lang = EXT_MAP[ext] || 'plaintext';
+            
+            projectData.files[fullPath] = { content: "", lang: lang };
+            saveData();
+            switchTab(fullPath);
+        }
+
+        function promptNewFolder() {
+            let name = prompt("作成するフォルダー名を入力してください (例: assets/css):");
+            if (!name) return;
+            name = name.replace(/\/+/g, '/').replace(/^\//, '').replace(/\/$/, '');
+            
+            projectData.foldersExpanded[name] = true;
+            saveData();
+            renderUI();
+        }
+
+        function deleteFolder(folderPath) {
+            if (!confirm(`フォルダー「${folderPath}」内の全てのファイルも同時に削除されますがよろしいですか？`)) return;
+            
+            Object.keys(projectData.files).forEach(path => {
+                if (path.startsWith(folderPath + '/')) {
+                    delete projectData.files[path];
+                    selectedFiles.delete(path);
+                    const model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${path}`);
+                    if (model) model.dispose();
+                }
+            });
+            delete projectData.foldersExpanded[folderPath];
+            saveData();
+            
+            if (!projectData.files[activeTab]) {
+                switchTab(Object.keys(projectData.files)[0]);
+            } else {
+                renderUI();
+            }
+        }
+
+        function promptRenameFile(oldPath) {
+            const newPath = prompt(`「${oldPath}」の新しいファイルパスを入力してください:`, oldPath);
+            if (!newPath || newPath === oldPath) return;
+            if (projectData.files[newPath]) return alert("そのファイルパスは既に存在します");
+
+            const ext = newPath.split('.').pop().toLowerCase();
+            const lang = EXT_MAP[ext] || 'plaintext';
+
+            projectData.files[newPath] = {
+                content: projectData.files[oldPath].content,
+                lang: lang
+            };
+            delete projectData.files[oldPath];
+
+            if (selectedFiles.has(oldPath)) {
+                selectedFiles.delete(oldPath);
+                selectedFiles.add(newPath);
+            }
+
+            const oldModel = monacoInstance.editor.getModels().find(m => m.uri.path === `/${oldPath}`);
+            if (oldModel) oldModel.dispose();
+
+            saveData();
+            if (activeTab === oldPath) switchTab(newPath);
+            else renderUI();
+        }
+
+        function closeTab(name) {
+            const fileKeys = Object.keys(projectData.files);
+            if (name === "__settings__" || name === "__diff__") {
+                if (activeTab === name && fileKeys.length > 0) switchTab(fileKeys[0]);
+                else renderUI();
+            } else {
+                if (activeTab === name) {
+                    const remaining = fileKeys.filter(k => k !== name);
+                    if (remaining.length > 0) switchTab(remaining[0]);
+                }
+            }
+        }
+
+        function deleteFile(name) {
+            if (Object.keys(projectData.files).length <= 1) return alert("最後の1ファイルは削除できません");
+            if (!confirm(`${name} を削除しますか？`)) return;
+            delete projectData.files[name];
+            selectedFiles.delete(name);
+            const model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${name}`);
+            if (model) model.dispose();
+            if (activeTab === name) switchTab(Object.keys(projectData.files)[0]);
+            else renderUI();
+            saveData();
         }
 
         function toggleSidebar() {
@@ -473,91 +981,24 @@
         function getFileIconDom(name) {
             const ext = name.split('.').pop().toLowerCase();
             switch(ext) {
-                case 'html':   return '<i class="devicon-html5-plain icon-html text-base md:text-lg"></i>';
-                case 'css':    return '<i class="devicon-css3-plain icon-css text-base md:text-lg"></i>';
-                case 'js':     return '<i class="devicon-javascript-plain icon-js text-base md:text-lg"></i>';
-                case 'ts':     return '<i class="devicon-typescript-plain icon-ts text-base md:text-lg"></i>';
-                case 'py':     return '<i class="devicon-python-plain icon-python text-base md:text-lg"></i>';
-                case 'json':   return '<i class="devicon-json-plain icon-json text-base md:text-lg"></i>';
+                case 'html':   return '<i class="devicon-html5-plain icon-html"></i>';
+                case 'css':    return '<i class="devicon-css3-plain icon-css"></i>';
+                case 'js':     return '<i class="devicon-javascript-plain icon-js"></i>';
+                case 'ts':     return '<i class="devicon-typescript-plain icon-ts"></i>';
+                case 'py':     return '<i class="devicon-python-plain icon-python"></i>';
+                case 'json':   return '<i class="devicon-json-plain icon-json"></i>';
                 case 'cpp': case 'cc': case 'h': case 'hpp': 
-                               return '<i class="devicon-cplusplus-plain icon-cpp text-base md:text-lg"></i>';
-                case 'cs':     return '<i class="devicon-csharp-plain icon-csharp text-base md:text-lg"></i>';
-                case 'md':     return '<i class="devicon-markdown-original icon-md text-base md:text-lg"></i>';
+                               return '<i class="devicon-cplusplus-plain icon-cpp"></i>';
+                case 'cs':     return '<i class="devicon-csharp-plain icon-csharp"></i>';
+                case 'md':     return '<i class="devicon-markdown-original icon-md"></i>';
                 case 'sh': case 'bash': 
-                               return '<i class="devicon-bash-plain icon-sh text-base md:text-lg"></i>';
-                case 'sql':    return '<i class="devicon-azuresqldatabase-plain icon-sql text-base md:text-lg"></i>';
+                               return '<i class="devicon-bash-plain icon-sh"></i>';
+                case 'sql':    return '<i class="devicon-azuresqldatabase-plain icon-sql"></i>';
                 case 'yaml': case 'yml': 
-                               return '<i class="devicon-yaml-plain icon-yaml text-base md:text-lg"></i>';
-                case 'xml':    return '<i class="devicon-xml-plain icon-xml text-base md:text-lg"></i>';
-                default:       return '<i class="devicon-matcha-plain icon-txt text-base md:text-lg"></i>';
+                               return '<i class="devicon-yaml-plain icon-yaml"></i>';
+                case 'xml':    return '<i class="devicon-xml-plain icon-xml"></i>';
+                default:       return '<i class="devicon-matcha-plain icon-txt"></i>';
             }
-        }
-
-        function renderUI() {
-            const fileList = document.getElementById("fileList");
-            const tabBar = document.getElementById("tabBar");
-            fileList.innerHTML = "";
-            tabBar.innerHTML = "";
-
-            Object.keys(projectData.files).forEach(name => {
-                const isActive = (name === activeTab);
-                const isChecked = selectedFiles.has(name);
-                
-                const item = document.createElement("div");
-                item.className = `group px-2 py-1.5 flex items-center cursor-pointer ${isActive ? 'bg-[#37373d] text-white font-medium' : 'hover:bg-[#2a2d2e]'}`;
-                item.innerHTML = `
-                    <input type="checkbox" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation(); toggleFileSelect('${name}')" class="mr-1.5 accent-[#007acc] w-3.5 h-3.5 rounded cursor-pointer shrink-0">
-                    <div class="flex items-center truncate flex-1 py-0.5" onclick="switchTab('${name}')" ondblclick="promptRenameFile('${name}')">
-                        <span class="mr-1.5 flex items-center justify-center w-5 h-5 shrink-0">${getFileIconDom(name)}</span>
-                        <span class="truncate text-xs md:text-sm" title="ダブルクリックでリネーム">${name}</span>
-                    </div>
-                    <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition shrink-0">
-                        <button onclick="promptRenameFile('${name}')" class="text-gray-500 hover:text-white px-0.5 text-xs" title="名前を変更">✏️</button>
-                        <button onclick="deleteFile('${name}')" class="text-gray-500 hover:text-red-500 px-1 text-sm" title="削除">✕</button>
-                    </div>
-                `;
-                fileList.appendChild(item);
-
-                const tab = document.createElement("div");
-                tab.className = `h-full px-3 flex items-center space-x-1.5 border-r border-[#252526] cursor-pointer transition shrink-0 ${isActive ? 'bg-[#1e1e1e] text-white border-t-2 border-[#007acc]' : 'bg-[#2d2d2d] text-gray-500 hover:bg-[#2b2b2b]'}`;
-                tab.innerHTML = `<span class="scale-75 opacity-80 shrink-0">${getFileIconDom(name)}</span><span class="text-xs font-medium">${name}</span><span onclick="event.stopPropagation(); closeTab('${name}')" class="hover:text-white ml-1.5 text-xs">×</span>`;
-                tab.onclick = () => switchTab(name);
-                tabBar.appendChild(tab);
-            });
-
-            if (activeTab === "__settings__") {
-                const sTab = document.createElement("div");
-                sTab.className = `h-full px-4 flex items-center space-x-2 border-r border-[#252526] cursor-pointer shrink-0 bg-[#1e1e1e] text-white border-t-2 border-[#007acc]`;
-                sTab.innerHTML = `<span class="text-xs">⚙️</span><span class="text-xs">Settings</span><span onclick="event.stopPropagation(); closeTab('__settings__')" class="hover:text-white ml-1.5 text-xs">×</span>`;
-                tabBar.appendChild(sTab);
-            }
-        }
-
-        function promptRenameFile(oldName) {
-            const newName = prompt(`「${oldName}」の新しいファイル名を入力してください:`, oldName);
-            if (!newName || newName === oldName) return;
-            if (projectData.files[newName]) return alert("そのファイル名は既に存在します");
-
-            const ext = newName.split('.').pop().toLowerCase();
-            const lang = EXT_MAP[ext] || 'plaintext';
-
-            projectData.files[newName] = {
-                content: projectData.files[oldName].content,
-                lang: lang
-            };
-            delete projectData.files[oldName];
-
-            if (selectedFiles.has(oldName)) {
-                selectedFiles.delete(oldName);
-                selectedFiles.add(newName);
-            }
-
-            const oldModel = monacoInstance.editor.getModels().find(m => m.uri.path === `/${oldName}`);
-            if (oldModel) oldModel.dispose();
-
-            saveData();
-            if (activeTab === oldName) switchTab(newName);
-            else renderUI();
         }
 
         function execGlobalSearch() {
@@ -571,7 +1012,7 @@
                 return;
             }
 
-            if (editor && projectData.files[activeTab]) {
+            if (editor && projectData.files[activeTab] && activeTab !== "__settings__" && activeTab !== "__diff__") {
                 projectData.files[activeTab].content = editor.getValue();
             }
 
@@ -611,7 +1052,7 @@
             if (!searchStr) return alert("検索キーワードを入力してください");
             if (!confirm(`プロジェクト内のすべての「${searchStr}」を「${replaceStr}」に一括置換しますか？`)) return;
 
-            if (editor && projectData.files[activeTab]) {
+            if (editor && projectData.files[activeTab] && activeTab !== "__settings__" && activeTab !== "__diff__") {
                 projectData.files[activeTab].content = editor.getValue();
             }
 
@@ -625,75 +1066,11 @@
             });
 
             saveData();
-            if (projectData.files[activeTab] && editor) {
+            if (projectData.files[activeTab] && editor && activeTab !== "__settings__" && activeTab !== "__diff__") {
                 editor.setValue(projectData.files[activeTab].content);
             }
             execGlobalSearch();
             alert("一括置換が完了しました。");
-        }
-
-        function switchTab(target) {
-            activeTab = target;
-            const editorLayer = document.getElementById("editorLayer");
-            const settingsLayer = document.getElementById("settingsLayer");
-            const topFileName = document.getElementById("topFileName");
-
-            if (target === "__settings__") {
-                editorLayer.classList.remove("active");
-                settingsLayer.classList.add("active");
-                topFileName.innerText = "Settings";
-                syncSettingsUI();
-            } else {
-                settingsLayer.classList.remove("active");
-                editorLayer.classList.add("active");
-                topFileName.innerText = target;
-
-                const file = projectData.files[target];
-                if (file && editor) {
-                    let model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${target}`);
-                    if (!model) {
-                        model = monacoInstance.editor.createModel(file.content, file.lang, monacoInstance.Uri.file(target));
-                    }
-                    editor.setModel(model);
-                    document.getElementById("langDisplay").innerText = file.lang;
-                }
-            }
-            renderUI();
-        }
-
-        function closeTab(name) {
-            const fileKeys = Object.keys(projectData.files);
-            if (name === "__settings__") {
-                if (activeTab === "__settings__" && fileKeys.length > 0) switchTab(fileKeys[0]);
-                else renderUI();
-            } else {
-                if (activeTab === name) {
-                    const remaining = fileKeys.filter(k => k !== name);
-                    if (remaining.length > 0) switchTab(remaining[0]);
-                }
-            }
-        }
-
-        function toggleFileSelect(name) {
-            if (selectedFiles.has(name)) selectedFiles.delete(name);
-            else selectedFiles.add(name);
-        }
-
-        function downloadSelectedFiles() {
-            if (selectedFiles.size === 0) return alert("ダウンロードするファイルにチェックを入れてください。");
-            if (editor && projectData.files[activeTab]) {
-                projectData.files[activeTab].content = editor.getValue();
-            }
-            selectedFiles.forEach(name => {
-                const file = projectData.files[name];
-                if (!file) return;
-                const blob = new Blob([file.content], { type: "text/plain;charset=utf-8" });
-                const a = document.createElement("a");
-                a.href = URL.createObjectURL(blob);
-                a.download = name;
-                a.click();
-                URL.revokeObjectURL(a.href);
-            });
         }
 
         function handleFileUpload(input) {
@@ -713,29 +1090,6 @@
                 input.value = "";
             };
             reader.readAsText(file);
-        }
-
-        function promptNewFile() {
-            const name = prompt("ファイル名を入力してください (例: main.html, script.js)");
-            if (!name) return;
-            if (projectData.files[name]) return alert("そのファイル名は既に存在します");
-            const ext = name.split('.').pop().toLowerCase();
-            const lang = EXT_MAP[ext] || 'plaintext';
-            projectData.files[name] = { content: "", lang: lang };
-            saveData();
-            switchTab(name);
-        }
-
-        function deleteFile(name) {
-            if (Object.keys(projectData.files).length <= 1) return alert("最後の1ファイルは削除できません");
-            if (!confirm(`${name} を削除しますか？`)) return;
-            delete projectData.files[name];
-            selectedFiles.delete(name);
-            const model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${name}`);
-            if (model) model.dispose();
-            if (activeTab === name) switchTab(Object.keys(projectData.files)[0]);
-            else renderUI();
-            saveData();
         }
 
         function openSettings() { switchTab("__settings__"); }
@@ -767,23 +1121,24 @@
             document.getElementById("fontSizeVal").innerText = projectData.settings.fontSize;
             document.getElementById("autoSaveVal").innerText = projectData.settings.autoSaveDelay + "ms";
 
-            if (editor) {
-                editor.updateOptions({ 
-                    fontSize: projectData.settings.fontSize,
-                    tabSize: projectData.settings.tabSize,
-                    wordWrap: projectData.settings.wordWrap,
-                    lineNumbers: projectData.settings.lineNumbers,
-                    minimap: { enabled: projectData.settings.minimap === "on" }
-                });
-                if (monacoInstance) monacoInstance.editor.setTheme(projectData.settings.theme);
-            }
+            const opt = { 
+                fontSize: projectData.settings.fontSize,
+                tabSize: projectData.settings.tabSize,
+                wordWrap: projectData.settings.wordWrap,
+                lineNumbers: projectData.settings.lineNumbers,
+                minimap: { enabled: projectData.settings.minimap === "on" }
+            };
+            if (editor) editor.updateOptions(opt);
+            if (diffEditor) diffEditor.updateOptions({ fontSize: projectData.settings.fontSize });
+            if (monacoInstance) monacoInstance.editor.setTheme(projectData.settings.theme);
+            
             saveData();
         }
 
-        function saveData() { localStorage.setItem("webstudio_pro_v9", JSON.stringify(projectData)); }
+        function saveData() { localStorage.setItem("webstudio_pro_v10", JSON.stringify(projectData)); }
 
         function loadData() {
-            const saved = localStorage.getItem("webstudio_pro_v9");
+            const saved = localStorage.getItem("webstudio_pro_v10");
             if (saved) {
                 projectData = JSON.parse(saved);
                 if (Object.keys(projectData.files).length === 0) {
@@ -794,6 +1149,7 @@
                 if (!projectData.settings.lineNumbers) projectData.settings.lineNumbers = "on";
                 if (!projectData.settings.minimap) projectData.settings.minimap = "off";
                 if (!projectData.settings.sidebarWidth) projectData.settings.sidebarWidth = 200;
+                if (!projectData.foldersExpanded) projectData.foldersExpanded = {};
                 if (projectData.settings.autoSaveDelay === undefined) projectData.settings.autoSaveDelay = 500;
                 activeTab = Object.keys(projectData.files)[0];
             }
@@ -801,19 +1157,9 @@
 
         function resetAllData() {
             if (confirm("すべてのファイルと設定を消去して初期化しますか？")) {
-                localStorage.removeItem("webstudio_pro_v9");
+                localStorage.removeItem("webstudio_pro_v10");
                 location.reload();
             }
-        }
-
-        function exportSystemSnapshot() {
-            saveData();
-            const html = document.documentElement.outerHTML;
-            const blob = new Blob([html], { type: "text/html" });
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
-            a.download = "WebStudio_Pro_v9.html";
-            a.click();
         }
     </script>
 </body>
