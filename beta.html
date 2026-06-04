@@ -24,7 +24,7 @@
         .view-layer { display: none; height: 100%; width: 100%; }
         .view-layer.active { display: block; }
         
-        /* 言語別アイコンカラー定義 */
+        /* 言語別アイコンカラー */
         .icon-html { color: #e34f26; }
         .icon-css { color: #1572b6; }
         .icon-js { color: #f7df1e; }
@@ -44,6 +44,13 @@
         #sidebar.collapsed { width: 0px !important; min-width: 0px !important; border-right-width: 0px; }
         #resizer { cursor: col-resize; touch-action: none; }
         #resizer:hover, #resizer.resizing { background-color: #007acc !important; }
+
+        /* コンテナクエリを利用した「一括」ボタンのレイアウト柔軟化 */
+        #searchContainer { container-type: inline-size; }
+        @container (max-width: 170px) {
+            #replaceWrapper { flex-direction: column !important; }
+            #btnReplaceAll { width: 100% !important; height: 28px; margin-top: 4px; }
+        }
     </style>
 </head>
 <body class="text-[#cccccc] flex flex-col select-none text-sm">
@@ -79,15 +86,17 @@
             </div>
 
             <div id="sideViewSearch" class="flex-1 flex flex-col p-3 space-y-3 overflow-y-auto no-scrollbar hidden">
-                <div>
-                    <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1">Search</label>
-                    <input type="text" id="searchInput" oninput="execGlobalSearch()" placeholder="検索キーワード" class="w-full bg-[#3c3c3c] border border-[#555] p-1.5 rounded text-xs text-white outline-none">
-                </div>
-                <div>
-                    <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1">Replace</label>
-                    <div class="flex space-x-1.5">
-                        <input type="text" id="replaceInput" placeholder="置換後の文字列" class="flex-1 bg-[#3c3c3c] border border-[#555] p-1.5 rounded text-xs text-white outline-none">
-                        <button onclick="execGlobalReplace()" class="bg-[#0e639c] hover:bg-[#1177bb] px-2 text-xs text-white rounded transition">一括</button>
+                <div id="searchContainer" class="w-full space-y-3">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1">Search</label>
+                        <input type="text" id="searchInput" oninput="execGlobalSearch()" placeholder="検索キーワード" class="w-full bg-[#3c3c3c] border border-[#555] p-1.5 rounded text-xs text-white outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1">Replace</label>
+                        <div id="replaceWrapper" class="flex flex-row items-stretch">
+                            <input type="text" id="replaceInput" placeholder="置換後の文字列" class="flex-1 min-w-0 bg-[#3c3c3c] border border-[#555] p-1.5 rounded text-xs text-white outline-none">
+                            <button id="btnReplaceAll" onclick="execGlobalReplace()" class="bg-[#0e639c] hover:bg-[#1177bb] px-2 text-xs text-white rounded transition ml-1 shrink-0 font-medium whitespace-nowrap">一括</button>
+                        </div>
                     </div>
                 </div>
                 <div class="border-t border-[#333] pt-2">
@@ -116,6 +125,27 @@
 
         <main class="flex-1 flex flex-col overflow-hidden">
             <div id="tabBar" class="flex bg-[#252526] h-10 overflow-x-auto no-scrollbar shrink-0 text-xs md:text-sm"></div>
+            
+            <div id="quickInputBar" class="bg-[#2d2d2d] border-b border-[#232324] h-9 px-2 flex items-center space-x-1.5 overflow-x-auto no-scrollbar shrink-0">
+                <button onclick="insertTemplate()" class="bg-[#0e639c] hover:bg-[#1177bb] text-white text-xs px-2 py-1 rounded transition shrink-0 font-bold mr-1">📄 HTML雛形</button>
+                <div class="h-4 w-[1px] bg-[#444] shrink-0 mr-1"></div>
+                
+                <button onclick="insertSymbol('<>')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">&lt;&gt;</button>
+                <button onclick="insertSymbol('{}')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">{}</button>
+                <button onclick="insertSymbol('[]')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">[]</button>
+                <button onclick="insertSymbol('()')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">()</button>
+                <button onclick="insertSymbol('\"\"')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">""</button>
+                <button onclick="insertSymbol('\'\'')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">''</button>
+                <button onclick="insertSymbol('`')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">`</button>
+                <button onclick="insertSymbol('*')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">*</button>
+                <button onclick="insertSymbol('~')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">~</button>
+                <button onclick="insertSymbol('_')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">_</button>
+                <button onclick="insertSymbol('!')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">!</button>
+                <button onclick="insertSymbol('#')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">#</button>
+                <button onclick="insertSymbol('%')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">%</button>
+                <button onclick="insertSymbol(';')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">;</button>
+                <button onclick="insertSymbol('=')" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 text-xs px-2.5 py-1 rounded transition font-mono font-bold shrink-0">=</button>
+            </div>
             
             <div class="flex-1 relative bg-[#1e1e1e]">
                 <div id="editorLayer" class="view-layer active">
@@ -203,17 +233,13 @@
     </footer>
 
     <script>
-        // マッピング拡張（シェルスクリプト, SQL, YAML, XMLを追加）
         const EXT_MAP = {
             'html': 'html', 'js': 'javascript', 'css': 'css',
             'py': 'python', 'json': 'json',
             'cpp': 'cpp', 'cc': 'cpp', 'h': 'cpp', 'hpp': 'cpp',
             'cs': 'csharp', 'md': 'markdown', 'ts': 'typescript', 
-            'txt': 'plaintext',
-            'sh': 'shell', 'bash': 'shell',
-            'sql': 'sql',
-            'yaml': 'yaml', 'yml': 'yaml',
-            'xml': 'xml'
+            'txt': 'plaintext', 'sh': 'shell', 'bash': 'shell',
+            'sql': 'sql', 'yaml': 'yaml', 'yml': 'yaml', 'xml': 'xml'
         };
 
         let projectData = {
@@ -257,7 +283,6 @@
                 lineNumbersMinChars: 3
             });
 
-            // 幅制限チェック付き初期幅適用
             applySidebarWidth(projectData.settings.sidebarWidth || 200);
 
             editor.onDidChangeModelContent(() => {
@@ -267,7 +292,7 @@
                     clearTimeout(autoSaveTimer);
                     autoSaveTimer = setTimeout(() => {
                         saveData();
-                        if (currentSidebarView === 'search') execGlobalSearch(); // 検索画面ならリアルタイム同期
+                        if (currentSidebarView === 'search') execGlobalSearch();
                         document.getElementById("statusInfo").innerText = "Auto Saved";
                         setTimeout(() => { document.getElementById("statusInfo").innerText = "Ready"; }, 1000);
                     }, projectData.settings.autoSaveDelay);
@@ -283,6 +308,78 @@
             switchTab(activeTab);
         });
 
+        // --- 新機能：記号のスマート挿入ロジック ---
+        function insertSymbol(sym) {
+            if (!editor || activeTab === "__settings__") return;
+            
+            const selection = editor.getSelection();
+            const selectedText = editor.getModel().getValueInRange(selection);
+            
+            let textToInsert = sym;
+            let targetSelection = null;
+
+            // ペア記号(括弧やクォーテーション)の包み込み対応
+            if (sym.length === 2 && ['<>', '{}', '[]', '()', '""', "''"].includes(sym)) {
+                const open = sym[0];
+                const close = sym[1];
+                textToInsert = open + selectedText + close;
+                
+                // 挿入後、カーソルを括弧の「中」に美しく戻すか、選択範囲を再設定
+                targetSelection = new monacoInstance.Selection(
+                    selection.startLineNumber,
+                    selection.startColumn + 1,
+                    selection.endLineNumber,
+                    selection.endColumn + 1
+                );
+            }
+
+            const range = new monacoInstance.Range(
+                selection.startLineNumber,
+                selection.startColumn,
+                selection.endLineNumber,
+                selection.endColumn
+            );
+
+            const id = { major: 1, minor: 1 };
+            const op = { identifier: id, range: range, text: textToInsert, forceMoveMarkers: true };
+            
+            editor.executeEdits("my-source", [op]);
+            
+            if (targetSelection) {
+                editor.setSelection(targetSelection);
+            }
+            editor.focus();
+        }
+
+        // --- 新機能：HTML5標準雛形の挿入 ---
+        function insertTemplate() {
+            if (!editor || activeTab === "__settings__") return;
+            
+            const htmlTemplate = `<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+</body>
+</html>`;
+
+            // 現在のエディタの中身を完全に入れ替えるか、カーソル位置に挿入するか
+            if (confirm("現在開いているエディタのカーソル位置にHTMLの標準雛形を挿入しますか？")) {
+                const selection = editor.getSelection();
+                const range = new monacoInstance.Range(
+                    selection.startLineNumber, selection.startColumn,
+                    selection.endLineNumber, selection.endColumn
+                );
+                const op = { identifier: { major: 1, minor: 1 }, range: range, text: htmlTemplate, forceMoveMarkers: true };
+                editor.executeEdits("my-source", [op]);
+                editor.focus();
+            }
+        }
+
         function toggleSidebar() {
             const sidebar = document.getElementById("sidebar");
             const resizer = document.getElementById("resizer");
@@ -296,12 +393,11 @@
             if (editor) editor.layout();
         }
 
-        // 1/8幅(12.5%)制限をかけた安全なリサイズ適用関数
         function applySidebarWidth(targetWidth) {
             const sidebar = document.getElementById("sidebar");
             const windowWidth = window.innerWidth;
-            const minW = Math.floor(windowWidth * 0.125); // ウィンドウ幅の1/8が最小値
-            const maxW = Math.floor(windowWidth * 0.5);   // 最大値は半分まで
+            const minW = Math.floor(windowWidth * 0.125);
+            const maxW = Math.floor(windowWidth * 0.5);
 
             let finalWidth = targetWidth;
             if (finalWidth < minW) finalWidth = minW;
@@ -347,7 +443,6 @@
             document.addEventListener("touchend", stopResize);
         }
 
-        // ウィンドウ幅が変動したときも1/8最小幅を強制維持する追従システム
         window.addEventListener('resize', () => {
             if (projectData && projectData.settings) {
                 applySidebarWidth(projectData.settings.sidebarWidth);
@@ -375,7 +470,6 @@
             }
         }
 
-        // ファイルアイコン対応強化
         function getFileIconDom(name) {
             const ext = name.split('.').pop().toLowerCase();
             switch(ext) {
@@ -439,13 +533,11 @@
             }
         }
 
-        // --- ファイル名変更 (新機能: リネーム) ---
         function promptRenameFile(oldName) {
             const newName = prompt(`「${oldName}」の新しいファイル名を入力してください:`, oldName);
             if (!newName || newName === oldName) return;
             if (projectData.files[newName]) return alert("そのファイル名は既に存在します");
 
-            // データの複製と旧データの削除
             const ext = newName.split('.').pop().toLowerCase();
             const lang = EXT_MAP[ext] || 'plaintext';
 
@@ -455,25 +547,19 @@
             };
             delete projectData.files[oldName];
 
-            // 選択状態の引き継ぎ
             if (selectedFiles.has(oldName)) {
                 selectedFiles.delete(oldName);
                 selectedFiles.add(newName);
             }
 
-            // 旧エディタモデルの破棄
             const oldModel = monacoInstance.editor.getModels().find(m => m.uri.path === `/${oldName}`);
             if (oldModel) oldModel.dispose();
 
             saveData();
-            if (activeTab === oldName) {
-                switchTab(newName);
-            } else {
-                renderUI();
-            }
+            if (activeTab === oldName) switchTab(newName);
+            else renderUI();
         }
 
-        // --- プロジェクト内一括全文検索システム (新機能) ---
         function execGlobalSearch() {
             const query = document.getElementById("searchInput").value;
             const container = document.getElementById("searchResultsList");
@@ -485,13 +571,11 @@
                 return;
             }
 
-            // 現在開いているエディタの内容を期日前同期
             if (editor && projectData.files[activeTab]) {
                 projectData.files[activeTab].content = editor.getValue();
             }
 
             let matchCount = 0;
-
             Object.keys(projectData.files).forEach(filename => {
                 const content = projectData.files[filename].content;
                 const lines = content.split('\n');
@@ -517,11 +601,9 @@
                     }
                 });
             });
-
             countEl.innerText = `${matchCount} 件のマッチ`;
         }
 
-        // --- プロジェクト内一括置換システム (新機能) ---
         function execGlobalReplace() {
             const searchStr = document.getElementById("searchInput").value;
             const replaceStr = document.getElementById("replaceInput").value;
@@ -536,17 +618,13 @@
             Object.keys(projectData.files).forEach(filename => {
                 const content = projectData.files[filename].content;
                 if (content.includes(searchStr)) {
-                    // グローバル全置換
                     projectData.files[filename].content = content.split(searchStr).join(replaceStr);
-                    
-                    // 読み込み済みのMonacoモデルがあれば中身を更新
                     const model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${filename}`);
                     if (model) model.setValue(projectData.files[filename].content);
                 }
             });
 
             saveData();
-            // 置換後に最新化
             if (projectData.files[activeTab] && editor) {
                 editor.setValue(projectData.files[activeTab].content);
             }
@@ -638,7 +716,7 @@
         }
 
         function promptNewFile() {
-            const name = prompt("ファイル名を入力してください (例: script.sh, queries.sql, config.yaml)");
+            const name = prompt("ファイル名を入力してください (例: main.html, script.js)");
             if (!name) return;
             if (projectData.files[name]) return alert("そのファイル名は既に存在します");
             const ext = name.split('.').pop().toLowerCase();
@@ -702,10 +780,10 @@
             saveData();
         }
 
-        function saveData() { localStorage.setItem("webstudio_pro_v8", JSON.stringify(projectData)); }
+        function saveData() { localStorage.setItem("webstudio_pro_v9", JSON.stringify(projectData)); }
 
         function loadData() {
-            const saved = localStorage.getItem("webstudio_pro_v8");
+            const saved = localStorage.getItem("webstudio_pro_v9");
             if (saved) {
                 projectData = JSON.parse(saved);
                 if (Object.keys(projectData.files).length === 0) {
@@ -723,7 +801,7 @@
 
         function resetAllData() {
             if (confirm("すべてのファイルと設定を消去して初期化しますか？")) {
-                localStorage.removeItem("webstudio_pro_v8");
+                localStorage.removeItem("webstudio_pro_v9");
                 location.reload();
             }
         }
@@ -734,7 +812,7 @@
             const blob = new Blob([html], { type: "text/html" });
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
-            a.download = "WebStudio_Pro_v8.html";
+            a.download = "WebStudio_Pro_v9.html";
             a.click();
         }
     </script>
