@@ -36,64 +36,71 @@
         .icon-txt { color: #858585; }
     </style>
 </head>
-<body class="text-[#cccccc] flex flex-col select-none">
+<body class="text-[#cccccc] flex flex-col select-none text-sm">
 
-    <header class="bg-[#3c3c3c] text-white text-[11px] px-3 h-8 flex items-center justify-between border-b border-[#2b2b2b] shrink-0">
-        <div class="flex items-center space-x-3">
-            <span class="font-bold text-[#007acc]">WebStudio Pro</span>
-            <span id="topFileName" class="opacity-60">main.js</span>
+    <header class="bg-[#3c3c3c] text-white text-sm px-4 h-10 flex items-center justify-between border-b border-[#2b2b2b] shrink-0">
+        <div class="flex items-center space-x-4">
+            <span class="font-bold text-[#007acc] text-base tracking-wide">WebStudio Pro</span>
+            <span id="topFileName" class="opacity-60 text-xs md:text-sm">main.js</span>
         </div>
-        <div class="flex items-center space-x-3">
-            <button onclick="exportSystemSnapshot()" class="hover:text-[#007acc] transition">一括DL保存</button>
+        <div class="flex items-center space-x-3 text-xs md:text-sm">
+            <button onclick="exportSystemSnapshot()" class="bg-[#0e639c] hover:bg-[#1177bb] px-2.5 py-1 rounded transition font-medium">一括DL保存</button>
         </div>
     </header>
 
     <div class="flex-1 flex overflow-hidden">
         
-        <aside class="w-12 md:w-56 bg-[#252526] flex flex-col border-r border-[#2b2b2b] shrink-0">
-            <div class="p-2 flex items-center justify-between border-b border-[#333] hidden md:flex text-[11px] uppercase tracking-tighter text-gray-400">
+        <aside class="w-16 md:w-64 bg-[#252526] flex flex-col border-r border-[#2b2b2b] shrink-0">
+            <div class="p-3 flex items-center justify-between border-b border-[#333] hidden md:flex text-xs uppercase tracking-wider text-gray-400 font-bold">
                 <span>Explorer</span>
-                <div class="flex items-center space-x-2">
-                    <button onclick="document.getElementById('fileUploadInput').click()" class="hover:bg-[#333] px-1 rounded text-white text-sm" title="ファイルをアップロード">📤</button>
-                    <button onclick="promptNewFile()" class="hover:bg-[#333] px-1 rounded text-white text-lg" title="新規ファイル作成">＋</button>
+                <div class="flex items-center space-x-2.5">
+                    <button onclick="document.getElementById('fileUploadInput').click()" class="hover:bg-[#333] p-1 rounded text-white text-base" title="ファイルをアップロード">📤</button>
+                    <button onclick="promptNewFile()" class="hover:bg-[#333] p-1 rounded text-white text-xl" title="新規ファイル作成">＋</button>
                 </div>
             </div>
             
             <input type="file" id="fileUploadInput" class="hidden" onchange="handleFileUpload(this)">
             
-            <div id="fileList" class="flex-1 overflow-y-auto no-scrollbar py-2"></div>
+            <div id="fileList" class="flex-1 overflow-y-auto no-scrollbar py-2 text-sm md:text-[15px]"></div>
+
+            <div class="p-2.5 bg-[#202021] border-t border-[#333] text-xs hidden md:block">
+                <div class="font-bold text-gray-400 mb-1.5 uppercase tracking-tight">Export Files</div>
+                <button onclick="downloadSelectedFiles()" class="w-full bg-[#3c3c3c] hover:bg-[#4e4e4e] text-[#cccccc] py-1.5 rounded text-center border border-[#555] transition font-medium">
+                    選択したファイルをDL
+                </button>
+            </div>
 
             <div class="border-t border-[#333]">
-                <button onclick="openSettings()" class="w-full p-3 hover:bg-[#333] flex justify-center md:justify-start items-center space-x-2 transition">
-                    <span class="text-sm">⚙️</span>
-                    <span class="hidden md:inline text-xs">Settings</span>
+                <button onclick="openSettings()" class="w-full p-3.5 hover:bg-[#333] flex justify-center md:justify-start items-center space-x-3 transition">
+                    <span class="text-base">⚙️</span>
+                    <span class="hidden md:inline text-sm font-medium">Settings</span>
                 </button>
             </div>
         </aside>
 
         <main class="flex-1 flex flex-col overflow-hidden">
             
-            <div id="tabBar" class="flex bg-[#252526] h-9 overflow-x-auto no-scrollbar shrink-0"></div>
+            <div id="tabBar" class="flex bg-[#252526] h-10 overflow-x-auto no-scrollbar shrink-0 text-xs md:text-sm"></div>
             
             <div class="flex-1 relative bg-[#1e1e1e]">
                 <div id="editorLayer" class="view-layer active">
                     <div id="editorContainer" class="w-full h-full"></div>
                 </div>
 
-                <div id="settingsLayer" class="view-layer bg-[#1e1e1e] p-6 md:p-10 overflow-y-auto">
-                    <h2 class="text-2xl mb-6 font-light">Settings</h2>
+                <div id="settingsLayer" class="view-layer bg-[#1e1e1e] p-6 md:p-10 overflow-y-auto text-sm md:text-[15px]">
+                    <h2 class="text-2xl md:text-3xl mb-6 font-light">Settings</h2>
                     <div class="max-w-xl space-y-8 pb-12">
                         <section>
-                            <label class="block text-sm font-bold mb-2 text-gray-400">Editor: Font Size</label>
+                            <label class="block font-bold mb-2 text-gray-400">Editor: Font Size (コード本文)</label>
                             <div class="flex items-center space-x-4">
                                 <input type="range" id="fontSizeRange" min="10" max="30" step="1" oninput="updateSettingsFromUI()" class="flex-1">
-                                <span id="fontSizeVal" class="w-12 text-center">16</span>
+                                <span id="fontSizeVal" class="w-12 text-center font-bold">16</span>
                             </div>
                         </section>
 
                         <section>
-                            <label class="block text-sm font-bold mb-2 text-gray-400">Editor: Tab Size (インデント字数)</label>
-                            <select id="tabSizeSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2 rounded outline-none text-sm">
+                            <label class="block font-bold mb-2 text-gray-400">Editor: Tab Size (インデント字数)</label>
+                            <select id="tabSizeSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2.5 rounded outline-none text-sm">
                                 <option value="2">2 スペース</option>
                                 <option value="4">4 スペース</option>
                                 <option value="8">8 スペース</option>
@@ -101,25 +108,41 @@
                         </section>
 
                         <section>
-                            <label class="block text-sm font-bold mb-2 text-gray-400">Editor: Word Wrap (行の折り返し)</label>
-                            <select id="wordWrapSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2 rounded outline-none text-sm">
+                            <label class="block font-bold mb-2 text-gray-400">Editor: Word Wrap (行の折り返し)</label>
+                            <select id="wordWrapSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2.5 rounded outline-none text-sm">
                                 <option value="on">on (画面幅で折り返す)</option>
                                 <option value="off">off (折り返さない)</option>
                             </select>
                         </section>
 
                         <section>
-                            <label class="block text-sm font-bold mb-2 text-gray-400">Files: Auto Save Delay (自動保存の間隔ミル秒)</label>
-                            <div class="flex items-center space-x-4">
-                                <input type="range" id="autoSaveRange" min="0" max="5000" step="100" oninput="updateSettingsFromUI()" class="flex-1">
-                                <span id="autoSaveVal" class="w-16 text-center">500ms</span>
-                            </div>
-                            <p class="text-[11px] text-gray-500 mt-1">キーボード入力を止めてから保存されるまでの待ち時間です。(0で完全リアルタイム)</p>
+                            <label class="block font-bold mb-2 text-gray-400">Editor: Line Numbers (行番号の表示)</label>
+                            <select id="lineNumbersSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2.5 rounded outline-none text-sm">
+                                <option value="on">on (表示する)</option>
+                                <option value="off">off (非表示)</option>
+                            </select>
                         </section>
 
                         <section>
-                            <label class="block text-sm font-bold mb-2 text-gray-400">Editor: Color Theme</label>
-                            <select id="themeSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2 rounded outline-none text-sm">
+                            <label class="block font-bold mb-2 text-gray-400">Editor: Minimap (ミニマップの表示)</label>
+                            <select id="minimapSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2.5 rounded outline-none text-sm">
+                                <option value="off">off (非表示 - iPad推奨)</option>
+                                <option value="on">on (表示する)</option>
+                            </select>
+                        </section>
+
+                        <section>
+                            <label class="block font-bold mb-2 text-gray-400">Files: Auto Save Delay (自動保存の間隔ミル秒)</label>
+                            <div class="flex items-center space-x-4">
+                                <input type="range" id="autoSaveRange" min="0" max="5000" step="100" oninput="updateSettingsFromUI()" class="flex-1">
+                                <span id="autoSaveVal" class="w-16 text-center font-bold">500ms</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">キーボード入力を止めてから保存されるまでの待ち時間です。</p>
+                        </section>
+
+                        <section>
+                            <label class="block font-bold mb-2 text-gray-400">Editor: Color Theme</label>
+                            <select id="themeSelect" onchange="updateSettingsFromUI()" class="w-full bg-[#3c3c3c] border border-[#555] p-2.5 rounded outline-none text-sm">
                                 <option value="vs-dark">Visual Studio Dark</option>
                                 <option value="vs-light">Visual Studio Light</option>
                                 <option value="hc-black">High Contrast</option>
@@ -137,7 +160,7 @@
         </main>
     </div>
 
-    <footer class="bg-[#007acc] text-white text-[10px] px-3 h-5 flex items-center justify-between shrink-0">
+    <footer class="bg-[#007acc] text-white text-xs px-3 h-6 flex items-center justify-between shrink-0">
         <div id="statusInfo">Ready</div>
         <div class="flex space-x-4">
             <span id="cursorPos">Ln 1, Col 1</span>
@@ -162,6 +185,8 @@
                 fontSize: 16,
                 tabSize: 4,
                 wordWrap: "on",
+                lineNumbers: "on",
+                minimap: "off",
                 autoSaveDelay: 500,
                 theme: "vs-dark"
             }
@@ -170,7 +195,8 @@
         let activeTab = "main.js";
         let editor = null;
         let monacoInstance = null;
-        let autoSaveTimer = null; // デバウンス（間隔保存）用タイマー
+        let autoSaveTimer = null;
+        let selectedFiles = new Set(); // 複数ダウンロード選択用
 
         require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' } });
         
@@ -183,18 +209,17 @@
                 fontSize: projectData.settings.fontSize,
                 tabSize: projectData.settings.tabSize,
                 wordWrap: projectData.settings.wordWrap,
+                lineNumbers: projectData.settings.lineNumbers,
+                minimap: { enabled: projectData.settings.minimap === "on" },
                 theme: projectData.settings.theme,
-                minimap: { enabled: false },
                 padding: { top: 10 },
                 lineNumbersMinChars: 3
             });
 
-            // 内容変更のトリガー（設定されたディレイを挟んで自動保存）
             editor.onDidChangeModelContent(() => {
                 if (projectData.files[activeTab]) {
                     projectData.files[activeTab].content = editor.getValue();
                     
-                    // 古いタイマーをクリアして、入力を止めてから指定ミリ秒後に保存を実行
                     clearTimeout(autoSaveTimer);
                     autoSaveTimer = setTimeout(() => {
                         saveData();
@@ -215,17 +240,17 @@
         function getFileIconDom(name) {
             const ext = name.split('.').pop().toLowerCase();
             switch(ext) {
-                case 'html':   return '<i class="devicon-html5-plain icon-html text-base"></i>';
-                case 'css':    return '<i class="devicon-css3-plain icon-css text-base"></i>';
-                case 'js':     return '<i class="devicon-javascript-plain icon-js text-base"></i>';
-                case 'ts':     return '<i class="devicon-typescript-plain icon-ts text-base"></i>';
-                case 'py':     return '<i class="devicon-python-plain icon-python text-base"></i>';
-                case 'json':   return '<i class="devicon-json-plain icon-json text-base"></i>';
+                case 'html':   return '<i class="devicon-html5-plain icon-html text-base md:text-lg"></i>';
+                case 'css':    return '<i class="devicon-css3-plain icon-css text-base md:text-lg"></i>';
+                case 'js':     return '<i class="devicon-javascript-plain icon-js text-base md:text-lg"></i>';
+                case 'ts':     return '<i class="devicon-typescript-plain icon-ts text-base md:text-lg"></i>';
+                case 'py':     return '<i class="devicon-python-plain icon-python text-base md:text-lg"></i>';
+                case 'json':   return '<i class="devicon-json-plain icon-json text-base md:text-lg"></i>';
                 case 'cpp': case 'cc': case 'h': case 'hpp': 
-                               return '<i class="devicon-cplusplus-plain icon-cpp text-base"></i>';
-                case 'cs':     return '<i class="devicon-csharp-plain icon-csharp text-base"></i>';
-                case 'md':     return '<i class="devicon-markdown-original icon-md text-base"></i>';
-                default:       return '<i class="devicon-matcha-plain icon-txt text-base"></i>';
+                               return '<i class="devicon-cplusplus-plain icon-cpp text-base md:text-lg"></i>';
+                case 'cs':     return '<i class="devicon-csharp-plain icon-csharp text-base md:text-lg"></i>';
+                case 'md':     return '<i class="devicon-markdown-original icon-md text-base md:text-lg"></i>';
+                default:       return '<i class="devicon-matcha-plain icon-txt text-base md:text-lg"></i>';
             }
         }
 
@@ -235,33 +260,34 @@
             fileList.innerHTML = "";
             tabBar.innerHTML = "";
 
-            // ファイルリスト
+            // ファイルリスト (チェックボックス付き本家スタイル)
             Object.keys(projectData.files).forEach(name => {
                 const isActive = (name === activeTab);
+                const isChecked = selectedFiles.has(name);
                 
                 const item = document.createElement("div");
-                item.className = `group px-3 py-1.5 flex justify-between items-center cursor-pointer text-sm ${isActive ? 'bg-[#37373d] text-white font-medium' : 'hover:bg-[#2a2d2e]'}`;
+                item.className = `group px-2 py-2 flex items-center cursor-pointer ${isActive ? 'bg-[#37373d] text-white font-medium' : 'hover:bg-[#2a2d2e]'}`;
                 item.innerHTML = `
+                    <input type="checkbox" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation(); toggleFileSelect('${name}')" class="mr-2 accent-[#007acc] w-4 h-4 rounded cursor-pointer">
                     <div class="flex items-center truncate flex-1 py-0.5" onclick="switchTab('${name}')">
                         <span class="mr-2 flex items-center justify-center w-5 h-5">${getFileIconDom(name)}</span>
                         <span class="truncate">${name}</span>
                     </div>
-                    <button onclick="deleteFile('${name}')" class="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-500 px-1 text-xs transition">✕</button>
+                    <button onclick="deleteFile('${name}')" class="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-500 px-1 text-sm transition">✕</button>
                 `;
                 fileList.appendChild(item);
 
                 const tab = document.createElement("div");
-                tab.className = `h-full px-4 flex items-center space-x-2 text-xs border-r border-[#252526] cursor-pointer transition shrink-0 ${isActive ? 'bg-[#1e1e1e] text-white border-t-2 border-[#007acc]' : 'bg-[#2d2d2d] text-gray-500 hover:bg-[#2b2b2b]'}`;
-                tab.innerHTML = `<span class="scale-90 opacity-80">${getFileIconDom(name)}</span><span class="ml-1">${name}</span><span onclick="event.stopPropagation(); closeTab('${name}')" class="hover:text-white ml-2">×</span>`;
+                tab.className = `h-full px-4 flex items-center space-x-2 border-r border-[#252526] cursor-pointer transition shrink-0 ${isActive ? 'bg-[#1e1e1e] text-white border-t-2 border-[#007acc]' : 'bg-[#2d2d2d] text-gray-500 hover:bg-[#2b2b2b]'}`;
+                tab.innerHTML = `<span class="scale-90 opacity-80">${getFileIconDom(name)}</span><span class="ml-1">${name}</span><span onclick="event.stopPropagation(); closeTab('${name}')" class="hover:text-white ml-2 text-sm">×</span>`;
                 tab.onclick = () => switchTab(name);
                 tabBar.appendChild(tab);
             });
 
-            // 設定タブ
             if (activeTab === "__settings__") {
                 const sTab = document.createElement("div");
-                sTab.className = `h-full px-4 flex items-center space-x-2 text-xs border-r border-[#252526] cursor-pointer shrink-0 bg-[#1e1e1e] text-white border-t-2 border-[#007acc]`;
-                sTab.innerHTML = `<span class="text-xs">⚙️</span><span>Settings</span><span onclick="event.stopPropagation(); closeTab('__settings__')" class="hover:text-white ml-2">×</span>`;
+                sTab.className = `h-full px-4 flex items-center space-x-2 border-r border-[#252526] cursor-pointer shrink-0 bg-[#1e1e1e] text-white border-t-2 border-[#007acc]`;
+                sTab.innerHTML = `<span class="text-xs">⚙️</span><span>Settings</span><span onclick="event.stopPropagation(); closeTab('__settings__')" class="hover:text-white ml-2 text-sm">×</span>`;
                 tabBar.appendChild(sTab);
             }
         }
@@ -297,24 +323,46 @@
         }
 
         function closeTab(name) {
-            // 設定タブ、またはファイルを閉じた際のフォールバック先を計算
             const fileKeys = Object.keys(projectData.files);
-            
             if (name === "__settings__") {
-                if (activeTab === "__settings__" && fileKeys.length > 0) {
-                    switchTab(fileKeys[0]);
-                } else {
-                    renderUI();
-                }
+                if (activeTab === "__settings__" && fileKeys.length > 0) switchTab(fileKeys[0]);
+                else renderUI();
             } else {
-                // ファイルタブを閉じる
                 if (activeTab === name) {
                     const remaining = fileKeys.filter(k => k !== name);
-                    if (remaining.length > 0) {
-                        switchTab(remaining[0]);
-                    }
+                    if (remaining.length > 0) switchTab(remaining[0]);
                 }
             }
+        }
+
+        // --- 個別・複数ファイルダウンロード機能 (新機能) ---
+        function toggleFileSelect(name) {
+            if (selectedFiles.has(name)) selectedFiles.delete(name);
+            else selectedFiles.add(name);
+        }
+
+        function downloadSelectedFiles() {
+            if (selectedFiles.size === 0) return alert("ダウンロードするファイルにチェックを入れてください。");
+            
+            // 最新のエディタの内容を反映
+            if (editor && projectData.files[activeTab]) {
+                projectData.files[activeTab].content = editor.getValue();
+            }
+
+            selectedFiles.forEach(name => {
+                const file = projectData.files[name];
+                if (!file) return;
+
+                const blob = new Blob([file.content], { type: "text/plain;charset=utf-8" });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = name;
+                a.click();
+                URL.revokeObjectURL(a.href);
+            });
+            
+            document.getElementById("statusInfo").innerText = `${selectedFiles.size}個のファイルをDLしました`;
+            setTimeout(() => { document.getElementById("statusInfo").innerText = "Ready"; }, 2000);
         }
 
         function handleFileUpload(input) {
@@ -340,7 +388,7 @@
         }
 
         function promptNewFile() {
-            const name = prompt("ファイル名を入力してください (例: main.cpp, index.html)");
+            const name = prompt("ファイル名を入力してください (例: script.py, main.cpp)");
             if (!name) return;
             if (projectData.files[name]) return alert("そのファイル名は既に存在します");
 
@@ -357,15 +405,13 @@
             if (!confirm(`${name} を削除しますか？`)) return;
 
             delete projectData.files[name];
+            selectedFiles.delete(name);
             
             const model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${name}`);
             if (model) model.dispose();
 
-            if (activeTab === name) {
-                switchTab(Object.keys(projectData.files)[0]);
-            } else {
-                renderUI();
-            }
+            if (activeTab === name) switchTab(Object.keys(projectData.files)[0]);
+            else renderUI();
             saveData();
         }
 
@@ -373,63 +419,62 @@
             switchTab("__settings__");
         }
 
-        // --- 新規設定項目の同期と反映ロジック ---
         function syncSettingsUI() {
             document.getElementById("fontSizeRange").value = projectData.settings.fontSize || 16;
             document.getElementById("fontSizeVal").innerText = projectData.settings.fontSize || 16;
-            
             document.getElementById("tabSizeSelect").value = projectData.settings.tabSize || 4;
             document.getElementById("wordWrapSelect").value = projectData.settings.wordWrap || "on";
             
+            document.getElementById("lineNumbersSelect").value = projectData.settings.lineNumbers || "on";
+            document.getElementById("minimapSelect").value = projectData.settings.minimap || "off";
+            
             document.getElementById("autoSaveRange").value = projectData.settings.autoSaveDelay !== undefined ? projectData.settings.autoSaveDelay : 500;
             document.getElementById("autoSaveVal").innerText = (projectData.settings.autoSaveDelay || 0) + "ms";
-            
             document.getElementById("themeSelect").value = projectData.settings.theme || "vs-dark";
         }
 
         function updateSettingsFromUI() {
-            const size = document.getElementById("fontSizeRange").value;
-            const tabSize = document.getElementById("tabSizeSelect").value;
-            const wordWrap = document.getElementById("wordWrapSelect").value;
-            const autoSaveDelay = document.getElementById("autoSaveRange").value;
-            const theme = document.getElementById("themeSelect").value;
-
             projectData.settings = {
-                fontSize: parseInt(size),
-                tabSize: parseInt(tabSize),
-                wordWrap: wordWrap,
-                autoSaveDelay: parseInt(autoSaveDelay),
-                theme: theme
+                fontSize: parseInt(document.getElementById("fontSizeRange").value),
+                tabSize: parseInt(document.getElementById("tabSizeSelect").value),
+                wordWrap: document.getElementById("wordWrapSelect").value,
+                lineNumbers: document.getElementById("lineNumbersSelect").value,
+                minimap: document.getElementById("minimapSelect").value,
+                autoSaveDelay: parseInt(document.getElementById("autoSaveRange").value),
+                theme: document.getElementById("themeSelect").value
             };
 
-            document.getElementById("fontSizeVal").innerText = size;
-            document.getElementById("autoSaveVal").innerText = autoSaveDelay + "ms";
+            document.getElementById("fontSizeVal").innerText = projectData.settings.fontSize;
+            document.getElementById("autoSaveVal").innerText = projectData.settings.autoSaveDelay + "ms";
 
             if (editor) {
                 editor.updateOptions({ 
                     fontSize: projectData.settings.fontSize,
                     tabSize: projectData.settings.tabSize,
-                    wordWrap: projectData.settings.wordWrap
+                    wordWrap: projectData.settings.wordWrap,
+                    lineNumbers: projectData.settings.lineNumbers,
+                    minimap: { enabled: projectData.settings.minimap === "on" }
                 });
-                if (monacoInstance) monacoInstance.editor.setTheme(theme);
+                if (monacoInstance) monacoInstance.editor.setTheme(projectData.settings.theme);
             }
             saveData();
         }
 
         function saveData() {
-            localStorage.setItem("webstudio_pro_v5", JSON.stringify(projectData));
+            localStorage.setItem("webstudio_pro_v6", JSON.stringify(projectData));
         }
 
         function loadData() {
-            const saved = localStorage.getItem("webstudio_pro_v5");
+            const saved = localStorage.getItem("webstudio_pro_v6");
             if (saved) {
                 projectData = JSON.parse(saved);
                 if (Object.keys(projectData.files).length === 0) {
                     projectData.files["main.js"] = { content: "", lang: "javascript" };
                 }
-                // オプションのデフォルト値補正
                 if (!projectData.settings.tabSize) projectData.settings.tabSize = 4;
                 if (!projectData.settings.wordWrap) projectData.settings.wordWrap = "on";
+                if (!projectData.settings.lineNumbers) projectData.settings.lineNumbers = "on";
+                if (!projectData.settings.minimap) projectData.settings.minimap = "off";
                 if (projectData.settings.autoSaveDelay === undefined) projectData.settings.autoSaveDelay = 500;
                 
                 activeTab = Object.keys(projectData.files)[0];
@@ -438,7 +483,7 @@
 
         function resetAllData() {
             if (confirm("すべてのファイルと設定を消去して初期化しますか？")) {
-                localStorage.removeItem("webstudio_pro_v5");
+                localStorage.removeItem("webstudio_pro_v6");
                 location.reload();
             }
         }
@@ -449,7 +494,7 @@
             const blob = new Blob([html], { type: "text/html" });
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
-            a.download = "WebStudio_Pro_v5.html";
+            a.download = "WebStudio_Pro_v6.html";
             a.click();
         }
     </script>
