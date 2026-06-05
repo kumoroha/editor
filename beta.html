@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Web Code Studio Pro v13.3</title>
+    <title>Web Code Studio Pro v14.0</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
@@ -37,6 +37,7 @@
         .icon-sh { color: #4ebd3a; }
         .icon-sql { color: #00758f; }
         .icon-yaml { color: #cb171e; }
+        .icon-image { color: #4ec9b0; }
         .xml { color: #0066b3; }
 
         #sidebar { transition: transform 0.2s ease, width 0s; }
@@ -99,7 +100,7 @@
                 <div class="p-2 flex items-center justify-between border-b border-[#333] text-xs font-bold text-gray-400 whitespace-nowrap">
                     <span>Workspace</span>
                     <div class="flex items-center space-x-2">
-                        <button onclick="document.getElementById('fileUploadInput').click()" class="hover:bg-[#333] p-1 rounded text-white text-base" title="ファイルをアップロード">📤</button>
+                        <button onclick="document.getElementById('fileUploadInput').click()" class="hover:bg-[#333] p-1 rounded text-white text-base" title="ファイルをアップロード (画像も対応)">📤</button>
                         <button onclick="promptNewFolder()" class="hover:bg-[#333] p-1 rounded text-white text-sm" title="新規フォルダ作成">📁+</button>
                         <button onclick="promptNewFile()" class="hover:bg-[#333] p-1 rounded text-white text-xl" title="新規ファイル作成">＋</button>
                     </div>
@@ -140,7 +141,8 @@
         <div id="resizer" class="w-[4px] bg-[#2b2b2b] shrink-0 z-20 transition-colors duration-150"></div>
 
         <main class="flex-1 flex flex-col overflow-hidden">
-            <div id="tabBar" class="flex bg-[#252526] h-10 overflow-x-auto no-scrollbar shrink-0 text-xs md:text-sm"></div>
+            <!-- タブバー：高さを低く調整（h-10からh-8へ変更） -->
+            <div id="tabBar" class="flex bg-[#252526] h-8 overflow-x-auto no-scrollbar shrink-0 text-xs"></div>
             
             <div id="quickInputBar" class="bg-[#2d2d2d] border-b border-[#232324] h-9 px-2 flex items-center space-x-1.5 overflow-x-auto no-scrollbar shrink-0">
                 <button onclick="executeSelectAll()" class="bg-[#444] hover:bg-[#555] text-white text-xs px-2 py-1 rounded transition shrink-0 font-medium">全選択</button>
@@ -173,24 +175,41 @@
             
             <div class="flex-1 relative bg-[#1e1e1e] flex flex-col overflow-hidden">
                 <div class="flex-1 relative overflow-hidden">
+                    <!-- 通常エディタ層 -->
                     <div id="editorLayer" class="view-layer active">
                         <div id="editorContainer" class="w-full h-full"></div>
                     </div>
 
+                    <!-- 差分ビューア層 -->
                     <div id="diffLayer" class="view-layer">
                         <div id="diffContainer" class="w-full h-full"></div>
                     </div>
 
+                    <!-- プレビュー画面層 -->
                     <div id="previewLayer" class="view-layer bg-white">
                         <iframe id="previewIframe" class="w-full h-full border-none bg-white"></iframe>
                     </div>
 
+                    <!-- 画像プレビュー層 -->
+                    <div id="imageLayer" class="view-layer bg-[#111111] flex flex-col items-center justify-center p-4 overflow-auto scrollable-area">
+                        <div class="max-w-full p-4 bg-[#1e1e1e] rounded-lg border border-[#333] shadow-xl flex flex-col items-center space-y-4">
+                            <div class="overflow-auto max-h-[60dvh] max-w-full border border-[#2b2b2b] bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 16 16%22><rect width=%228%22 height=%228%22 fill=%22%232a2a2a%22/><rect x=%228%22 y=%228%22 width=%228%22 height=%228%22 fill=%22%232a2a2a%22/><rect x=%228%22 width=%228%22 height=%228%22 fill=%22%231f1f1f%22/><rect y=%228%22 width=%228%22 height=%228%22 fill=%22%231f1f1f%22/></svg>')] bg-repeat p-2">
+                                <img id="imagePreviewContainer" class="max-w-full object-contain" alt="Image Preview">
+                            </div>
+                            <div class="w-full text-center space-y-1">
+                                <p id="imageMetaName" class="text-xs font-bold text-gray-200 truncate"></p>
+                                <p id="imageMetaSize" class="text-[11px] text-gray-400"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Welcome 画面層 -->
                     <div id="welcomeLayer" class="view-layer bg-[#1e1e1e] flex flex-col items-center justify-center p-6 text-center">
                         <div class="max-w-md space-y-6">
                             <div>
                                 <div class="text-5xl mb-3">🚀</div>
                                 <h2 class="text-2xl font-bold text-white tracking-wide">Web Code Studio Pro</h2>
-                                <p class="text-gray-400 text-xs mt-1">Pocket IDE Environment v13.3</p>
+                                <p class="text-gray-400 text-xs mt-1">Pocket IDE Environment v14.0</p>
                             </div>
                             <p class="text-sm text-gray-400 leading-relaxed">
                                 開いているファイルがありません。左のエクスプローラーからファイルを選択するか、新しく作成してコーディングを開始しましょう。
@@ -200,12 +219,13 @@
                                     <span>📄</span><span>新規ファイルを作成する</span>
                                 </button>
                                 <button onclick="document.getElementById('fileUploadInput').click()" class="w-full bg-[#3c3c3c] hover:bg-[#4e4e4e] text-gray-200 border border-[#555] py-2 rounded font-medium transition flex items-center justify-center space-x-2">
-                                    <span>📤</span><span>既存ファイルを読み込む</span>
+                                    <span>📤</span><span>ファイルを読み込む (画像も可)</span>
                                 </button>
                             </div>
                         </div>
                     </div>
 
+                    <!-- 設定画面層 -->
                     <div id="settingsLayer" class="view-layer bg-[#1e1e1e] p-6 md:p-10 overflow-y-auto text-sm md:text-[15px] scrollable-area">
                         <h2 class="text-2xl md:text-3xl mb-6 font-light">Settings</h2>
                         <div class="max-w-xl space-y-8 pb-12">
@@ -345,7 +365,7 @@
                 <p class="text-xs text-gray-400 leading-relaxed">
                     3分ごとに自動生成されたバックアップ履歴（最大10世代）です。**世代を表す数字（Gen）が大きいほど最新の状態**となります。
                 </p>
-                <div class="border border-[#3c3c3c] bg-[#1e1e1e] rounded max-h-56 overflow-y-auto no-scrollbar p-1.5 scrollable-area">
+                <div class="border border-[#3c3c3c] bg-[#1e1e1e] rounded max-h-56 overflow-y-auto no-scrollbar p-1.5 overflow-y-auto scrollable-area">
                     <div id="historyList" class="space-y-1.5 text-xs"></div>
                 </div>
             </div>
@@ -357,8 +377,80 @@
             'html': 'html', 'js': 'javascript', 'css': 'css', 'py': 'python', 'json': 'json',
             'cpp': 'cpp', 'cc': 'cpp', 'h': 'cpp', 'hpp': 'cpp', 'cs': 'csharp', 'md': 'markdown',
             'ts': 'typescript', 'txt': 'plaintext', 'sh': 'shell', 'bash': 'shell', 'sql': 'sql',
-            'yaml': 'yaml', 'yml': 'yaml', 'xml': 'xml'
+            'yaml': 'yaml', 'yml': 'yaml', 'xml': 'xml',
+            'png': 'image', 'jpg': 'image', 'jpeg': 'image', 'gif': 'image', 'svg': 'image', 'webp': 'image'
         };
+
+        // 全言語分インテリセンス辞書定義
+        const LANGUAGE_SUGGESTIONS = {
+            html: [
+                { label: 'div', insertText: '<div>\n\t${1}\n</div>', desc: 'HTML Division' },
+                { label: 'span', insertText: '<span>${1}</span>', desc: 'HTML Span' },
+                { label: 'a', insertText: '<a href="${1:#}">\n\t${2}\n</a>', desc: 'Anchor Link' },
+                { label: 'script', insertText: '<script src="${1}"><\/script>', desc: 'Script Tag' },
+                { label: 'link', insertText: '<link rel="stylesheet" href="${1}">', desc: 'CSS Style Link' },
+                { label: 'img', insertText: '<img src="${1}" alt="${2}">', desc: 'Image Element' },
+                { label: 'style', insertText: '<style>\n\t${1}\n</style>', desc: 'Style Block' }
+            ],
+            css: [
+                { label: 'display: flex;', insertText: 'display: flex;', desc: 'Flexbox Layout' },
+                { label: 'background-color', insertText: 'background-color: ${1:#fff};', desc: 'BG Color' },
+                { label: 'color', insertText: 'color: ${1:#333};', desc: 'Text Color' },
+                { label: 'margin', insertText: 'margin: ${1:0};', desc: 'Box Margin' },
+                { label: 'padding', insertText: 'padding: ${1:0};', desc: 'Box Padding' },
+                { label: 'border', insertText: 'border: 1px solid ${1:#ccc};', desc: 'Border Line' },
+                { label: 'justify-content', insertText: 'justify-content: ${1:center};', desc: 'Flex alignment' }
+            ],
+            javascript: [
+                { label: 'console.log', insertText: 'console.log(${1});', desc: 'Print standard log' },
+                { label: 'function', insertText: 'function ${1:name}(${2}) {\n\t${3}\n}', desc: 'Function Statement' },
+                { label: 'document.getElementById', insertText: 'document.getElementById(\'${1}\')', desc: 'DOM Element Selector' },
+                { label: 'addEventListener', insertText: 'addEventListener(\'${1:click}\', (e) => {\n\t${2}\n});', desc: 'DOM Event Listener' },
+                { label: 'const', insertText: 'const ${1:varName} = ${2};', desc: 'Constant Variable' },
+                { label: 'let', insertText: 'let ${1:varName} = ${2};', desc: 'Block Scope Variable' },
+                { label: 'JSON.stringify', insertText: 'JSON.stringify(${1})', desc: 'Object to JSON string' },
+                { label: 'JSON.parse', insertText: 'JSON.parse(${1})', desc: 'JSON string to Object' }
+            ],
+            python: [
+                { label: 'print', insertText: 'print(${1})', desc: 'Print statement' },
+                { label: 'def', insertText: 'def ${1:func_name}(${2}):\n\t${3:pass}', desc: 'Function Definition' },
+                { label: 'import', insertText: 'import ${1:os}', desc: 'Module Import' },
+                { label: 'if __name__ == "__main__":', insertText: 'if __name__ == "__main__":\n\t${1:main()}', desc: 'Script Entry Point' },
+                { label: 'for in', insertText: 'for ${1:i} in range(${2:10}):\n\t${3:pass}', desc: 'Loop statement' },
+                { label: 'class', insertText: 'class ${1:ClassName}:\n\tdef __init__(self):\n\t\t${2:pass}', desc: 'Class Definition' }
+            ],
+            csharp: [
+                { label: 'Console.WriteLine', insertText: 'Console.WriteLine(${1});', desc: 'System Output' },
+                { label: 'using System;', insertText: 'using System;', desc: 'Import Namespace' },
+                { label: 'public class', insertText: 'public class ${1:Program}\n{\n\t${2}\n}', desc: 'Class structure' },
+                { label: 'public static void Main', insertText: 'public static void Main(string[] args)\n{\n\t${1}\n}', desc: 'App Entry Point' }
+            ],
+            sql: [
+                { label: 'SELECT', insertText: 'SELECT ${1:*} FROM ${2:table_name};', desc: 'Query Selection' },
+                { label: 'INSERT INTO', insertText: 'INSERT INTO ${1:table} (${2:col}) VALUES (${3:val});', desc: 'Insert Data' },
+                { label: 'UPDATE', insertText: 'UPDATE ${1:table_name} SET ${2:col} = ${3:val} WHERE ${4:condition};', desc: 'Update Data' },
+                { label: 'DELETE FROM', insertText: 'DELETE FROM ${1:table_name} WHERE ${2:condition};', desc: 'Delete Data' }
+            ],
+            markdown: [
+                { label: 'code block', insertText: '```${1:javascript}\n${2}\n
+```', desc: 'Code Block Segment' },
+                { label: 'table template', insertText: '| ${1:Header1} | ${2:Header2} |\n| --- | --- |\n| ${3:Value1} | ${4:Value2} |', desc: 'MD Grid Table' }
+            ],
+            json: [
+                { label: 'key-value', insertText: '"${1:key}": "${2:value}"', desc: 'JSON String Pair' }
+            ],
+            yaml: [
+                { label: 'config-node', insertText: '${1:name}:\n  ${2:key}: ${3:value}', desc: 'YAML Node Mapping' }
+            ],
+            shell: [
+                { label: 'echo', insertText: 'echo "${1:Hello}"', desc: 'Terminal Echo' },
+                { label: 'shebang bash', insertText: '#!/bin/bash\n', desc: 'Bash Script Header' }
+            ],
+            xml: [
+                { label: 'node', insertText: '<${1:tag}>\n\t${2}\n</${1:tag}>', desc: 'XML Document Node' }
+            ]
+        };
+        LANGUAGE_SUGGESTIONS.typescript = LANGUAGE_SUGGESTIONS.javascript;
 
         let projectData = {
             files: {
@@ -443,15 +535,9 @@
         require(['vs/editor/editor.main'], function() {
             monacoInstance = monaco;
 
-            // CDN版MonacoでC++のローカルサジェスト（インテリセンス）を強力に稼働させる補完レジストリ
+            // C++用インテリセンス補完
             monacoInstance.languages.registerCompletionItemProvider('cpp', {
                 provideCompletionItems: function(model, position) {
-                    const textUntilPosition = model.getValueInRange({
-                        startLineNumber: 1, startColumn: 1,
-                        endLineNumber: position.lineNumber, endColumn: position.column
-                    });
-                    
-                    // C++標準予約語および主要キーワードのインテリセンス定義
                     const cppKeywords = [
                         'include', 'define', 'main', 'std', 'cout', 'cin', 'endl', 'vector', 'string',
                         'int', 'float', 'double', 'char', 'bool', 'void', 'class', 'struct', 'public',
@@ -459,27 +545,39 @@
                         'break', 'continue', 'return', 'true', 'false', 'namespace', 'using', 'template',
                         'typename', 'auto', 'const', 'static', 'virtual', 'override', 'nullptr'
                     ];
-
                     const suggestions = cppKeywords.map(keyword => {
                         let insertText = keyword;
                         let kind = monacoInstance.languages.CompletionItemKind.Keyword;
-
                         if (keyword === 'include') { insertText = 'include <${1:iostream}>'; kind = monacoInstance.languages.CompletionItemKind.Snippet; }
                         else if (keyword === 'main') { insertText = 'main() {\n\t${1}\n\treturn 0;\n}'; kind = monacoInstance.languages.CompletionItemKind.Snippet; }
                         else if (keyword === 'cout') { insertText = 'cout << ${1}'; kind = monacoInstance.languages.CompletionItemKind.Field; }
                         else if (keyword === 'endl') { insertText = 'endl;'; kind = monacoInstance.languages.CompletionItemKind.Property; }
-
                         return {
-                            label: keyword,
-                            kind: kind,
-                            insertText: insertText,
+                            label: keyword, kind: kind, insertText: insertText,
                             insertTextRules: insertText.includes('$') ? monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet : undefined,
                             range: new monacoInstance.Range(position.lineNumber, position.column, position.lineNumber, position.column)
                         };
                     });
-
                     return { suggestions: suggestions };
                 }
+            });
+
+            // その他全対応言語のインテリセンス一括登録
+            Object.keys(LANGUAGE_SUGGESTIONS).forEach(langKey => {
+                monacoInstance.languages.registerCompletionItemProvider(langKey, {
+                    provideCompletionItems: function(model, position) {
+                        const dict = LANGUAGE_SUGGESTIONS[langKey];
+                        const suggestions = dict.map(item => ({
+                            label: item.label,
+                            kind: item.insertText.includes('$') ? monacoInstance.languages.CompletionItemKind.Snippet : monacoInstance.languages.CompletionItemKind.Function,
+                            documentation: item.desc,
+                            insertText: item.insertText,
+                            insertTextRules: item.insertText.includes('$') ? monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet : undefined,
+                            range: new monacoInstance.Range(position.lineNumber, position.column, position.lineNumber, position.column)
+                        }));
+                        return { suggestions: suggestions };
+                    }
+                });
             });
 
             loadData();
@@ -575,19 +673,17 @@
                 document.getElementById("historyModal").classList.remove("hidden");
                 return;
             }
-            
             for (let idx = projectData.timeMachine.length - 1; idx >= 0; idx--) {
                 const snap = projectData.timeMachine[idx];
                 const timeStr = new Date(snap.timestamp).toLocaleString();
                 const fileCount = Object.keys(snap.files).length;
                 const genNumber = idx + 1;
-                
                 const row = document.createElement("div");
                 row.className = "bg-[#252526] p-2 rounded border border-[#3c3c3c] flex items-center justify-between space-x-2";
                 row.innerHTML = `
                     <div class="flex flex-col min-w-0">
                         <span class="font-bold text-gray-200">${timeStr} <span class="text-[10px] text-amber-500 bg-amber-950/40 px-1 rounded ml-1">Gen ${genNumber}</span></span>
-                        <span class="text-[11px] text-gray-400 mt-0.5 truncate">ワークスペース内スナップショット (${fileCount} 個의 ファイル)</span>
+                        <span class="text-[11px] text-gray-400 mt-0.5 truncate">ワークスペース内スナップショット (${fileCount} 個のファイル)</span>
                     </div>
                     <div class="flex items-center space-x-1.5 shrink-0">
                         <button onclick="viewHistoryDiff(${idx})" class="bg-[#3c3c3c] hover:bg-[#4e4e4e] text-white px-2 py-1 rounded text-[11px] transition">差分</button>
@@ -604,6 +700,7 @@
         function viewHistoryDiff(idx) {
             const snap = projectData.timeMachine[idx];
             if (!snap || !snap.files[activeTab]) return alert("この履歴データ内に対象ファイルが存在しないため比較できません。");
+            if (projectData.files[activeTab].lang === 'image') return alert("画像ファイルは差分比較に対応していません。");
             closeHistoryModal();
             const originalContent = snap.files[activeTab].content;
             const currentContent = projectData.files[activeTab].content;
@@ -618,7 +715,7 @@
         }
 
         function restoreHistorySnapshot(idx) {
-            if (!confirm("本当にこの世代の状態へワークスペース全体を復元しますか？\n（現在の最新コードは上書きされます）")) return;
+            if (!confirm("本当にこの世代の状態へワークスペース全体を復元しますか？\n（現在の最新コードやメディアは上書きされます）")) return;
             const snap = projectData.timeMachine[idx]; if (!snap) return;
             projectData.files = JSON.parse(JSON.stringify(snap.files));
             saveData(); closeHistoryModal();
@@ -627,7 +724,7 @@
         }
 
         function formatCodeWithConfirm() {
-            if (isSpecialActive() || !projectData.files[activeTab]) return;
+            if (isSpecialActive() || !projectData.files[activeTab] || projectData.files[activeTab].lang === 'image') return;
             if (confirm("✨ コードを自動整形（フォーマット）しますか？\n（インデント構造が上書きされます）")) {
                 editor.getAction('editor.action.formatDocument').run().then(() => {
                     const status = document.getElementById("statusInfo");
@@ -663,8 +760,7 @@
             });
         }
 
-        // 特別な特殊タブレイヤーであるかどうかの判別
-        function isSpecialActive() { return activeTab === "__settings__" || activeTab === "__diff__" || activeTab === "__welcome__" || activeTab === "__preview__"; }
+        function isSpecialActive() { return activeTab === "__settings__" || activeTab === "__diff__" || activeTab === "__welcome__" || activeTab === "__preview__" || activeTab === "__image__"; }
 
         function insertSymbol(sym) {
             if (!editor || isSpecialActive()) return;
@@ -753,7 +849,7 @@
                                 <span class="truncate text-xs md:text-sm">${key}</span>
                             </div>
                             <div class="flex items-center space-x-1.5 text-gray-400 transition shrink-0">
-                                <button onclick="openDiffMode('${item.path}')" class="hover:text-sky-400 text-xs" title="差分を見る">⚖️</button>
+                                ${projectData.files[item.path].lang !== 'image' ? `<button onclick="openDiffMode('${item.path}')" class="hover:text-sky-400 text-xs" title="差分を見る">⚖️</button>` : ''}
                                 <button onclick="promptRenameFile('${item.path}')" class="hover:text-white text-xs" title="名前変更">✏️</button>
                                 <button onclick="deleteFile('${item.path}')" class="hover:text-red-500 text-sm" title="削除">✕</button>
                             </div>
@@ -770,8 +866,8 @@
                 if (!projectData.files[path]) return;
                 const isActive = (path === activeTab), filename = path.split('/').pop();
                 const tab = document.createElement("div");
-                tab.className = `h-full px-3 flex items-center space-x-1.5 border-r border-[#252526] cursor-pointer transition shrink-0 ${isActive ? 'bg-[#1e1e1e] text-white border-t-2 border-[#007acc]' : 'bg-[#2d2d2d] text-gray-500 hover:bg-[#2b2b2b]'}`;
-                tab.innerHTML = `<span class="scale-75 opacity-80 shrink-0">${getFileIconDom(filename)}</span><span class="text-xs font-medium">${filename}</span><span onclick="event.stopPropagation(); closeTab('${path}')" class="hover:text-white ml-1.5 text-xs p-0.5">×</span>`;
+                tab.className = `h-full px-2.5 flex items-center space-x-1.5 border-r border-[#252526] cursor-pointer transition shrink-0 ${isActive ? 'bg-[#1e1e1e] text-white border-t-2 border-[#007acc]' : 'bg-[#2d2d2d] text-gray-500 hover:bg-[#2b2b2b]'}`;
+                tab.innerHTML = `<span class="scale-75 opacity-80 shrink-0">${getFileIconDom(filename)}</span><span class="text-[11px] font-medium tracking-wide">${filename}</span><span onclick="event.stopPropagation(); closeTab('${path}')" class="hover:text-white ml-1 text-xs px-0.5 opacity-60 hover:opacity-100">×</span>`;
                 tab.onclick = () => switchTab(path);
                 tabBar.appendChild(tab);
             });
@@ -780,13 +876,14 @@
             if (activeTab === "__diff__") renderSpecialTab("⚖️ Diff View", "__diff__");
             if (activeTab === "__welcome__") renderSpecialTab("🚀 Welcome", "__welcome__");
             if (activeTab === "__preview__") renderSpecialTab("💻 Preview", "__preview__");
+            if (activeTab === "__image__") renderSpecialTab("🖼️ Image View", "__image__");
         }
 
         function renderSpecialTab(label, id) {
             const tabBar = document.getElementById("tabBar");
             const sTab = document.createElement("div");
-            sTab.className = `h-full px-4 flex items-center space-x-2 border-r border-[#252526] cursor-pointer shrink-0 bg-[#1e1e1e] text-white border-t-2 border-[#007acc]`;
-            sTab.innerHTML = `<span class="text-xs">${label}</span><span onclick="event.stopPropagation(); closeTab('${id}')" class="hover:text-white ml-1.5 text-xs p-0.5">×</span>`;
+            sTab.className = `h-full px-3 flex items-center space-x-1.5 border-r border-[#252526] cursor-pointer shrink-0 bg-[#1e1e1e] text-white border-t-2 border-[#007acc]`;
+            sTab.innerHTML = `<span class="text-[11px] font-medium">${label}</span><span onclick="event.stopPropagation(); closeTab('${id}')" class="hover:text-white ml-1 text-xs px-0.5">×</span>`;
             sTab.onclick = () => switchTab(id);
             tabBar.appendChild(sTab);
         }
@@ -794,7 +891,7 @@
         function toggleFolder(path) { projectData.foldersExpanded[path] = projectData.foldersExpanded[path] === false; saveData(); renderUI(); }
 
         function setDiffCheckpoint() {
-            if (isSpecialActive() || !projectData.files[activeTab]) return alert("対象外のタブです。");
+            if (isSpecialActive() || !projectData.files[activeTab] || projectData.files[activeTab].lang === 'image') return alert("対象外のファイルです。");
             if (editor) projectData.files[activeTab].content = editor.getValue();
             projectData.diffCheckpoints[activeTab] = projectData.files[activeTab].content;
             saveData(); document.getElementById("statusInfo").innerText = "📌 差分の基準点を記憶しました！";
@@ -802,7 +899,7 @@
         }
 
         function openDiffMode(path) {
-            if (!monacoInstance || !projectData.files[path]) return;
+            if (!monacoInstance || !projectData.files[path] || projectData.files[path].lang === 'image') return;
             let originalContent = projectData.diffCheckpoints[path];
             if (originalContent === undefined) {
                 const rawData = localStorage.getItem("webstudio_pro_v13.2");
@@ -859,11 +956,10 @@
         function switchTab(target) {
             if (projectData.files[target] && !projectData.openTabs.includes(target)) projectData.openTabs.push(target);
             activeTab = target;
-            const layers = { editor: document.getElementById("editorLayer"), diff: document.getElementById("diffLayer"), preview: document.getElementById("previewLayer"), welcome: document.getElementById("welcomeLayer"), settings: document.getElementById("settingsLayer") };
+            const layers = { editor: document.getElementById("editorLayer"), diff: document.getElementById("diffLayer"), preview: document.getElementById("previewLayer"), welcome: document.getElementById("welcomeLayer"), settings: document.getElementById("settingsLayer"), image: document.getElementById("imageLayer") };
             Object.values(layers).forEach(l => l.classList.remove("active"));
             const topFileName = document.getElementById("topFileName");
 
-            // 特殊画面（設定、ようこそ画面、プレビューなど）では、最上部ヘッダーの機能ボタンおよび中段ツールバーを非表示にする制御
             const quickInputBar = document.getElementById("quickInputBar");
             const headerFunctionButtons = document.getElementById("headerFunctionButtons");
             
@@ -879,20 +975,34 @@
             else if (target === "__diff__") { layers.diff.classList.add("active"); document.getElementById("langDisplay").innerText = "Diff Viewer"; }
             else if (target === "__preview__") { layers.preview.classList.add("active"); topFileName.innerText = "Live Preview"; document.getElementById("langDisplay").innerText = "Browser Container"; }
             else if (target === "__welcome__") { layers.welcome.classList.add("active"); topFileName.innerText = "Welcome"; }
+            else if (target === "__image__") { layers.image.classList.add("active"); }
             else {
                 const file = projectData.files[target];
-                if (file && editor) {
-                    layers.editor.classList.add("active"); topFileName.innerText = target;
-                    let model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${target}`);
-                    if (!model) model = monacoInstance.editor.createModel(file.content, file.lang, monacoInstance.Uri.file(target));
-                    editor.setModel(model); document.getElementById("langDisplay").innerText = file.lang;
+                if (file) {
+                    if (file.lang === 'image') {
+                        layers.image.classList.add("active");
+                        topFileName.innerText = target;
+                        document.getElementById("langDisplay").innerText = "Image Asset";
+                        
+                        const imgView = document.getElementById("imagePreviewContainer");
+                        imgView.src = file.content; 
+                        document.getElementById("imageMetaName").innerText = target;
+                        document.getElementById("imageMetaSize").innerText = `規格: ${file.content.startsWith('data:') ? file.content.split(';')[0].replace('data:', '') : 'Vector Graphic SVG'}`;
+                        if(quickInputBar) quickInputBar.style.display = "none";
+                        if(headerFunctionButtons) headerFunctionButtons.style.display = "none";
+                    } else if (editor) {
+                        layers.editor.classList.add("active"); topFileName.innerText = target;
+                        let model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${target}`);
+                        if (!model) model = monacoInstance.editor.createModel(file.content, file.lang, monacoInstance.Uri.file(target));
+                        editor.setModel(model); document.getElementById("langDisplay").innerText = file.lang;
+                    }
                 } else { activeTab = "__welcome__"; layers.welcome.classList.add("active"); if(quickInputBar) quickInputBar.style.display = "none"; if(headerFunctionButtons) headerFunctionButtons.style.display = "none"; }
             }
             saveData(); renderUI(); updateFooterCounters();
         }
 
         function closeTab(name) {
-            if (name === "__settings__" || name === "__diff__" || name === "__welcome__" || name === "__preview__") { if (activeTab === name) fallbackToRemainingTab(); else renderUI(); return; }
+            if (name === "__settings__" || name === "__diff__" || name === "__welcome__" || name === "__preview__" || name === "__image__") { if (activeTab === name) fallbackToRemainingTab(); else renderUI(); return; }
             projectData.openTabs = projectData.openTabs.filter(t => t !== name); saveData();
             if (activeTab === name) fallbackToRemainingTab(); else renderUI();
         }
@@ -923,8 +1033,17 @@
         function downloadSelectedFilesFromModal() {
             if (selectedFiles.size === 0) return alert("ファイルを選択してください。");
             selectedFiles.forEach(name => {
-                const blob = new Blob([projectData.files[name].content], { type: "text/plain;charset=utf-8" });
-                const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name.replace(/\//g, '_'); a.click();
+                const file = projectData.files[name];
+                const isImg = file.lang === 'image';
+                
+                let a = document.createElement("a");
+                if (isImg && file.content.startsWith("data:")) {
+                    a.href = file.content;
+                } else {
+                    const blob = new Blob([file.content], { type: "text/plain;charset=utf-8" });
+                    a.href = URL.createObjectURL(blob);
+                }
+                a.download = name.replace(/\//g, '_'); a.click();
             });
             closeDownloadModal();
         }
@@ -932,15 +1051,19 @@
         function exportSystemSnapshotFromModal() {
             saveData();
             const blob = new Blob([document.documentElement.outerHTML], { type: "text/html" });
-            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "WebStudio_Pro_v13_3.html"; a.click();
+            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "WebStudio_Pro_v14_0.html"; a.click();
             closeDownloadModal();
         }
 
         function promptNewFile(basePath = "") {
-            let name = prompt("ファイル名を入力してください:"); if (!name) return;
+            let name = prompt("ファイル名を入力してください (例: logo.png, script.js):"); if (!name) return;
             let fullPath = basePath ? `${basePath}/${name}` : name; fullPath = fullPath.replace(/\/+/g, '/').replace(/^\//, '');
             if (projectData.files[fullPath]) return alert("既に存在します");
-            projectData.files[fullPath] = { content: "", lang: EXT_MAP[fullPath.split('.').pop().toLowerCase()] || 'plaintext' };
+            
+            const determinedLang = EXT_MAP[fullPath.split('.').pop().toLowerCase()] || 'plaintext';
+            const initialContent = determinedLang === 'image' ? 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7' : "";
+            
+            projectData.files[fullPath] = { content: initialContent, lang: determinedLang };
             saveData(); switchTab(fullPath);
         }
 
@@ -951,7 +1074,7 @@
         }
 
         function deleteFolder(folderPath) {
-            if (!confirm(`フォルダ内すべてのファイルが削除されますがよろしいですか？`)) return;
+            if (!confirm(`フォルダ内すべてのファイル(画像含む)が削除されますがよろしいですか？`)) return;
             Object.keys(projectData.files).forEach(path => { if (path.startsWith(folderPath + '/')) executeActualFileDeletion(path); });
             delete projectData.foldersExpanded[folderPath]; saveData(); refreshWorkspaceAfterDeletion();
         }
@@ -1055,6 +1178,7 @@
                 case 'sh': case 'bash': return '<i class="devicon-bash-plain icon-sh"></i>';
                 case 'sql':  return '<i class="devicon-azuresqldatabase-plain icon-sql"></i>';
                 case 'yaml': case 'yml': return '<i class="devicon-yaml-plain icon-yaml"></i>';
+                case 'png': case 'jpg': case 'jpeg': case 'gif': case 'svg': case 'webp': return '🖼️';
                 default:     return '<i class="devicon-matcha-plain icon-txt"></i>';
             }
         }
@@ -1065,6 +1189,7 @@
             container.innerHTML = ""; if (!query) { countEl.innerText = "0 件のマッチ"; return; }
             let matchCount = 0;
             Object.keys(projectData.files).forEach(filename => {
+                if (projectData.files[filename].lang === 'image') return; 
                 const lines = projectData.files[filename].content.split('\n');
                 lines.forEach((line, index) => {
                     if (line.includes(query)) {
@@ -1084,6 +1209,7 @@
             if (!searchStr) return alert("検索キーワードを入力してください");
             if (!confirm(`すべての「${searchStr}」を「${replaceStr}」に一括置換しますか？`)) return;
             Object.keys(projectData.files).forEach(filename => {
+                if (projectData.files[filename].lang === 'image') return;
                 const content = projectData.files[filename].content;
                 if (content.includes(searchStr)) { projectData.files[filename].content = content.split(searchStr).join(replaceStr); const model = monacoInstance.editor.getModels().find(m => m.uri.path === `/${filename}`); if (model) model.setValue(projectData.files[filename].content); }
             });
@@ -1093,11 +1219,19 @@
         function handleFileUpload(input) {
             const file = input.files[0]; if (!file) return;
             const reader = new FileReader();
+            const name = file.name;
+            const determinedLang = EXT_MAP[name.split('.').pop().toLowerCase()] || 'plaintext';
+
             reader.onload = function(e) {
-                const name = file.name; projectData.files[name] = { content: e.target.result, lang: EXT_MAP[name.split('.').pop().toLowerCase()] || 'plaintext' };
+                projectData.files[name] = { content: e.target.result, lang: determinedLang };
                 saveData(); switchTab(name); input.value = "";
             };
-            reader.readAsText(file);
+
+            if (determinedLang === 'image') {
+                reader.readAsDataURL(file);
+            } else {
+                reader.readAsText(file);
+            }
         }
 
         function openSettings() { switchTab("__settings__"); }
